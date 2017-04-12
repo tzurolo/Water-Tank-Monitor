@@ -3,6 +3,8 @@
 //
 //  Platform: AtMega328P
 //
+// Need way to 'finalize', that is, release resources to reduce power
+//
 
 #include "ADCManager.h"
 
