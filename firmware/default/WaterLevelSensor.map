@@ -1,0 +1,911 @@
+Archive member included because of file (symbol)
+
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_mulsi3.o)
+                              BatteryMonitor.o (__mulsi3)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodhi4.o)
+                              StringUtils.o (__udivmodhi4)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodsi4.o)
+                              SystemTime.o (__udivmodsi4)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_divmodsi4.o)
+                              BatteryMonitor.o (__divmodsi4)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+                              c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o (exit)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+                              CommandProcessor.o (__do_copy_data)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+                              SystemTime.o (__do_clear_bss)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o)
+                              CommandProcessor.o (atoi)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcasecmp_P.o)
+                              CommandProcessor.o (strcasecmp_P)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcmp_P.o)
+                              StringUtils.o (strcmp_P)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strlen_P.o)
+                              SoftwareSerialTx.o (strlen_P)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy_P.o)
+                              CharString.o (strncpy_P)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strstr_P.o)
+                              SIM800.o (strstr_P)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o)
+                              CommandProcessor.o (strtok)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                              CommandProcessor.o (strncpy)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok_r.o)
+                              c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o) (strtok_r)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o)
+                              CellularComm_SIM800.o (itoa)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(ltoa.o)
+                              CellularComm_SIM800.o (ltoa)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(mul10.o)
+                              c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o) (__mulhi_const_10)
+c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strrev.o)
+                              c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o) (strrev)
+
+Allocating common symbols
+Common symbol       size              file
+
+responseMsg         0x1               SIM800.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00020000         xr
+data             0x00800060         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+Address of section .data set to 0x800100
+LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+LOAD WaterLevelSensorMain.o
+LOAD SystemTime.o
+LOAD ADCManager.o
+LOAD DataHistory.o
+LOAD CommandProcessor.o
+LOAD EEPROMStorage.o
+LOAD Console.o
+LOAD BatteryMonitor.o
+LOAD CellularComm_SIM800.o
+LOAD CellularTCPIP_SIM800.o
+LOAD TCPIPConsole.o
+LOAD SIM800.o
+LOAD ByteQueue.o
+LOAD SoftwareSerialTx.o
+LOAD SoftwareSerialRx.o
+LOAD CharString.o
+LOAD StringUtils.o
+LOAD UART_async.o
+LOAD EEPROM_Util.o
+LOAD RamSentinel.o
+LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a
+LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a
+LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00000000     0x5460
+ *(.vectors)
+ .vectors       0x00000000       0x68 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+                0x00000000                __vectors
+                0x00000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+ .progmem.gcc_sw_table
+                0x00000068       0x32 CellularComm_SIM800.o
+ *(.progmem*)
+ .progmem.data  0x0000009a        0x4 SystemTime.o
+ .progmem.data  0x0000009e        0x6 ADCManager.o
+                0x0000009e                channelMasks
+ .progmem.data  0x000000a4      0x1af CommandProcessor.o
+ .progmem.data  0x00000253       0x17 EEPROMStorage.o
+ .progmem.data  0x0000026a        0x3 Console.o
+                0x0000026a                crlfP
+ .progmem.data  0x0000026d      0x22b CellularComm_SIM800.o
+                0x0000026e                smsStatusRecUnread
+                0x0000029a                smsStatusStrings
+                0x00000279                smsStatusRecRead
+                0x00000282                smsStatusStoUnsent
+                0x0000026d                smsStatusUndefined
+                0x0000028d                smsStatusStoSent
+                0x00000296                smsStatusAll
+ .progmem.data  0x00000498      0x14c CellularTCPIP_SIM800.o
+ .progmem.data  0x000005e4       0x51 TCPIPConsole.o
+ .progmem.data  0x00000635      0x2b5 SIM800.o
+                0x00000680                rmOK
+                0x00000683                rmRDY
+                0x00000687                rmSEND_FAIL
+                0x000006c5                pmCBC
+                0x000006ab                SIM800_ResponseMessageTable
+                0x00000790                ipsTCP_CONNECTING
+                0x000007aa                ipsUDP_CLOSING
+                0x00000706                plusMessageTable
+                0x00000720                ipsCONNECT_OK
+                0x0000063e                rmCLOSED
+                0x000006f4                pmCPIN
+                0x0000074b                ipsIP_START
+                0x000006a1                rmSMS_Ready
+                0x000006d3                pmCGATT
+                0x0000066e                rmNORMAL_POWER_DOWN
+                0x0000072b                ipsIP_CONFIG
+                0x00000784                ipsTCP_CLOSING
+                0x0000075e                ipsPDP_DEACT
+                0x00000645                rmCONNECT_FAIL
+                0x000006d9                pmCIPACK
+                0x00000699                rmSHUT_OK
+                0x000006ea                pmCMGS
+                0x00000740                ipsIP_INITIAL
+                0x00000735                ipsIP_GPRSACT
+                0x000006ef                pmCMTI
+                0x00000652                rmCONNECT_OK
+                0x000006fe                pmCSQ
+                0x00000754                ipsIP_STATUS
+                0x0000079f                ipsUDP_CLOSED
+                0x00000691                rmSEND_OK
+                0x00000779                ipsTCP_CLOSED
+                0x000006c9                pmCCLK
+                0x000006f9                pmCREG
+                0x0000065d                rmCall_Ready
+                0x000006e0                pmCMGL
+                0x00000702                pmPDP
+                0x000006e5                pmCMGR
+                0x00000668                rmERROR
+                0x00000768                ipsSERVER_LISTENING
+                0x000006ce                pmCFUN
+                0x000007b6                ipsUDP_CONNECTING
+                0x000007c5                ipStateTable
+                0x00000635                rmCLOSE_OK
+ .progmem.data  0x000008ea        0x3 CharString.o
+                0x000008ee                . = ALIGN (0x2)
+ *fill*         0x000008ed        0x1 00
+                0x000008ee                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x000008ee        0x0 linker stubs
+ *(.trampolines*)
+                0x000008ee                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x000008ee                __ctors_start = .
+ *(.ctors)
+                0x000008ee                __ctors_end = .
+                0x000008ee                __dtors_start = .
+ *(.dtors)
+                0x000008ee                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x000008ee        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+                0x000008ee                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x000008ee        0xc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x000008fa       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+                0x000008fa                __do_copy_data
+ .init4         0x00000910       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+                0x00000910                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000920        0x8 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+ *(.init9)
+ *(.text)
+ .text          0x00000928        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+                0x00000928                __vector_22
+                0x00000928                __vector_1
+                0x00000928                __vector_24
+                0x00000928                __vector_12
+                0x00000928                __bad_interrupt
+                0x00000928                __vector_6
+                0x00000928                __vector_3
+                0x00000928                __vector_23
+                0x00000928                __vector_25
+                0x00000928                __vector_13
+                0x00000928                __vector_17
+                0x00000928                __vector_4
+                0x00000928                __vector_9
+                0x00000928                __vector_2
+                0x00000928                __vector_21
+                0x00000928                __vector_15
+                0x00000928                __vector_8
+                0x00000928                __vector_14
+                0x00000928                __vector_10
+                0x00000928                __vector_16
+ .text          0x0000092c       0x6e WaterLevelSensorMain.o
+                0x0000092c                main
+ .text          0x0000099a      0x280 SystemTime.o
+                0x00000ab0                SystemTime_shuttingDown
+                0x00000ac2                __vector_11
+                0x00000a60                SystemTime_timeHasArrived
+                0x00000ab6                SystemTime_task
+                0x00000a2e                SystemTime_futureTime
+                0x00000a92                SystemTime_commenceShutdown
+                0x000009f0                SystemTime_registerForTickNotification
+                0x00000a0c                SystemTime_getCurrentTime
+                0x00000b62                SystemTime_appendCurrentToString
+                0x000009fa                currentTick
+                0x0000099a                SystemTime_Initialize
+ .text          0x00000c1a      0x15a ADCManager.o
+                0x00000c32                ADCManager_setupChannel
+                0x00000d2e                ADCManager_ConversionIsComplete
+                0x00000cda                ADCManager_StartConversion
+                0x00000c7c                ADCManager_task
+                0x00000c1a                ADCManager_Initialize
+ .text          0x00000d74      0x19e DataHistory.o
+                0x00000d74                DataHistory_insertValue
+                0x00000dc0                DataHistory_getLatest
+                0x00000df8                DataHistory_getStatistics
+ .text          0x00000f12      0x8ac CommandProcessor.o
+                0x0000103e                CommandProcessor_processCommand
+                0x00000f4e                CommandProcessor_createStatusMessage
+ .text          0x000017be      0x314 EEPROMStorage.o
+                0x00001862                EEPROMStorage_getThingspeakHostAddress
+                0x00001904                EEPROMStorage_thingspeakEnabled
+                0x0000182a                EEPROMStorage_setWaterTankFullDistance
+                0x000017be                EEPROMStorage_ipConsoleServerPort
+                0x00001836                EEPROMStorage_setWaterTankEmptyDistance
+                0x0000193e                EEPROMStorage_waterHighNotificationLevel
+                0x00001852                EEPROMStorage_getThingspeakWriteKey
+                0x0000191c                EEPROMStorage_timeoutState
+                0x00001976                EEPROMStorage_setThingspeak
+                0x000017c8                EEPROMStorage_filterVariance
+                0x000019a6                EEPROMStorage_setWaterLowNotificationLevel
+                0x000018b2                EEPROMStorage_setThingspeakHostAddress
+                0x00001812                EEPROMStorage_setThingspeakHostPort
+                0x00001948                EEPROMStorage_waterLowNotificationLevel
+                0x000018d2                EEPROMStorage_setPIN
+                0x00001882                EEPROMStorage_getPIN
+                0x000018f0                EEPROMStorage_filterSamples
+                0x00001982                EEPROMStorage_setTimeoutState
+                0x000017d2                EEPROMStorage_thingspeakHostPort
+                0x0000198e                EEPROMStorage_setNotification
+                0x000018e2                EEPROMStorage_ipConsoleEnabled
+                0x00001952                EEPROMStorage_setIPConsoleEnabled
+                0x0000199a                EEPROMStorage_setWaterHighNotificationLevel
+                0x000017fa                EEPROMStorage_setIPConsoleServerPort
+                0x000019b2                EEPROMStorage_Initialize
+                0x00001842                EEPROMStorage_getIPConsoleServerAddress
+                0x000017e6                EEPROMStorage_waterTankFullDistance
+                0x00001806                EEPROMStorage_setFilterVariance
+                0x000017dc                EEPROMStorage_LoggingUpdateInterval
+                0x0000181e                EEPROMStorage_setLoggingUpdateInterval
+                0x000018c2                EEPROMStorage_setAPN
+                0x000018a2                EEPROMStorage_setThingspeakWriteKey
+                0x00001926                EEPROMStorage_notificationEnabled
+                0x0000196a                EEPROMStorage_setFilterSampleTime
+                0x000018fa                EEPROMStorage_filterSampleTime
+                0x00001872                EEPROMStorage_getAPN
+                0x0000195e                EEPROMStorage_setFilterSamples
+                0x000017f0                EEPROMStorage_waterTankEmptyDistance
+                0x00001892                EEPROMStorage_setIPConsoleServerAddress
+ .text          0x00001ad2      0x116 Console.o
+                0x00001ad2                Console_printCS
+                0x00001ae0                Console_printP
+                0x00001afc                Console_task
+                0x00001be2                Console_Initialize
+                0x00001aee                Console_print
+ .text          0x00001be8      0x192 BatteryMonitor.o
+                0x00001ce0                BatteryMonitor_currentVoltage
+                0x00001bee                BatteryMonitor_task
+                0x00001d52                BatteryMonitor_Initialize
+                0x00001be8                BatteryMonitor_currentStatus
+ .text          0x00001d7a      0xac4 CellularComm_SIM800.o
+                0x00001e4a                CellularComm_state
+                0x00001de4                CellularComm_Enable
+                0x00001fc6                CellularComm_Initialize
+                0x00002080                messageStatusFromString
+                0x00001e52                CellularComm_stateIsTCPIPSubtask
+                0x00001dec                CellularComm_Disable
+                0x00001e26                CellularComm_isRegistered
+                0x00001e20                CellularComm_registrationStatus
+                0x00001e02                CellularComm_gotRegistrationStatus
+                0x00001eb4                CellularComm_isIdle
+                0x00001df2                CellularComm_isEnabled
+                0x00001e62                CellularComm_batteryMillivolts
+                0x00001e3e                CellularComm_currentTime
+                0x00001e6c                CellularComm_postOutgoingMessage
+                0x000021ce                CellularComm_requestRegistrationStatus
+                0x00001e44                CellularComm_SignalQuality
+                0x00001d7a                imageOfMessageStatus
+                0x000021f2                CellularComm_task
+ .text          0x0000283e      0x7c0 CellularTCPIP_SIM800.o
+                0x00002a6a                CellularTCPIP_Subtask
+                0x00002882                CellularTCPIP_sendData
+                0x0000283e                responseMessageCallback
+                0x00002a22                CellularTCPIP_notifyConnectionClosed
+                0x0000289a                CellularTCPIP_disconnect
+                0x000028a2                CellularTCPIP_hasSubtaskWorkToDo
+                0x000028d0                CellularTCPIP_writeData
+                0x00002952                CellularTCPIP_Initialize
+                0x000028bc                CellularTCPIP_state
+                0x000028c4                CellularTCPIP_writeDataCS
+                0x000028ca                CellularTCPIP_writeDataP
+                0x0000287c                CellularTCPIP_connectionStatus
+                0x00002900                CellularTCPIP_connect
+ .text          0x00002ffe      0x23a TCPIPConsole.o
+                0x0000301a                TCPIPConsole_readyToSend
+                0x00003202                TCPIPConsole_Initialize
+                0x0000303c                TCPIPConsole_restoreEnablement
+                0x0000306c                TCPIPConsole_task
+                0x00003046                TCPIPConsole_disable
+                0x00003008                TCPIPConsole_sendData
+                0x00002ffe                TCPIPConsole_setDataReceiver
+                0x00003058                TCPIPConsole_enable
+ .text          0x00003238      0xf2a SIM800.o
+                0x00003284                SIM800_setIPStateCallback
+                0x000032c0                SIM800_setCGATTCallback
+                0x0000328e                SIM800_setIPAddressCallback
+                0x00003246                SIM800_status
+                0x00003306                SIM800_setCCLKCallback
+                0x000040d2                SIM800_sendStringCS
+                0x00003240                SIM800_powerOff
+                0x000032fc                SIM800_setCPINCallback
+                0x0000331a                SIM800_setPromptCallback
+                0x00004134                SIM800_sendLineCS
+                0x00003310                SIM800_setCBCCallback
+                0x000032ac                SIM800_setDataAcceptCallback
+                0x000032de                SIM800_setCSQCallback
+                0x00003f4a                SIM800_task
+                0x000033ce                SIM800_sendStringP
+                0x00003324                SIM800_sendCtrlZ
+                0x000032ca                SIM800_setSMSMessageReceivedCallback
+                0x000032d4                SIM800_setCFUNCallback
+                0x000040fa                SIM800_sendLineP
+                0x000032f2                SIM800_setCMTICallback
+                0x0000327a                SIM800_setResponseMessageCallback
+                0x00003238                SIM800_powerOn
+                0x00003374                SIM800_sendHex
+                0x000032a2                SIM800_setCIPACKCallback
+                0x000032e8                SIM800_setCREGCallback
+                0x000032b6                SIM800_setPDPDeactCallback
+                0x00003298                SIM800_setIPDataCallback
+                0x0000332c                SIM800_sendHexP
+                0x000033fc                SIM800_sendString
+                0x000040aa                SIM800_sendLine
+                0x00004002                SIM800_Initialize
+ .text          0x00004162       0xfa ByteQueue.o
+                0x000041f8                ByteQueue_pop
+                0x00004178                ByteQueue_push
+                0x00004162                ByteQueue_clear
+ .text          0x0000425c      0x160 SoftwareSerialTx.o
+                0x00004292                SoftwareSerialTx_sendChar
+                0x00004264                SoftwareSerialTx_disable
+                0x000042aa                SoftwareSerialTx_send
+                0x00004334                SoftwareSerialTx_Initialize
+                0x0000425c                SoftwareSerialTx_enable
+                0x0000426a                SoftwareSerialTx_isIdle
+                0x000042d6                SoftwareSerialTx_sendP
+ .text          0x000043bc      0x1a6 SoftwareSerialRx.o
+                0x000043bc                SoftwareSerialRx_enable
+                0x00004444                __vector_7
+                0x00004402                __vector_5
+                0x000043da                SoftwareSerialRx_disable
+                0x000043fc                SoftwareSerial_rxQueue
+                0x00004520                SoftwareSerialRx_Initialize
+ .text          0x00004562      0x184 CharString.o
+                0x00004562                CharString_appendC
+                0x00004590                CharString_truncate
+                0x0000464c                CharString_appendNewline
+                0x00004694                CharString_appendCS
+                0x000045aa                CharString_appendP
+                0x000045f6                CharString_append
+ .text          0x000046e6      0x60c StringUtils.o
+                0x000048ca                StringUtils_lookupString
+                0x0000481a                StringUtils_scanDecimal
+                0x00004ad2                StringUtils_appendDecimal
+                0x00004c5c                StringUtils_scanQuotedString
+                0x000046e6                StringUtils_skipWhitespace
+                0x0000476c                StringUtils_scanIntegerU32
+                0x00004706                StringUtils_scanInteger
+                0x00004bc0                StringUtils_scanDelimitedString
+                0x00004972                StringUtils_appendDecimal32
+ .text          0x00004cf2      0x376 UART_async.o
+                0x00004d16                UART_tx_queue_is_empty
+                0x00004db2                UART_read_byte
+                0x00004e34                UART_write_bytes
+                0x00004f28                UART_write_byte
+                0x00004d44                __vector_19
+                0x00004fa4                UART_write_string
+                0x00004cf2                UART_set_baud_rate
+                0x00004e9c                UART_write_stringCS
+                0x00005040                UART_init
+                0x00005004                UART_read_string
+                0x00004f42                UART_write_stringP
+                0x00004de4                __vector_18
+                0x00004d30                __vector_20
+ .text          0x00005068       0xce EEPROM_Util.o
+                0x0000507a                EEPROM_read
+                0x000050b8                EEPROM_readWord
+                0x00005112                EEPROM_writeWord
+                0x000050e4                EEPROM_writeString
+                0x0000508a                EEPROM_readString
+                0x00005068                EEPROM_write
+ .text          0x00005136       0x1e RamSentinel.o
+                0x00005136                RAMSentinel_Initialize
+                0x0000513e                RAMSentinel_sentinelIntact
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_mulsi3.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodhi4.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodsi4.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_divmodsi4.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcasecmp_P.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcmp_P.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strlen_P.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy_P.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strstr_P.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok_r.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(ltoa.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(mul10.o)
+ .text          0x00005154        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strrev.o)
+                0x00005154                . = ALIGN (0x2)
+ *(.text.*)
+ .text.libgcc   0x00005154       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_mulsi3.o)
+                0x00005154                __mulsi3
+ .text.libgcc   0x00005192       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodhi4.o)
+                0x00005192                __udivmodhi4
+ .text.libgcc   0x000051ba       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodsi4.o)
+                0x000051ba                __udivmodsi4
+ .text.libgcc   0x000051fe       0x36 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_divmodsi4.o)
+                0x000051fe                __divmodsi4
+ .text.libgcc   0x00005234        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+ .text.libgcc   0x00005234        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+ .text.libgcc   0x00005234        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+ .text.avr-libc
+                0x00005234       0x3c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o)
+                0x00005234                atoi
+ .text.avr-libc
+                0x00005270       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcasecmp_P.o)
+                0x00005270                strcasecmp_P
+ .text.avr-libc
+                0x00005296       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcmp_P.o)
+                0x00005296                strcmp_P
+ .text.avr-libc
+                0x000052a8       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strlen_P.o)
+                0x000052a8                strlen_P
+ .text.avr-libc
+                0x000052ba       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy_P.o)
+                0x000052ba                strncpy_P
+ .text.avr-libc
+                0x000052d8       0x34 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strstr_P.o)
+                0x000052d8                strstr_P
+ .text.avr-libc
+                0x0000530c        0xa c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o)
+                0x0000530c                strtok
+ .text.avr-libc
+                0x00005316       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                0x00005316                strncpy
+ .text.avr-libc
+                0x00005334       0x4e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok_r.o)
+                0x00005334                strtok_r
+ .text.avr-libc
+                0x00005382       0x42 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o)
+                0x00005382                itoa
+ .text.avr-libc
+                0x000053c4       0x68 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(ltoa.o)
+                0x000053c4                ltoa
+ .text.avr-libc
+                0x0000542c       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(mul10.o)
+                0x0000542c                __mulhi_const_10
+ .text.avr-libc
+                0x0000543c       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strrev.o)
+                0x0000543c                strrev
+                0x0000545c                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x0000545c        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+                0x0000545c                exit
+                0x0000545c                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x0000545c        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+ *(.fini0)
+                0x00005460                _etext = .
+
+.data           0x00800100       0x9e load address 0x00005460
+                0x00800100                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00800100        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+ .data          0x00800100        0x0 WaterLevelSensorMain.o
+ .data          0x00800100        0x0 SystemTime.o
+ .data          0x00800100        0x0 ADCManager.o
+ .data          0x00800100        0x0 DataHistory.o
+ .data          0x00800100        0x4 CommandProcessor.o
+ .data          0x00800104       0x37 EEPROMStorage.o
+ .data          0x0080013b        0x9 Console.o
+                0x00800140                commandBuffer
+ .data          0x00800144        0x5 BatteryMonitor.o
+                0x00800144                batteryVoltageHistory
+ .data          0x00800149       0x1c CellularComm_SIM800.o
+                0x00800149                incomingSMSMessagePhoneNumber
+                0x00800151                incomingSMSMessageText
+                0x0080014d                incomingSMSMessageTimestamp
+                0x00800155                outgoingSMSMessagePhoneNumber
+                0x00800159                CellularComm_outgoingSMSMessageText
+                0x0080015d                cpinStatus
+ .data          0x00800165        0x4 CellularTCPIP_SIM800.o
+                0x00800165                ctHostAddress
+ .data          0x00800169        0x1 TCPIPConsole.o
+ .data          0x0080016a        0xc SIM800.o
+                0x0080016a                SIM800Response
+                0x0080016e                smsMsgStatus
+                0x00800172                smsPhoneNumber
+ .data          0x00800176        0x0 ByteQueue.o
+ .data          0x00800176        0xa SoftwareSerialTx.o
+                0x00800176                txQueue
+ .data          0x00800180        0xa SoftwareSerialRx.o
+                0x00800180                rxQueue
+ .data          0x0080018a        0x0 CharString.o
+ .data          0x0080018a        0x0 StringUtils.o
+ .data          0x0080018a       0x14 UART_async.o
+                0x00800194                rx_queue
+                0x0080018a                tx_queue
+ .data          0x0080019e        0x0 EEPROM_Util.o
+ .data          0x0080019e        0x0 RamSentinel.o
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_mulsi3.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodhi4.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodsi4.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_divmodsi4.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcasecmp_P.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcmp_P.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strlen_P.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy_P.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strstr_P.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok_r.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(ltoa.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(mul10.o)
+ .data          0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strrev.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ *(.gnu.linkonce.d*)
+                0x0080019e                . = ALIGN (0x2)
+                0x0080019e                _edata = .
+                0x0080019e                PROVIDE (__data_end, .)
+
+.bss            0x0080019e      0x509
+                0x0080019e                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x0080019e        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5/crtm328p.o
+ .bss           0x0080019e        0x0 WaterLevelSensorMain.o
+ .bss           0x0080019e        0x9 SystemTime.o
+ .bss           0x008001a7       0x15 ADCManager.o
+ .bss           0x008001bc        0x0 DataHistory.o
+ .bss           0x008001bc        0x0 CommandProcessor.o
+ .bss           0x008001bc        0x0 EEPROMStorage.o
+ .bss           0x008001bc       0x2d Console.o
+                0x008001bc                commandBuffer_buf
+ .bss           0x008001e9        0xc BatteryMonitor.o
+                0x008001e9                batteryVoltageHistory_buf
+ .bss           0x008001f5      0x1cc CellularComm_SIM800.o
+                0x0080037a                cpinStatus_buf
+                0x00800206                incomingSMSMessageTimestamp_buf
+                0x00800227                incomingSMSMessageText_buf
+                0x008002c8                outgoingSMSMessagePhoneNumber_buf
+                0x008002d9                CellularComm_outgoingSMSMessageText_buf
+                0x008001f5                incomingSMSMessagePhoneNumber_buf
+ .bss           0x008003c1       0x3a CellularTCPIP_SIM800.o
+                0x008003c1                ctHostAddress_buf
+ .bss           0x008003fb        0xc TCPIPConsole.o
+ .bss           0x00800407      0x118 SIM800.o
+                0x00800407                SIM800Response_buf
+                0x008004db                smsPhoneNumber_buf
+                0x008004d0                smsMsgStatus_buf
+ .bss           0x0080051f        0x0 ByteQueue.o
+ .bss           0x0080051f       0x68 SoftwareSerialTx.o
+                0x0080051f                txQueue_buf
+ .bss           0x00800587       0x54 SoftwareSerialRx.o
+                0x00800587                rxQueue_buf
+ .bss           0x008005db        0x0 CharString.o
+ .bss           0x008005db        0x0 StringUtils.o
+ .bss           0x008005db       0xc8 UART_async.o
+                0x008005db                tx_queue_buf
+                0x0080063f                rx_queue_buf
+ .bss           0x008006a3        0x0 EEPROM_Util.o
+ .bss           0x008006a3        0x1 RamSentinel.o
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_mulsi3.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodhi4.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_udivmodsi4.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_divmodsi4.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_exit.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_copy_data.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr5\libgcc.a(_clear_bss.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(atoi.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcasecmp_P.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strcmp_P.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strlen_P.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy_P.o)
+ .bss           0x008006a4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strstr_P.o)
+ .bss           0x008006a4        0x2 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strtok_r.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(itoa.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(ltoa.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(mul10.o)
+ .bss           0x008006a6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr5\libc.a(strrev.o)
+ *(.bss*)
+ *(COMMON)
+ COMMON         0x008006a6        0x1 SIM800.o
+                0x008006a6                responseMsg
+                0x008006a7                PROVIDE (__bss_end, .)
+                0x00005460                __data_load_start = LOADADDR (.data)
+                0x000054fe                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x008006a7        0x0
+                0x008006a7                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x008006a7                PROVIDE (__noinit_end, .)
+                0x008006a7                _end = .
+                0x008006a7                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000       0x91
+ *(.eeprom*)
+ .eeprom        0x00810000       0x91 EEPROMStorage.o
+                0x00810037                thingspeakEnabled
+                0x00810001                cellPIN
+                0x00810017                apn
+                0x00810011                emptyDist
+                0x0081000a                loggingUpdateInterval
+                0x0081005a                thingspeakWriteKey
+                0x0081000d                filterSampleTime
+                0x0081006f                ipConsoleServerAddress
+                0x00810058                thingspeakHostPort
+                0x00810013                fullDist
+                0x00810038                thingspeakHostAddress
+                0x00810000                initFlag
+                0x0081000f                filterVariance
+                0x0081000e                numFilterSamples
+                0x00810016                highNotification
+                0x0081000c                timeoutState
+                0x00810009                notification
+                0x00810015                lowNotification
+                0x0081006e                ipConsoleEnabled
+                0x0081008f                ipConsoleServerPort
+                0x00810091                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab           0x00000000     0xdc5c
+ *(.stab)
+ .stab          0x00000000      0x75c WaterLevelSensorMain.o
+ .stab          0x0000075c      0x5f4 SystemTime.o
+                                0xa2c (size before relaxing)
+ .stab          0x00000d50      0x54c ADCManager.o
+                                0x78c (size before relaxing)
+ .stab          0x0000129c      0x4c8 DataHistory.o
+                                0x630 (size before relaxing)
+ .stab          0x00001764     0x1320 CommandProcessor.o
+                               0x162c (size before relaxing)
+ .stab          0x00002a84      0xc90 EEPROMStorage.o
+                                0xf54 (size before relaxing)
+ .stab          0x00003714      0x3e4 Console.o
+                                0x6c0 (size before relaxing)
+ .stab          0x00003af8      0x474 BatteryMonitor.o
+                                0x798 (size before relaxing)
+ .stab          0x00003f6c     0x1d64 CellularComm_SIM800.o
+                               0x2214 (size before relaxing)
+ .stab          0x00005cd0     0x1350 CellularTCPIP_SIM800.o
+                               0x1800 (size before relaxing)
+ .stab          0x00007020      0x6fc TCPIPConsole.o
+                                0xb7c (size before relaxing)
+ .stab          0x0000771c     0x3438 SIM800.o
+                               0x3894 (size before relaxing)
+ .stab          0x0000ab54      0x36c ByteQueue.o
+                                0x54c (size before relaxing)
+ .stab          0x0000aec0      0x6b4 SoftwareSerialTx.o
+                                0x9a8 (size before relaxing)
+ .stab          0x0000b574      0x498 SoftwareSerialRx.o
+                                0x6f0 (size before relaxing)
+ .stab          0x0000ba0c      0x4a4 CharString.o
+                                0x750 (size before relaxing)
+ .stab          0x0000beb0      0xc60 StringUtils.o
+                                0xf3c (size before relaxing)
+ .stab          0x0000cb10      0xaa4 UART_async.o
+                                0xd68 (size before relaxing)
+ .stab          0x0000d5b4      0x504 EEPROM_Util.o
+                                0x720 (size before relaxing)
+ .stab          0x0000dab8      0x1a4 RamSentinel.o
+                                0x354 (size before relaxing)
+
+.stabstr        0x00000000     0x7e92
+ *(.stabstr)
+ .stabstr       0x00000000     0x7e92 WaterLevelSensorMain.o
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info)
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(WaterLevelSensor.elf elf32-avr)
+LOAD linker stubs
