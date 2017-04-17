@@ -777,7 +777,7 @@ void SIM800_task (void)
                     mState = ms_waitingForCommand;
                 } else {
                     // was trying to power off - try again in a bit
-                    SystemTime_futureTime(2, &powerRetryTime);
+                    SystemTime_futureTime(200, &powerRetryTime);
                     mState = ms_powerRetryDelay;
                 }
             } else if (responseMsg == rm_NORMAL_POWER_DOWN) {
@@ -785,7 +785,7 @@ void SIM800_task (void)
                 Console_printP(PSTR("--- Off ---"));
                 if (powerCommand) {
                     // was trying to power on - try again in a bit
-                    SystemTime_futureTime(2, &powerRetryTime);
+                    SystemTime_futureTime(200, &powerRetryTime);
                     mState = ms_powerRetryDelay;
                 } else {
                     mState = ms_off;

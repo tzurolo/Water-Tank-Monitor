@@ -16,6 +16,7 @@
 #include "Console.h"
 #include "CommandProcessor.h"
 #include "BatteryMonitor.h"
+#include "InternalTemperatureMonitor.h"
 #include "CellularComm_SIM800.h"
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
@@ -33,6 +34,7 @@ static void Initialize (void)
     EEPROMStorage_Initialize();
     ADCManager_Initialize();
     BatteryMonitor_Initialize();
+//    InternalTemperatureMonitor_Initialize();
     SoftwareSerialTx_Initialize();
     SoftwareSerialRx_Initialize();
     Console_Initialize();
@@ -53,11 +55,13 @@ int main (void)
         SystemTime_task();
         ADCManager_task();
         BatteryMonitor_task();
+//        InternalTemperatureMonitor_task();
         SIM800_task();
         Console_task();
         TCPIPConsole_task();
         CellularComm_task();
         if (!RAMSentinel_sentinelIntact()) {
+            Console_printP(PSTR("stack collision!"));
             SystemTime_commenceShutdown();
         }
 

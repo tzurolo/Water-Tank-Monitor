@@ -63,7 +63,7 @@ void TCPIPConsole_Initialize (void)
     sendCompletionCallback = 0;
     sState = ss_idle;
     // wait 10 seconds before attempting first connection
-    SystemTime_futureTime(10, &nextConnectAttemptTime);
+    SystemTime_futureTime(1000, &nextConnectAttemptTime);
 }
 
 void TCPIPConsole_task (void)
@@ -112,7 +112,7 @@ void TCPIPConsole_task (void)
                     break;
                 case cs_disconnected :
                     // failed to get a connection - try again a bit later
-                    SystemTime_futureTime(2, &nextConnectAttemptTime);
+                    SystemTime_futureTime(200, &nextConnectAttemptTime);
                     sState = ss_idle;
                     break;
                 default:

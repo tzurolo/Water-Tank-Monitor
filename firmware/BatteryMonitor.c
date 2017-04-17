@@ -1,7 +1,8 @@
 //
 //  Battery Monitor
 //
-//  Monitors the state of the UPS's battery
+//  Monitors the state of the System battery. Measures battery voltage
+//  downstream of the FET power switch
 //
 //  Pin usage:
 //     ADC0 (PA0) - input from battery voltage divider
@@ -15,20 +16,23 @@
 
 #define BATTERY_ADC_CHANNEL ADC_SINGLE_ENDED_INPUT_ADC0
 
-#define BATTERY_DIVIDER_R1 10.0
-#define BATTERY_DIVIDER_R2 21.7
-#define SYSTEM_VCC 4.99
+#define BATTERY_DIVIDER_R1 6.72
+#define BATTERY_DIVIDER_R2 21.69
+#define REFERENCE_VOLTAGE 1.1
 
-#define RESISTOR_DIVIDER_COUNTS(VIN, VCC, R1, R2) ((uint16_t)((((R1/(R1+R2))*VIN)/VCC)*1024+0.5))
-#define BATTERY_VOLTAGE_COUNTS(VIN) RESISTOR_DIVIDER_COUNTS(VIN, SYSTEM_VCC, BATTERY_DIVIDER_R1, BATTERY_DIVIDER_R2)
+#define RESISTOR_DIVIDER_COUNTS(VIN, REF, R1, R2) ((uint16_t)((((R1/(R1+R2))*VIN)/REF)*1024+0.5))
+#define BATTERY_VOLTAGE_COUNTS(VIN) RESISTOR_DIVIDER_COUNTS(VIN, REFERENCE_VOLTAGE, BATTERY_DIVIDER_R1, BATTERY_DIVIDER_R2)
 
-#define BATTERY_10V9 BATTERY_VOLTAGE_COUNTS(10.9)
-#define BATTERY_12V  BATTERY_VOLTAGE_COUNTS(12.0)
-#define BATTERY_13V  BATTERY_VOLTAGE_COUNTS(13.0)
+#define BATTERY_3V5  BATTERY_VOLTAGE_COUNTS(3.5)
+#define BATTERY_4V5  BATTERY_VOLTAGE_COUNTS(4.5)
 
-#define BATTERY_VOLTAGE_SAMPLES 3
-// sample 4 times per second
-#define BATTERY_VOLTAGE_SAMPLE_TIME (SYSTEMTIME_TICKS_PER_SECOND / 4)
+#define RESOLUTION 1000
+#define SCALE 100
+#define NUMERATOR (((BATTERY_DIVIDER_R1 + BATTERY_DIVIDER_R2) / BATTERY_DIVIDER_R1) * (1.1 / 1024.0) * RESOLUTION * SCALE)
+
+#define BATTERY_VOLTAGE_SAMPLES 10
+// sample 10 times per second (10 1/100ths)
+#define BATTERY_VOLTAGE_SAMPLE_TIME 10
 
 typedef enum {
     bms_idle,
@@ -45,12 +49,12 @@ void BatteryMonitor_Initialize (void)
 {
     bmState = bms_idle;
     battStatus = bs_unknown;
-    // start sampling in 1/4 second (to let power stabilize
-    SystemTime_futureTime((SYSTEMTIME_TICKS_PER_SECOND / 4), &sampleTimer);
+    // start sampling in 1/50 second (20ms, to let power stabilize)
+    SystemTime_futureTime(2, &sampleTimer);
     DataHistory_clear(&batteryVoltageHistory);
 
     // set up the ADC channel for measuring battery voltage
-    ADCManager_setupChannel(BATTERY_ADC_CHANNEL, ADC_VOLTAGE_REF_AVCC, false);
+    ADCManager_setupChannel(BATTERY_ADC_CHANNEL, ADC_VOLTAGE_REF_INTERNAL_1V1, false);
 }
 
 BatteryMonitor_batteryStatus BatteryMonitor_currentStatus (void)
@@ -71,9 +75,7 @@ int16_t BatteryMonitor_currentVoltage (void)
 
     int32_t vBatt = batteryVoltage;
     // counts to 1/100s volt
-    // measured resistor divider ratio: 0.315, VCC: 4.99V
-    // ((4.99V / 0.315) / 1024) * 100 => 1.54
-    return ((((int32_t)vBatt) * 154) / 100);
+    return ((((int32_t)vBatt) * NUMERATOR) / RESOLUTION);
 }
 
 void BatteryMonitor_task (void)
@@ -105,11 +107,9 @@ void BatteryMonitor_task (void)
                         &batteryVoltageHistory, BATTERY_VOLTAGE_SAMPLES,
                         &minVoltage, &maxVoltage, &avgVoltage);
                     // determine status based on voltage reading
-                    if (maxVoltage < BATTERY_10V9) {
-                        battStatus = bs_underVoltage;
-                    } else if (maxVoltage < BATTERY_12V) {
+                    if (maxVoltage < BATTERY_3V5) {
                         battStatus = bs_lowVoltage;
-                    } else if (maxVoltage < BATTERY_13V) {
+                    } else if (maxVoltage < BATTERY_4V5) {
                         battStatus = bs_goodVoltage;
                     } else {
                         battStatus = bs_fullVoltage;

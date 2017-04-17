@@ -10,22 +10,23 @@
 #include <avr/wdt.h>
 #include "CellularComm_SIM800.h"
 #include "StringUtils.h"
+#include "Console.h"
 
 // when to reboot daily
 #define REBOOT_HOUR 12
 #define REBOOT_MINUTES 23
 
-#define REBOOT_FULL_DAY 86400L
+#define REBOOT_FULL_DAY 8640000L
 
 static volatile uint16_t tickCounter = 0;
-static volatile SystemTime_t secondsSinceReset = 0;
+static volatile SystemTime_t hundredthsSinceReset = 0;
 static bool shuttingDown = false;
 static SystemTime_TickNotification notificationFunction;
 
 void SystemTime_Initialize (void)
 {
     tickCounter = 0;
-    secondsSinceReset = 0;
+    hundredthsSinceReset = 0;
     notificationFunction = 0;
 
     // set up timer3 to fire interrupt once per second
@@ -63,17 +64,17 @@ void SystemTime_getCurrentTime (
     char SREGSave;
     SREGSave = SREG;
     cli();
-    *curTime = secondsSinceReset;
+    *curTime = hundredthsSinceReset;
     SREG = SREGSave;
 }
 
 void SystemTime_futureTime (
-    const int secondsFromNow,
+    const int hundredthsFromNow,
     SystemTime_t* futureTime)
 {
     SystemTime_t currentTime;
     SystemTime_getCurrentTime(&currentTime);
-    *futureTime = currentTime + (SystemTime_t)secondsFromNow;
+    *futureTime = currentTime + (SystemTime_t)hundredthsFromNow;
 }
 
 bool SystemTime_timeHasArrived (
@@ -93,6 +94,7 @@ bool SystemTime_timeHasArrived (
 void SystemTime_commenceShutdown (void)
 {
     shuttingDown = true;
+    Console_printP(PSTR("shutting down..."));
     wdt_enable(WDTO_8S);
 }
 
@@ -109,30 +111,16 @@ void SystemTime_task (void)
     } else {
         wdt_reset();
 #if 0
-        // blink the LED
-        const uint16_t blinkTime =
-            CellularComm_isEnabled()
-            ? (CellularComm_isRegistered()
-                ? (SYSTEMTIME_TICKS_PER_SECOND / 20)
-                : (SYSTEMTIME_TICKS_PER_SECOND / 2))
-            : (SYSTEMTIME_TICKS_PER_SECOND - (SYSTEMTIME_TICKS_PER_SECOND / 10)); // about 0.9 second
-        if (currentTick() < blinkTime) {
-            LED_OUTPORT |= (1 << LED_PIN);
-        } else {
-            LED_OUTPORT &= ~(1 << LED_PIN);
-        }
-#endif
-#if 0
         // reboot daily at a predetermined time
         const CellularComm_NetworkTime* currentTime =
 	        CellularComm_currentTime();
-        SystemTime_t currentTimeSeconds;
-        SystemTime_getCurrentTime(&currentTimeSeconds);
+        SystemTime_t currentTimeHundredths;
+        SystemTime_getCurrentTime(&currentTimeHundredths);
         if (((currentTime->hour == REBOOT_HOUR) &&
             (currentTime->minutes == REBOOT_MINUTES) &&
-            (currentTimeSeconds > 7200) &&	// running at least two hours
+            (currentTimeHundredths > 720000L) &&    // running at least two hours
             CellularComm_isIdle()) ||
-            (currentTimeSeconds > REBOOT_FULL_DAY)) {
+            (currentTimeHundredths > REBOOT_FULL_DAY)) {
             SystemTime_commenceShutdown();
         }
 #endif
@@ -144,31 +132,32 @@ void SystemTime_appendCurrentToString (
 {
 
     // get current time
-    SystemTime_t curTime;
-    SystemTime_getCurrentTime(&curTime);
+    SystemTime_t curTimeHundredths;
+    SystemTime_getCurrentTime(&curTimeHundredths);
+    uint32_t curTimeSeconds = curTimeHundredths / 100;
 
     // append hours
-    const uint8_t hours = curTime / 3600;
+    const uint8_t hours = curTimeSeconds / 3600;
     StringUtils_appendDecimal(hours, 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append minutes
-    curTime = (curTime % 3600);
-    const uint8_t minutes =  curTime / 60;
+    curTimeSeconds = (curTimeSeconds % 3600);
+    const uint8_t minutes =  curTimeSeconds / 60;
     StringUtils_appendDecimal(minutes, 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append seconds
-    const uint8_t seconds = (curTime % 60);
+    const uint8_t seconds = (curTimeSeconds % 60);
     StringUtils_appendDecimal(seconds, 2, 0, timeString);
 }
 
 ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 {
     ++tickCounter;
-    if (tickCounter >= SYSTEMTIME_TICKS_PER_SECOND) {
+    if (tickCounter > (SYSTEMTIME_TICKS_PER_SECOND / 100)) {
         tickCounter = 0;
-        ++secondsSinceReset;
+        ++hundredthsSinceReset;
     }
 
     if (notificationFunction != NULL) {

@@ -25,9 +25,9 @@
 #define PINJUMPER_OUTPORT   PORTD
 
 // if the state machine is in the same state for more than
-// this many seconds (such as if the cell module freezes up)
+// this many hundredths of a second (such as if the cell module freezes up)
 // the system will commence shutdown and reboot
-#define STATE_TIMEOUT_TIME 240
+#define STATE_TIMEOUT_TIME 24000L
 
 typedef enum SMSMessageStatus_enum {
     sms_unknown,
@@ -578,13 +578,13 @@ void CellularComm_task (void)
                     if (CellularComm_isRegistered()) {
                         Console_printP(PSTR("Registered."));
 
-                        SystemTime_futureTime(5, &nextCheckForIncomingSMSMessageTime);
-                        SystemTime_futureTime(10, &nextCheckForNetworkTimeAndCSQTime);
+                        SystemTime_futureTime(500, &nextCheckForIncomingSMSMessageTime);
+                        SystemTime_futureTime(1000, &nextCheckForNetworkTimeAndCSQTime);
                         ccState = ccs_idle;
                     } else {
                         // not registered yet.
                         ccState = ccs_waitToRecheckCREG;
-                        SystemTime_futureTime(2, &powerupResumeTime);
+                        SystemTime_futureTime(200, &powerupResumeTime);
                     }
                 }
                 }
@@ -604,7 +604,7 @@ void CellularComm_task (void)
                         CMGLSMSMessageStatus = sms_recUnread;
                     }
                     // schedule next check
-                    SystemTime_futureTime(2, &nextCheckForIncomingSMSMessageTime);
+                    SystemTime_futureTime(200, &nextCheckForIncomingSMSMessageTime);
                     ccState = ccs_idle;
                 }
                 }
@@ -679,7 +679,7 @@ void CellularComm_task (void)
                 break;
             case ccs_waitingForCBCResponse : {
                 if (SIM800ResponseMsg == rm_OK) {
-                    SystemTime_futureTime(60, &nextCheckForNetworkTimeAndCSQTime);
+                    SystemTime_futureTime(6000, &nextCheckForNetworkTimeAndCSQTime);
                     ccState = ccs_idle;
                 }
                 }

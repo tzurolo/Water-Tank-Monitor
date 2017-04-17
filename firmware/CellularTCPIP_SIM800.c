@@ -17,10 +17,10 @@
 #define CIPACK_BEFORE_CIPSEND 1
 
 // time parameters (in seconds)
-#define IPSTATE_REQUEST_DELAY 1
-#define CREG_TIMEOUT 5
-#define CIPSTART_TIMEOUT 15
-#define SEND_TIMEOUT 15
+#define IPSTATE_REQUEST_DELAY 100
+#define CREG_TIMEOUT 500
+#define CIPSTART_TIMEOUT 1500
+#define SEND_TIMEOUT 1500
 
 // commands
 typedef enum CellularTCPIPCommand_enum {

@@ -16,7 +16,8 @@
 #include "CellularComm_SIM800.h"
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
-#include "LEDLightingUPSMonitor.h"
+#include "BatteryMonitor.h"
+#include "InternalTemperatureMonitor.h"
 #include "SystemTime.h"
 #include "SIM800.h"
 #include "Console.h"
@@ -89,13 +90,11 @@ void CommandProcessor_createStatusMessage (
     CharString_appendP(PSTR(", csq:"), msg);
     StringUtils_appendDecimal(CellularComm_SignalQuality(), 2, 0, msg);
     CharString_appendP(PSTR(", Vb:"), msg);
+    StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 2, msg);
+    CharString_appendP(PSTR("V, Vc:"), msg);
     StringUtils_appendDecimal(CellularComm_batteryMillivolts(), 1, 3, msg);
-    CharString_appendP(PSTR("V"), msg);
-//    appendVoltageToString(PowerMonitor_BatteryVoltage(), msg);
-//    CharString_appendP(PSTR(", Va:"), msg);
-//    appendVoltageToString(PowerMonitor_ACAdapterVoltage(), msg);
-//    CharString_appendP(PSTR(", UPS:"), msg);
-//    StringUtils_appendDecimal((int)PowerMonitor_UPSStatus(), 1, 0, msg);
+    CharString_appendP(PSTR("V, T:"), msg);
+    StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, msg);
     CharString_appendP(PSTR(", reg:"), msg);
     StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, msg);
     CharString_appendP(PSTR("  "), msg);
@@ -323,9 +322,10 @@ void CommandProcessor_processCommand (
             if (cmdToken != NULL) {
                 if (strcasecmp_P(cmdToken, PSTR("on")) == 0) {
                     DDRC |= (1 << PC5);
-                    PORTC &= ~(1 << PC5);
+                    PORTC |= (1 << PC5);
                 } else if (strcasecmp_P(cmdToken, PSTR("off")) == 0) {
-                    DDRC &= ~(1 << PC5);
+                    DDRC |= (1 << PC5);
+                    PORTC &= ~(1 << PC5);
                 }
             }
         } else if (strcasecmp_P(cmdToken, PSTR("sleep")) == 0) {

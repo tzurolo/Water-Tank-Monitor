@@ -17,6 +17,7 @@
 
 #define SYSTEMTIME_TICKS_PER_SECOND 4800
 
+// time in 1/100 second
 typedef uint32_t SystemTime_t;
 
 // prototype for functions that clients supply to
@@ -28,13 +29,14 @@ extern void SystemTime_Initialize (void);
 extern void SystemTime_registerForTickNotification (
     SystemTime_TickNotification notificationFcn);
 
+// time since reset in 1/100 second
 extern void SystemTime_getCurrentTime (
     SystemTime_t *curTime);
 
 // initializes futureTime to the current time plus
-// the given number of seconds
+// the given number of 1/100 seconds
 extern void SystemTime_futureTime (
-    const int secondsFromNow,
+    const int hundredthsFromNow,
     SystemTime_t* futureTime);
 
 // returns true if the current time is >= the given time

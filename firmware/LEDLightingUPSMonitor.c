@@ -17,8 +17,8 @@
 #include "TCPIPConsole.h"
 
 // time in seconds
-#define ReadInterval 10
-#define UPS_SERIAL_DATA_TIMEOUT 4
+#define ReadInterval 1000
+#define UPS_SERIAL_DATA_TIMEOUT 400
 #define UPS_SERIAL_DATA_LENGTH 32
 
 typedef enum SendDataStatus_enum {
@@ -329,7 +329,7 @@ static void SendDataSubtask (void)
 void LEDLightingUPSMonitor_Initialize (void)
 {
     // give the system some time to initialize before monitoring
-    SystemTime_futureTime(15, &nextScheduledReadingTime);
+    SystemTime_futureTime(1500, &nextScheduledReadingTime);
 
     CharString_clear(&upsSerialData);
     CharString_clear(&latestUpsSettings);

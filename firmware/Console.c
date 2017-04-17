@@ -85,7 +85,7 @@ void Console_task (void)
         UART_write_stringP(crlfP);
 
 	// schedule next display
-	SystemTime_futureTime(1, &nextStatusPrintTime);
+	SystemTime_futureTime(100, &nextStatusPrintTime);
 	}
 }
 
