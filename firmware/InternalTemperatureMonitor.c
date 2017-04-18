@@ -14,9 +14,11 @@
 
 #define REFERENCE_VOLTAGE 1.1
 
+// at 22 deg C we got 349 counts from the AtMega328P
+#define ESTIMATED_ZERO_C_COUNTS 327
+
 #define RESOLUTION 1000
-#define SCALE 100
-#define NUMERATOR (((BATTERY_DIVIDER_R1 + BATTERY_DIVIDER_R2) / BATTERY_DIVIDER_R1) * (1.1 / 1024.0) * RESOLUTION * SCALE)
+#define NUMERATOR ((1 / 0.94) * (1100 / 1024) * RESOLUTION)
 
 #define SENSOR_SAMPLES 10
 // sample 10 times per second (10 1/100ths)
@@ -56,7 +58,7 @@ int16_t InternalTemperatureMonitor_currentTemperature (void)
 
     int32_t temp = avgTemperature;
     // counts to degrees C
-    return ((int16_t)temp);
+    return ((int16_t)(((temp - ESTIMATED_ZERO_C_COUNTS) * NUMERATOR) / RESOLUTION));
 }
 
 void InternalTemperatureMonitor_task (void)

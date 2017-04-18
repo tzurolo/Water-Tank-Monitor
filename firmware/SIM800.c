@@ -5,10 +5,10 @@
 //  software serial with the same pinout as the Adafruit Feather FONA
 
 //  I/O Pin usage
-//      D2 (Rx)   -> TX0
-//      D3 (Tx)   -> RX0
+//      D0 (Rx)   -> TX0
+//      D1 (Tx)   -> RX0
 //      D4        -> OnKey
-//      D5        -> Power Status
+//      D5        -> Power Status (optional)
 //
 #include "SIM800.h"
 
