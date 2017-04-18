@@ -34,7 +34,7 @@ static void Initialize (void)
     EEPROMStorage_Initialize();
     ADCManager_Initialize();
     BatteryMonitor_Initialize();
-//    InternalTemperatureMonitor_Initialize();
+    InternalTemperatureMonitor_Initialize();
     SoftwareSerialTx_Initialize();
     SoftwareSerialRx_Initialize();
     Console_Initialize();
@@ -55,7 +55,7 @@ int main (void)
         SystemTime_task();
         ADCManager_task();
         BatteryMonitor_task();
-//        InternalTemperatureMonitor_task();
+        InternalTemperatureMonitor_task();
         SIM800_task();
         Console_task();
         TCPIPConsole_task();

@@ -1,0 +1,214 @@
+   1               		.file	"WaterLevelSensorMain.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 142               	.global	main
+ 144               	main:
+   1:../WaterLevelSensorMain.c **** #include <inttypes.h>
+   2:../WaterLevelSensorMain.c **** #include <avr/io.h>
+   3:../WaterLevelSensorMain.c **** #include <avr/interrupt.h>
+   4:../WaterLevelSensorMain.c **** #include <avr/sleep.h>
+   5:../WaterLevelSensorMain.c **** #include <avr/pgmspace.h>
+   6:../WaterLevelSensorMain.c **** #include <avr/eeprom.h>
+   7:../WaterLevelSensorMain.c **** #include <avr/wdt.h>
+   8:../WaterLevelSensorMain.c **** #include <math.h>
+   9:../WaterLevelSensorMain.c **** #include <util/delay.h>
+  10:../WaterLevelSensorMain.c **** 
+  11:../WaterLevelSensorMain.c **** #include "intlimit.h"
+  12:../WaterLevelSensorMain.c **** #include "SystemTime.h"
+  13:../WaterLevelSensorMain.c **** #include "EEPROMStorage.h"
+  14:../WaterLevelSensorMain.c **** #include "ADCManager.h"
+  15:../WaterLevelSensorMain.c **** #include "BatteryMonitor.h"
+  16:../WaterLevelSensorMain.c **** #include "Console.h"
+  17:../WaterLevelSensorMain.c **** #include "CommandProcessor.h"
+  18:../WaterLevelSensorMain.c **** #include "BatteryMonitor.h"
+  19:../WaterLevelSensorMain.c **** #include "InternalTemperatureMonitor.h"
+  20:../WaterLevelSensorMain.c **** #include "CellularComm_SIM800.h"
+  21:../WaterLevelSensorMain.c **** #include "CellularTCPIP_SIM800.h"
+  22:../WaterLevelSensorMain.c **** #include "TCPIPConsole.h"
+  23:../WaterLevelSensorMain.c **** #include "SoftwareSerialRx.h"
+  24:../WaterLevelSensorMain.c **** #include "SoftwareSerialTx.h"
+  25:../WaterLevelSensorMain.c **** #include "RAMSentinel.h"
+  26:../WaterLevelSensorMain.c **** 
+  27:../WaterLevelSensorMain.c **** /** Configures the board hardware and chip peripherals for the demo's functionality. */
+  28:../WaterLevelSensorMain.c **** static void Initialize (void)
+  29:../WaterLevelSensorMain.c **** {
+  30:../WaterLevelSensorMain.c ****     // enable watchdog timer
+  31:../WaterLevelSensorMain.c ****     wdt_enable(WDTO_500MS);
+  32:../WaterLevelSensorMain.c **** 
+  33:../WaterLevelSensorMain.c ****     SystemTime_Initialize();
+  34:../WaterLevelSensorMain.c ****     EEPROMStorage_Initialize();
+  35:../WaterLevelSensorMain.c ****     ADCManager_Initialize();
+  36:../WaterLevelSensorMain.c ****     BatteryMonitor_Initialize();
+  37:../WaterLevelSensorMain.c ****     InternalTemperatureMonitor_Initialize();
+  38:../WaterLevelSensorMain.c ****     SoftwareSerialTx_Initialize();
+  39:../WaterLevelSensorMain.c ****     SoftwareSerialRx_Initialize();
+  40:../WaterLevelSensorMain.c ****     Console_Initialize();
+  41:../WaterLevelSensorMain.c ****     CellularComm_Initialize();
+  42:../WaterLevelSensorMain.c ****     CellularTCPIP_Initialize();
+  43:../WaterLevelSensorMain.c ****     TCPIPConsole_Initialize();
+  44:../WaterLevelSensorMain.c ****     RAMSentinel_Initialize();
+  45:../WaterLevelSensorMain.c **** }
+  46:../WaterLevelSensorMain.c ****  
+  47:../WaterLevelSensorMain.c **** int main (void)
+  48:../WaterLevelSensorMain.c **** {
+ 145               	e: function */
+ 146               	/* frame size = 0 */
+ 147               	.LBB5:
+ 148               	.LBB6:
+ 150               	.LM1:
+ 151               		ldi r18,lo8(13)
+ 152               		ldi r24,lo8(24)
+ 153               		ldi r25,hi8(24)
+ 154 0000 2DE0      	/* #APP */
+ 155 0002 88E1      	 ;  31 "../WaterLevelSensorMain.c" 1
+ 156 0004 90E0      		in __tmp_reg__,__SREG__
+ 157               		cli
+ 158               		wdr
+ 159 0006 0FB6      		sts 96,r24
+ 160 0008 F894      		out __SREG__,__tmp_reg__
+ 161 000a A895      		sts 96,r18
+ 162 000c 8093 6000 		
+ 163 0010 0FBE      	 ;  0 "" 2
+ 165               	.LM2:
+ 166               	/* #NOAPP */
+ 167               		call SystemTime_Initialize
+ 169               	.LM3:
+ 170 0016 0E94 0000 		call EEPROMStorage_Initialize
+ 172               	.LM4:
+ 173 001a 0E94 0000 		call ADCManager_Initialize
+ 175               	.LM5:
+ 176 001e 0E94 0000 		call BatteryMonitor_Initialize
+ 178               	.LM6:
+ 179 0022 0E94 0000 		call InternalTemperatureMonitor_Initialize
+ 181               	.LM7:
+ 182 0026 0E94 0000 		call SoftwareSerialTx_Initialize
+ 184               	.LM8:
+ 185 002a 0E94 0000 		call SoftwareSerialRx_Initialize
+ 187               	.LM9:
+ 188 002e 0E94 0000 		call Console_Initialize
+ 190               	.LM10:
+ 191 0032 0E94 0000 		call CellularComm_Initialize
+ 193               	.LM11:
+ 194 0036 0E94 0000 		call CellularTCPIP_Initialize
+ 196               	.LM12:
+ 197 003a 0E94 0000 		call TCPIPConsole_Initialize
+ 199               	.LM13:
+ 200 003e 0E94 0000 		call RAMSentinel_Initialize
+ 201               	.LBE6:
+ 202               	.LBE5:
+ 204               	.LM14:
+ 205               	/* #APP */
+  49:../WaterLevelSensorMain.c ****     Initialize();
+  50:../WaterLevelSensorMain.c **** 
+  51:../WaterLevelSensorMain.c ****     sei();
+ 206               	.LBE5:
+ 208               	.LM14:
+ 209               	/* #APP */
+ 210 0046 7894      	 ;  51 "../WaterLevelSensorMain.c" 1
+ 211               		sei
+ 212               	 ;  0 "" 2
+ 213               	/* #NOAPP */
+  52:../WaterLevelSensorMain.c **** 
+  53:../WaterLevelSensorMain.c ****     for (;;) {
+  54:../WaterLevelSensorMain.c ****         // run all the tasks
+  55:../WaterLevelSensorMain.c ****         SystemTime_task();
+ 214               	LevelSensorMain.c" 1
+ 215               		sei
+ 216 0048 0E94 0000 	 ;  0 "" 2
+  56:../WaterLevelSensorMain.c ****         ADCManager_task();
+ 217               	  51 "../WaterLevelSensorMain.c" 1
+ 218               		sei
+ 219 004c 0E94 0000 	 ;  0 "" 2
+  57:../WaterLevelSensorMain.c ****         BatteryMonitor_task();
+ 220               	  51 "../WaterLevelSensorMain.c" 1
+ 221               		sei
+ 222 0050 0E94 0000 	 ;  0 "" 2
+  58:../WaterLevelSensorMain.c ****         InternalTemperatureMonitor_task();
+ 223               	  51 "../WaterLevelSensorMain.c" 1
+ 224               		sei
+ 225 0054 0E94 0000 	 ;  0 "" 2
+  59:../WaterLevelSensorMain.c ****         SIM800_task();
+ 226               	  51 "../WaterLevelSensorMain.c" 1
+ 227               		sei
+ 228 0058 0E94 0000 	 ;  0 "" 2
+  60:../WaterLevelSensorMain.c ****         Console_task();
+ 229               	  51 "../WaterLevelSensorMain.c" 1
+ 230               		sei
+ 231 005c 0E94 0000 	 ;  0 "" 2
+  61:../WaterLevelSensorMain.c ****         TCPIPConsole_task();
+ 232               	  51 "../WaterLevelSensorMain.c" 1
+ 233               		sei
+ 234 0060 0E94 0000 	 ;  0 "" 2
+  62:../WaterLevelSensorMain.c ****         CellularComm_task();
+ 235               	  51 "../WaterLevelSensorMain.c" 1
+ 236               		sei
+ 237 0064 0E94 0000 	 ;  0 "" 2
+  63:../WaterLevelSensorMain.c ****         if (!RAMSentinel_sentinelIntact()) {
+ 238               	  51 "../WaterLevelSensorMain.c" 1
+ 239               		sei
+ 240 0068 0E94 0000 	 ;  0 "" 2
+ 241 006c 8823      	/* #NOAPP */
+ 242 006e 01F4      	.L6:
+  64:../WaterLevelSensorMain.c ****             Console_printP(PSTR("stack collision!"));
+ 243               	ensorMain.c" 1
+ 244               		sei
+ 245 0070 80E0      	 ;  0 "" 2
+ 246 0072 90E0      	/* #NOAPP */
+ 247 0074 0E94 0000 	.L6:
+  65:../WaterLevelSensorMain.c ****             SystemTime_commenceShutdown();
+ 248               	ensorMain.c" 1
+ 249               		sei
+ 250 0078 0E94 0000 	 ;  0 "" 2
+ 251 007c 00C0      	/* #NOAPP */
+ 252               	.L6:
+ 254               	.LM15:
+ 255               		call SystemTime_task
+ 257               	.LM16:
+ 258 0000 7374 6163 		call ADCManager_task
+ 258      6B20 636F 
+ 258      6C6C 6973 
+ 258      696F 6E21 
+ 258      00
+ 260               	.LM17:
+ 261               		call BatteryMonitor_task
+DEFINED SYMBOLS
+                            *ABS*:00000000 WaterLevelSensorMain.c
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:2      *ABS*:0000003f __SREG__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:3      *ABS*:0000003e __SP_H__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:4      *ABS*:0000003d __SP_L__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:5      *ABS*:00000034 __CCP__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:144    .text:00000000 main
+C:\Users\owner\AppData\Local\Temp/ccA0l4f6.s:257    .progmem.data:00000000 __c.2221
+
+UNDEFINED SYMBOLS
+SystemTime_Initialize
+EEPROMStorage_Initialize
+ADCManager_Initialize
+BatteryMonitor_Initialize
+InternalTemperatureMonitor_Initialize
+SoftwareSerialTx_Initialize
+SoftwareSerialRx_Initialize
+Console_Initialize
+CellularComm_Initialize
+CellularTCPIP_Initialize
+TCPIPConsole_Initialize
+RAMSentinel_Initialize
+SystemTime_task
+ADCManager_task
+BatteryMonitor_task
+InternalTemperatureMonitor_task
+SIM800_task
+Console_task
+TCPIPConsole_task
+CellularComm_task
+RAMSentinel_sentinelIntact
+Console_printP
+SystemTime_commenceShutdown
