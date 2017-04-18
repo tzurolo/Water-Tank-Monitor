@@ -6,6 +6,7 @@
 
 #include "EEPROM_Util.h"
 #include "Console.h"
+#include "avr/pgmspace.h"
 
 // This prevents the MSVC editor from tripping over EEMEM in definitions
 #ifndef EEMEM
@@ -15,7 +16,8 @@
 // storage address map
 uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as all one's
 
-char EEMEM cellPIN[8] = "7353";
+char EEMEM cellPIN[8]  = "7353";
+char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM loggingUpdateInterval = 600;
 uint8_t EEMEM timeoutState = 0;
@@ -36,16 +38,16 @@ char EEMEM apn[32] = "mobiledata";
 
 // thingspeak
 uint8_t EEMEM thingspeakEnabled = 0;
-char EEMEM thingspeakHostAddress[32] = "api.thingspeak.com";
+char EEMEM thingspeakHostAddress[32]  = "api.thingspeak.com";
+char thingspeakHostAddressP[] PROGMEM = "api.thingspeak.com";
 uint16_t EEMEM thingspeakHostPort = 80;
 char EEMEM thingspeakWriteKey[20] = "";
 
 // TCPIP Console
 uint8_t EEMEM ipConsoleEnabled = 1;
 char EEMEM ipConsoleServerAddress[32] = "tonyz.dyndns.org";
+char tzHostAddressP[]         PROGMEM = "tonyz.dyndns.org";
 uint16_t EEMEM ipConsoleServerPort = 3000;
-
-static const char* tzPin = "7353"; // Tony's telestial Sim card PIN
 
 void EEPROMStorage_Initialize (void)
 {
@@ -56,7 +58,10 @@ void EEPROMStorage_Initialize (void)
     if (initLevel < 1) {
         Console_printP(PSTR("re-initializing EEPROM"));
         // EE has not been initialized. Initialize now.
-        EEPROMStorage_setPIN(tzPin);
+        CharString_define(40, stringBuffer);
+
+        CharString_copyP(tzPinP, &stringBuffer);
+        EEPROMStorage_setPIN(CharString_cstr(&stringBuffer));
 
 	EEPROMStorage_setWaterTankEmptyDistance(290);
 	EEPROMStorage_setWaterTankFullDistance(30);
@@ -70,7 +75,8 @@ void EEPROMStorage_Initialize (void)
 
         EEPROMStorage_setLoggingUpdateInterval(600);
         EEPROMStorage_setThingspeak(false);
-        EEPROMStorage_setThingspeakHostAddress("api.thingspeak.com");
+        CharString_copyP(thingspeakHostAddressP, &stringBuffer);
+        EEPROMStorage_setThingspeakHostAddress(CharString_cstr(&stringBuffer));
         EEPROMStorage_setThingspeakHostPort(80);
         EEPROMStorage_setThingspeakWriteKey("");
 
@@ -79,7 +85,8 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setFilterVariance(16383); // effectively unlimited variance
 
         EEPROMStorage_setIPConsoleEnabled(false);
-        EEPROMStorage_setIPConsoleServerAddress("tonyz.dyndns.org");
+        CharString_copyP(tzHostAddressP, &stringBuffer);
+        EEPROMStorage_setIPConsoleServerAddress(CharString_cstr(&stringBuffer));
         EEPROMStorage_setIPConsoleServerPort(3000);
 
         // indicate EE has been initialized

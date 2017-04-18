@@ -41,7 +41,7 @@ static volatile bool isEnabled;
 static volatile RxState rxState;
 static ByteQueueElement dataByte;
 static uint8_t bitMask;
-ByteQueue_define(80, rxQueue);
+ByteQueue_define(16, rxQueue);
 
 static bool rxBit (void)
 {

@@ -97,14 +97,14 @@ static SMSMessageStatus CMGLSMSMessageStatus;
 static SMSMessageStatus incomingSMSMessageStatus;
 CharString_define(16, incomingSMSMessagePhoneNumber)
 CharString_define(32, incomingSMSMessageTimestamp)
-CharString_define(160, incomingSMSMessageText)
+CharString_define(60, incomingSMSMessageText)
 static MessageIDQueue_type incomingSMSMessageIDs;
 static MessageIDQueue_ValueType currentlyProcessingMessageID;
 static bool gotCMGRMessage;
 
 // variables for outgoing SMS messages
 CharString_define(16, outgoingSMSMessagePhoneNumber)
-CharString_define(160, CellularComm_outgoingSMSMessageText)
+CharString_define(60, CellularComm_outgoingSMSMessageText)
 
 // variables for cell registration, network time, etc
 static SystemTime_t nextCheckForNetworkTimeAndCSQTime;
