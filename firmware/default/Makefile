@@ -1,12 +1,12 @@
 ###############################################################################
-# Makefile for the project WaterLevelSensor
+# Makefile for the project WaterLevelMonitor
 ###############################################################################
 
 ## General Flags
-PROJECT = WaterLevelSensor
+PROJECT = WaterLevelMonitor
 MCU = atmega328p
 F_CPU = 8000000
-TARGET = WaterLevelSensor.elf
+TARGET = WaterLevelMonitor.elf
 CC = avr-gcc.exe
 
 ## Options common to compile, link and assembly rules
@@ -26,7 +26,7 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 
 ## Linker flags
 LDFLAGS = $(COMMON)
-LDFLAGS += -Wl,-Map,WaterLevelSensor.map
+LDFLAGS += -Wl,-Map,WaterLevelMonitor.map
 
 
 ## Intel Hex file production flags
@@ -41,22 +41,23 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 INCLUDES = -I"C:\WinAVR-20100110\avr\include" -I"C:\WinAVR-20100110\avr\bin" -I".." 
 
 ## Objects that must be built in order to link
-OBJECTS = WaterLevelSensorMain.o SystemTime.o ADCManager.o DataHistory.o \
+OBJECTS = WaterLevelMonitorMain.o SystemTime.o ADCManager.o DataHistory.o \
         CommandProcessor.o EEPROMStorage.o Console.o \
         BatteryMonitor.o InternalTemperatureMonitor.o \
         CellularComm_SIM800.o CellularTCPIP_SIM800.o TCPIPConsole.o SIM800.o \
-        ByteQueue.o SoftwareSerialTx.o SoftwareSerialRx.o CharString.o StringUtils.o \
-        UART_async.o EEPROM_Util.o \
+        SoftwareSerialTx.o SoftwareSerialRx0.o SoftwareSerialRx2.o \
+        CharString.o ByteQueue.o StringUtils.o UART_async.o EEPROM_Util.o \
+        IOPortBitfield.o \
         RamSentinel.o
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) WaterLevelSensor.hex WaterLevelSensor.eep size
+all: $(TARGET) WaterLevelMonitor.hex WaterLevelMonitor.eep size
 
 ## Compile
-WaterLevelSensorMain.o: ../WaterLevelSensorMain.c
+WaterLevelMonitorMain.o: ../WaterLevelMonitorMain.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 SystemTime.o: ../SystemTime.c
@@ -74,7 +75,10 @@ ByteQueue.o: ../ByteQueue.c
 SoftwareSerialTx.o: ../SoftwareSerialTx.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-SoftwareSerialRx.o: ../SoftwareSerialRx.c
+SoftwareSerialRx0.o: ../SoftwareSerialRx0.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+SoftwareSerialRx2.o: ../SoftwareSerialRx2.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 EEPROM_Util.o: ../EEPROM_Util.c
@@ -113,6 +117,9 @@ UART_async.o: ../UART_async.c
 EEPROMStorage.o: ../EEPROMStorage.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
+IOPortBitfield.o: ../IOPortBitfield.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
 Console.o: ../Console.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
@@ -139,7 +146,7 @@ size: ${TARGET}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) WaterLevelSensor.elf dep/* WaterLevelSensor.hex WaterLevelSensor.eep
+	-rm -rf $(OBJECTS) WaterLevelMonitor.elf dep/* WaterLevelMonitor.hex WaterLevelMonitor.eep
 
 ## Other dependencies
 -include $(shell mkdir dep 2>/dev/null) $(wildcard dep/*)
