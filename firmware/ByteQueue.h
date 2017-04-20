@@ -10,8 +10,8 @@
 //
 //  How to use it:
 //    Define a queue like this:
-//       ByteQueue_define(300, FromADH8066_Buffer)
-//    which defines variable FromADH8066_Buffer with a capacity of
+//       ByteQueue_define(300, FromADH8066_Buffer, static)
+//    which defines static variable FromADH8066_Buffer with a capacity of
 //    300 bytes.
 //    Then you can use the other functions to push and pop bytes.
 //
@@ -32,18 +32,18 @@ typedef struct {
     uint16_t length;
     uint16_t capacity;
     ByteQueueElement *bytes;
-    } ByteQueue;
+    } ByteQueue_t;
 
-#define ByteQueue_define(capacity, queueName) \
-    ByteQueueElement queueName##_buf[capacity] = {0}; \
-    ByteQueue queueName = {0, 0, 0, capacity, queueName##_buf};
+#define ByteQueue_define(capacity, queueName, storage) \
+    storage ByteQueueElement queueName##_buf[capacity] = {0}; \
+    storage ByteQueue_t queueName = {0, 0, 0, capacity, queueName##_buf};
 
 extern void ByteQueue_clear (
-    ByteQueue *q);
+    ByteQueue_t *q);
 
 // returns the current length of the queue
 inline uint16_t ByteQueue_length (
-    const ByteQueue *q)
+    const ByteQueue_t *q)
     {
     char SREGSave;
     SREGSave = SREG;
@@ -58,7 +58,7 @@ inline uint16_t ByteQueue_length (
 
 // returns the length available in the queue
 inline uint16_t ByteQueue_spaceRemaining (
-    const ByteQueue *q)
+    const ByteQueue_t *q)
     {
     char SREGSave;
     SREGSave = SREG;
@@ -73,7 +73,7 @@ inline uint16_t ByteQueue_spaceRemaining (
 
 // returns true if the queue is currently empty
 inline bool ByteQueue_is_empty (
-   const ByteQueue *q)
+   const ByteQueue_t *q)
    {
     char SREGSave;
     SREGSave = SREG;
@@ -88,7 +88,7 @@ inline bool ByteQueue_is_empty (
 
 // returns true if the queue is currently full
 inline bool ByteQueue_is_full (
-   const ByteQueue *q)
+   const ByteQueue_t *q)
    {
     char SREGSave;
     SREGSave = SREG;
@@ -103,7 +103,7 @@ inline bool ByteQueue_is_full (
 
 // assumes the queue is not empty
 inline ByteQueueElement ByteQueue_head (
-   const ByteQueue *q)
+   const ByteQueue_t *q)
 {
     char SREGSave;
     SREGSave = SREG;
@@ -120,10 +120,10 @@ inline ByteQueueElement ByteQueue_head (
 // true if successful
 extern bool ByteQueue_push (
    const ByteQueueElement byte,
-   ByteQueue *q);
+   ByteQueue_t *q);
 
 // pops a byte from the head of the queue, expects it's not empty
 extern ByteQueueElement ByteQueue_pop (
-   ByteQueue *q);
+   ByteQueue_t *q);
 
 #endif   // BYTEQUEUE_LOADED

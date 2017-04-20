@@ -1,10 +1,14 @@
 //
-//  Console for USB host
+//  System Console for debug and local control
 //
+//  Pin usage:
+//      PC2 - serial input
+//      PC3 - serial output
 //
 #include "Console.h"
 
-#include "UART_async.h"
+#include "SoftwareSerialRx0.h"
+#include "SoftwareSerialTx.h"
 #include "SystemTime.h"
 #include "CommandProcessor.h"
 #include "StringUtils.h"
@@ -12,6 +16,8 @@
 #include <avr/pgmspace.h>
 
 #define SINGLE_SCREEN 0
+
+#define TX_CHAN_INDEX 1
 
 #define ANSI_ESCAPE_SEQUENCE(EscapeSeq)  "\33[" EscapeSeq
 #define ESC_CURSOR_POS(Line, Column)    ANSI_ESCAPE_SEQUENCE(#Line ";" #Column "H")
@@ -32,23 +38,25 @@ static bool consoleIsConnected ()
 
 void Console_Initialize (void)
 {
-    UART_init();
+    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_c, 3);
+    SoftwareSerialTx_enable(TX_CHAN_INDEX);
 }
 
 void Console_task (void)
 {
-    char cmdByte;
-    if (UART_read_byte(&cmdByte)) {
+    ByteQueue_t* rxQueue = SoftwareSerial_rx0Queue();
+    if (!ByteQueue_is_empty(rxQueue)) {
+        char cmdByte = ByteQueue_pop(rxQueue);
         switch (cmdByte) {
             case '\r' : {
                 // command complete. execute it
                 CommandProcessor_processCommand(CharString_cstr(&commandBuffer), "", "");
 
 #if SINGLE_SCREEN
-                USBTerminal_sendCharsToHost(ESC_CURSOR_POS(2, 1));
+                 SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(2, 1));
 #endif
-                UART_write_stringCS(&commandBuffer);
-                UART_write_string(ESC_ERASE_LINE);
+                SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
+                SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
                 CharString_clear(&commandBuffer);
                 }
                 break;
@@ -65,11 +73,11 @@ void Console_task (void)
         }
 		// echo current command
 #if SINGLE_SCREEN
-        USBTerminal_sendCharsToHost(ESC_CURSOR_POS(1, 1));
+         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(1, 1));
 #endif
-        UART_write_stringCS(&commandBuffer);
+        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
 #if SINGLE_SCREEN
-        USBTerminal_sendCharsToHost(ESC_ERASE_LINE);
+         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
 #endif
     }
 
@@ -77,16 +85,16 @@ void Console_task (void)
     if (consoleIsConnected() &&
         SystemTime_timeHasArrived(&nextStatusPrintTime)) {
 #if SINGLE_SCREEN
-        USBTerminal_sendCharsToHost(ESC_CURSOR_POS(3, 1));
+         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(3, 1));
 #endif
         CharString_define(120, statusMsg)
         CommandProcessor_createStatusMessage(&statusMsg);
-        UART_write_stringCS(&statusMsg);
-        UART_write_stringP(crlfP);
+        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &statusMsg);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 
 	// schedule next display
 	SystemTime_futureTime(100, &nextStatusPrintTime);
-	}
+    }
 }
 
 static void sendCursorTo (
@@ -99,7 +107,7 @@ static void sendCursorTo (
     CharString_appendC(';', &cursorToBuf);
     StringUtils_appendDecimal(column, 1, 0, &cursorToBuf);
     CharString_appendC('H', &cursorToBuf);
-    UART_write_stringCS(&cursorToBuf);
+    SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &cursorToBuf);
 }
 
 void Console_print (
@@ -110,17 +118,17 @@ void Console_print (
 #if 0
         if (currentPrintLine > 22) {
             currentPrintLine = 5;
-            UART_write_string(ESC_CURSOR_POS(5, 1));
-            UART_write_string(ANSI_ESCAPE_SEQUENCE("J"));
+            SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(5, 1));
+            SoftwareSerialTx_send(TX_CHAN_INDEX, ANSI_ESCAPE_SEQUENCE("J"));
         }
 #endif
         // print text on the current line
 	sendCursorTo(currentPrintLine, 1);
 #endif
-        UART_write_string(text);
-        UART_write_stringP(crlfP);
+        SoftwareSerialTx_send(TX_CHAN_INDEX, text);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 #if SINGLE_SCREEN
-        UART_write_string(ESC_CURSOR_POS_RESTORE);
+        SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS_RESTORE);
         ++currentPrintLine;
 
         // restore cursor to command buffer end
@@ -137,18 +145,18 @@ void Console_printP (
 #if 0
         if (currentPrintLine > 22) {
             currentPrintLine = 5;
-            UART_write_string(ESC_CURSOR_POS(5, 1));
-            UART_write_string(ANSI_ESCAPE_SEQUENCE("J"));
+            SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(5, 1));
+            SoftwareSerialTx_send(TX_CHAN_INDEX, ANSI_ESCAPE_SEQUENCE("J"));
         }
 #endif
 
 	// print text on the current line
 	sendCursorTo(currentPrintLine, 1);
 #endif
-        UART_write_stringP(text);
-        UART_write_stringP(crlfP);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, text);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 #if SINGLE_SCREEN
-        UART_write_string(ESC_CURSOR_POS_RESTORE);
+        SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS_RESTORE);
         ++currentPrintLine;
 
         // restore cursor to command buffer end
@@ -165,17 +173,17 @@ void Console_printCS (
 #if 0
         if (currentPrintLine > 22) {
 	        currentPrintLine = 5;
-	        UART_write_string(ESC_CURSOR_POS(5, 1));
-	        UART_write_string(ANSI_ESCAPE_SEQUENCE("J"));
+	        SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(5, 1));
+	        SoftwareSerialTx_send(TX_CHAN_INDEX, ANSI_ESCAPE_SEQUENCE("J"));
         }
 #endif
         // print text on the current line
         sendCursorTo(currentPrintLine, 1);
 #endif
-        UART_write_stringCS(text);
-        UART_write_stringP(crlfP);
+        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, text);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 #if SINGLE_SCREEN
-        UART_write_string(ESC_CURSOR_POS_RESTORE);
+        SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS_RESTORE);
         ++currentPrintLine;
 
         // restore cursor to command buffer end

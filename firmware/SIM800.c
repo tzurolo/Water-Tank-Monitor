@@ -5,8 +5,8 @@
 //  software serial with the same pinout as the Adafruit Feather FONA
 
 //  I/O Pin usage
-//      D0 (Rx)   -> TX0
-//      D1 (Tx)   -> RX0
+//      D2 (Rx)   -> TX0
+//      D3 (Tx)   -> RX0
 //      D4        -> OnKey
 //      D5        -> Power Status (optional)
 //
@@ -16,13 +16,15 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include "ByteQueue.h"
-#include "SoftwareSerialRx.h"
+#include "SoftwareSerialRx2.h"
 #include "SoftwareSerialTx.h"
 #include "Console.h"
 #include "SystemTime.h"
 #include "StringUtils.h"
 
 #define USE_POWER_STATE 0
+
+#define TX_CHAN_INDEX 0
 
 #define ONKEY_PIN           PD4
 #define ONKEY_OUTPORT       PORTD
@@ -610,7 +612,7 @@ static bool interpretNonterminatedResponse (
 
 static void processResponseBytes (void)
 {
-    ByteQueue* rxQueue = SoftwareSerial_rxQueue();
+    ByteQueue_t* rxQueue = SoftwareSerial_rx2Queue();
     ByteQueueElement inByte;
     for (uint8_t numBytes = ByteQueue_length(rxQueue); numBytes > 0;
             --numBytes) {
@@ -754,7 +756,8 @@ void SIM800_Initialize (void)
     CBCCallback = 0;
     promptCallback = 0;
 
-    SoftwareSerialTx_enable();
+    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_d, 3);
+    SoftwareSerialTx_enable(TX_CHAN_INDEX);
 }
 
 void SIM800_task (void)
@@ -959,10 +962,7 @@ void SIM800_sendString (
 {
     Console_print(str);
 
-    const char* strPtr = str;
-    while (*strPtr != 0) {
-        SoftwareSerialTx_sendChar(*strPtr++);
-    }
+    SoftwareSerialTx_send(TX_CHAN_INDEX, str);
 }
 
 void SIM800_sendStringP (
@@ -970,15 +970,7 @@ void SIM800_sendStringP (
 {
     Console_printP(str);
 
-    PGM_P cp = str;
-    uint8_t byte = 0;
-    do {
-        byte = pgm_read_byte(cp);
-        ++cp;
-        if (byte != 0) {
-            SoftwareSerialTx_sendChar((char)byte);
-        }
-    } while (byte != 0);
+    SoftwareSerialTx_sendP(TX_CHAN_INDEX, str);
 }
 
 void SIM800_sendStringCS (
@@ -991,14 +983,14 @@ void SIM800_sendLine (
     const char* str)
 {
     SIM800_sendString(str);
-    SoftwareSerialTx_sendChar(13);
+    SoftwareSerialTx_sendChar(TX_CHAN_INDEX, 13);
 }
 
 void SIM800_sendLineP (
     PGM_P str)
 {
     SIM800_sendStringP(str);
-    SoftwareSerialTx_sendChar(13);
+    SoftwareSerialTx_sendChar(TX_CHAN_INDEX, 13);
 }
 
 void SIM800_sendLineCS (
@@ -1013,8 +1005,8 @@ void SIM800_sendHex (
     const uint8_t* dataPtr = data;
     while (*dataPtr != 0) {
         const uint8_t chByte = *dataPtr++;
-        SoftwareSerialTx_sendChar(nibbleHex(chByte >> 4));
-        SoftwareSerialTx_sendChar(nibbleHex(chByte));
+        SoftwareSerialTx_sendChar(TX_CHAN_INDEX, nibbleHex(chByte >> 4));
+        SoftwareSerialTx_sendChar(TX_CHAN_INDEX, nibbleHex(chByte));
     }
 }
 
@@ -1027,14 +1019,14 @@ void SIM800_sendHexP (
         byte = pgm_read_byte(cp);
         ++cp;
         if (byte != 0) {
-            SoftwareSerialTx_sendChar(nibbleHex(byte >> 4));
-            SoftwareSerialTx_sendChar(nibbleHex(byte));
+            SoftwareSerialTx_sendChar(TX_CHAN_INDEX, nibbleHex(byte >> 4));
+            SoftwareSerialTx_sendChar(TX_CHAN_INDEX, nibbleHex(byte));
         }
     } while (byte != 0);
 }
 
 void SIM800_sendCtrlZ (void)
 {
-    SoftwareSerialTx_sendChar(26);
+    SoftwareSerialTx_sendChar(TX_CHAN_INDEX, 26);
 }
 

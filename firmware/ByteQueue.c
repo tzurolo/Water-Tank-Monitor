@@ -5,7 +5,7 @@
 #include "ByteQueue.h"
 
 void ByteQueue_clear (
-    ByteQueue *q)
+    ByteQueue_t *q)
     {
     char SREGSave;
     SREGSave = SREG;
@@ -20,7 +20,7 @@ void ByteQueue_clear (
 
 bool ByteQueue_push (
     const ByteQueueElement byte,
-    ByteQueue *q)
+    ByteQueue_t *q)
     {
     bool push_successful = false;
 
@@ -51,7 +51,7 @@ bool ByteQueue_push (
     }
 
 ByteQueueElement ByteQueue_pop (
-    ByteQueue *q)
+    ByteQueue_t *q)
 {
     ByteQueueElement byte = 0;
 

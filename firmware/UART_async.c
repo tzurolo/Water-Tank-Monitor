@@ -15,8 +15,8 @@
 #include <avr/io.h>
 #include <string.h>
 
-ByteQueue_define(100, tx_queue);
-ByteQueue_define(16, rx_queue);
+ByteQueue_define(100, tx_queue, static);
+ByteQueue_define(16, rx_queue, static);
 
 // called to start or continue transmitting
 static void transmit_next_byte (void)

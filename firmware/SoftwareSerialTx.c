@@ -4,7 +4,7 @@
 //   Uses SystemTime tick as baud clock.
 //
 //  Pin usage:
-//      PD3 - serial data out
+//      serial data out pins specified by port and bit passed to SoftwareSerialTx_Initialize()
 //
 
 #include "SoftwareSerialTx.h"
@@ -13,107 +13,144 @@
 #include "ByteQueue.h"
 #include "SystemTime.h"
 
-#define SERIAL_TX_DDR      DDRD
-#define SERIAL_TX_PORT     PORTD
-#define SERIAL_TX_PIN      PD3
+#include "UART_async.h"
+
+#define NUM_CHANNELS 2
 
 typedef enum TxState_enum {
     ts_idle,
     ts_sendingDataBits,
     ts_sendingStopBit
 } TxState;
-// state variables
-static bool isEnabled;
-static TxState txState = ts_idle;
-static ByteQueueElement dataByte;
-static uint8_t bitNumber;
-ByteQueue_define(100, txQueue);
+// channel descriptor
+typedef struct TxDescriptor_struct {
+    bool isEnabled;
+    TxState txState;
+    ByteQueueElement dataByte;
+    uint8_t bitNumber;
+    IOPortBitfield_t txBit;
+    ByteQueue_t *txQueue;
+} TxDescriptor;
+static TxDescriptor channels[NUM_CHANNELS];
+
+ByteQueue_define(100, txQueue0, static);
+ByteQueue_define(100, txQueue1, static);
 
 static void setTxBit (
-    const uint8_t bit)
+    const uint8_t bit,
+    IOPortBitfield_t *txBit)
 {
     if (bit != 0) {
-        SERIAL_TX_PORT |= (1 << SERIAL_TX_PIN);
+        IOPortBitfield_set(txBit);
     } else {
-        SERIAL_TX_PORT &= ~(1 << SERIAL_TX_PIN);
+        IOPortBitfield_clear(txBit);
     }
 }
 
 static void systemTimeTickTask (void)
 {
-    switch (txState) {
-    case ts_idle:
-        if (!ByteQueue_is_empty(&txQueue)) {
-            // issue start bit
-            setTxBit(0);
-            dataByte = ByteQueue_pop(&txQueue);
-            bitNumber = 1;
-            txState = ts_sendingDataBits;
+    for (int channelIndex = 0; channelIndex < NUM_CHANNELS; ++channelIndex) {
+        TxDescriptor *channel = &channels[channelIndex];
+        switch (channel->txState) {
+        case ts_idle:
+            if (!ByteQueue_is_empty(channel->txQueue)) {
+                // issue start bit
+                setTxBit(0, &channel->txBit);
+                channel->dataByte = ByteQueue_pop(channel->txQueue);
+                channel->bitNumber = 1;
+                channel->txState = ts_sendingDataBits;
+            }
+            break;
+        case ts_sendingDataBits:
+            setTxBit(channel->dataByte & 1, &channel->txBit);
+            if (channel->bitNumber == 8) {
+                channel->txState = ts_sendingStopBit;
+            } else {
+                ++channel->bitNumber;
+                channel->dataByte >>= 1;
+            }
+            break;
+        case ts_sendingStopBit:
+            setTxBit(1, &channel->txBit);
+            channel->txState = ts_idle;
+            break;
         }
-        break;
-    case ts_sendingDataBits:
-        setTxBit(dataByte & 1);
-        if (bitNumber == 8) {
-            txState = ts_sendingStopBit;
-        } else {
-            ++bitNumber;
-            dataByte >>= 1;
-        }
-        break;
-    case ts_sendingStopBit:
-        setTxBit(1);
-        txState = ts_idle;
-        break;
     }
 }
 
-void SoftwareSerialTx_Initialize (void)
+void SoftwareSerialTx_Initialize (
+    const uint8_t channelIndex,
+    const IOPortBitfield_PortSelection port,
+    const uint8_t pin)
 {
-    // set serial tx as output
-    SERIAL_TX_DDR      |= (1 << SERIAL_TX_PIN);
-    setTxBit(1);
+    TxDescriptor *channel = &channels[channelIndex];
 
-    isEnabled = false;
-    txState = ts_idle;
+    IOPortBitfield_t *txBit = &channel->txBit;
+    IOPortBitfield_init(port, pin, 1, true, txBit);
+    IOPortBitfield_set(txBit);
+
+    channel->isEnabled = false;
+    channel->txState = ts_idle;
+    switch (channelIndex) {
+        case 0: channel->txQueue = &txQueue0;   break;
+        case 1: channel->txQueue = &txQueue1;   break;
+    }
 
     SystemTime_registerForTickNotification(systemTimeTickTask);
 }
 
-void SoftwareSerialTx_enable (void)
+void SoftwareSerialTx_enable (
+    const uint8_t channelIndex)
 {
-    isEnabled = true;
+    channels[channelIndex].isEnabled = true;
 }
 
-void SoftwareSerialTx_disable (void)
+void SoftwareSerialTx_disable (
+    const uint8_t channelIndex)
 {
-    isEnabled = false;
+    channels[channelIndex].isEnabled = false;
 }
 
-bool SoftwareSerialTx_isIdle (void)
+bool SoftwareSerialTx_isIdle (
+    const uint8_t channelIndex)
 {
-    return ((txState == ts_idle) && ByteQueue_is_empty(&txQueue));
+    TxDescriptor *channel = &channels[channelIndex];
+    return ((channel->txState == ts_idle) && ByteQueue_is_empty(channel->txQueue));
 }
 
 void SoftwareSerialTx_send (
+    const uint8_t channelIndex,
     const char* text)
 {
-    if (isEnabled) {
+    TxDescriptor *channel = &channels[channelIndex];
+    if (channel->isEnabled) {
+        ByteQueue_t *txQueue = channel->txQueue;
         const char* cp = text;
         char ch;
         while ((ch = *cp++) != 0) {
-            ByteQueue_push((ByteQueueElement)ch, &txQueue);
+            ByteQueue_push((ByteQueueElement)ch, txQueue);
         }
     }
 }
 
+void SoftwareSerialTx_sendCS (
+    const uint8_t channelIndex,
+    const CharString_t* text)
+{
+    SoftwareSerialTx_send(channelIndex, CharString_cstr(text));
+}
+
 bool SoftwareSerialTx_sendP (
-   PGM_P string)
+    const uint8_t channelIndex,
+    PGM_P string)
 {
     bool successful = false;
 
-    if (isEnabled) {
+    TxDescriptor *channel = &channels[channelIndex];
+    if (channel->isEnabled) {
+        ByteQueue_t *txQueue = channel->txQueue;
         // check if there is enough space left in the tx queue
-        if (strlen_P(string) <= ByteQueue_spaceRemaining(&txQueue))
+        if (strlen_P(string) <= ByteQueue_spaceRemaining(txQueue))
             {  // there is enough space in the queue
             // push all bytes onto the queue
             PGM_P cp = string;
@@ -122,7 +159,7 @@ bool SoftwareSerialTx_sendP (
                 ch = pgm_read_byte(cp);
                 ++cp;
                 if (ch != 0) {
-                    ByteQueue_push(ch, &txQueue);
+                    ByteQueue_push(ch, txQueue);
                 }
             } while (ch != 0);
 
@@ -134,10 +171,12 @@ bool SoftwareSerialTx_sendP (
 }
 
 void SoftwareSerialTx_sendChar (
+    const uint8_t channelIndex,
     const char ch)
 {
-    if (isEnabled) {
-        ByteQueue_push((ByteQueueElement)ch, &txQueue);
+    TxDescriptor *channel = &channels[channelIndex];
+    if (channel->isEnabled) {
+        ByteQueue_push((ByteQueueElement)ch, channel->txQueue);
     }
 }
 
