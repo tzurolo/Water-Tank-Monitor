@@ -18,6 +18,7 @@
 #include "TCPIPConsole.h"
 #include "BatteryMonitor.h"
 #include "InternalTemperatureMonitor.h"
+#include "UltrasonicSensorMonitor.h"
 #include "SystemTime.h"
 #include "SIM800.h"
 #include "Console.h"
@@ -87,16 +88,18 @@ void CommandProcessor_createStatusMessage (
         CharString_appendC('.', msg);
         StringUtils_appendDecimal(CellularTCPIP_state(), 2, 0, msg);
     }
-    CharString_appendP(PSTR(", csq:"), msg);
-    StringUtils_appendDecimal(CellularComm_SignalQuality(), 2, 0, msg);
+    CharString_appendP(PSTR(", U:"), msg);
+    StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, msg);
     CharString_appendP(PSTR(", Vb:"), msg);
     StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 2, msg);
-    CharString_appendP(PSTR("V, Vc:"), msg);
+    CharString_appendP(PSTR(", Vc:"), msg);
     StringUtils_appendDecimal(CellularComm_batteryMillivolts(), 1, 3, msg);
-    CharString_appendP(PSTR("V, T:"), msg);
+    CharString_appendP(PSTR(", T:"), msg);
     StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, msg);
     CharString_appendP(PSTR(", reg:"), msg);
     StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, msg);
+    CharString_appendP(PSTR(", csq:"), msg);
+    StringUtils_appendDecimal(CellularComm_SignalQuality(), 2, 0, msg);
     CharString_appendP(PSTR("  "), msg);
 }
 

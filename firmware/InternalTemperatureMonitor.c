@@ -1,7 +1,7 @@
 //
-//  Battery Monitor
+//  Internal Temperature Monitor
 //
-//  Reads the AtMega328P's internal temperature sensor
+//  Reads the AtMega328P's internal temperature sensor through the ADC
 //
 
 #include "InternalTemperatureMonitor.h"

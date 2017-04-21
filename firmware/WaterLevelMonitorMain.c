@@ -17,6 +17,7 @@
 #include "CommandProcessor.h"
 #include "BatteryMonitor.h"
 #include "InternalTemperatureMonitor.h"
+#include "UltrasonicSensorMonitor.h"
 #include "CellularComm_SIM800.h"
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
@@ -36,6 +37,7 @@ static void Initialize (void)
     ADCManager_Initialize();
     BatteryMonitor_Initialize();
     InternalTemperatureMonitor_Initialize();
+    UltrasonicSensorMonitor_Initialize();
     SoftwareSerialRx0_Initialize();
     SoftwareSerialRx2_Initialize();
     Console_Initialize();
@@ -57,6 +59,7 @@ int main (void)
         ADCManager_task();
         BatteryMonitor_task();
         InternalTemperatureMonitor_task();
+        UltrasonicSensorMonitor_task();
         SIM800_task();
         Console_task();
         TCPIPConsole_task();
