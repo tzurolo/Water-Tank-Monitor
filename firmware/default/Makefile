@@ -43,7 +43,7 @@ INCLUDES = -I"C:\WinAVR-20100110\avr\include" -I"C:\WinAVR-20100110\avr\bin" -I"
 ## Objects that must be built in order to link
 OBJECTS = WaterLevelMonitorMain.o SystemTime.o ADCManager.o DataHistory.o \
         CommandProcessor.o EEPROMStorage.o Console.o \
-        BatteryMonitor.o InternalTemperatureMonitor.o \
+        BatteryMonitor.o InternalTemperatureMonitor.o UltrasonicSensorMonitor.o \
         CellularComm_SIM800.o CellularTCPIP_SIM800.o TCPIPConsole.o SIM800.o \
         SoftwareSerialTx.o SoftwareSerialRx0.o SoftwareSerialRx2.o \
         CharString.o ByteQueue.o StringUtils.o UART_async.o EEPROM_Util.o \
@@ -94,6 +94,9 @@ BatteryMonitor.o: ../BatteryMonitor.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 InternalTemperatureMonitor.o: ../InternalTemperatureMonitor.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+UltrasonicSensorMonitor.o: ../UltrasonicSensorMonitor.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 CellularComm_SIM800.o: ../CellularComm_SIM800.c
