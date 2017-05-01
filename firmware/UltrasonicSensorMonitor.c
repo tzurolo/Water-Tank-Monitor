@@ -22,7 +22,7 @@ DataHistory_define(SENSOR_SAMPLES, distanceHistory);
 
 void UltrasonicSensorMonitor_Initialize (void)
 {
-    UART_init();
+    UART_init(true);
     UART_set_baud_rate(9600);
     DataHistory_clear(&distanceHistory);
 }

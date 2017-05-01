@@ -20,6 +20,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#define CONSULT_PINJUMPER 0
+
 #define PINJUMPER_PIN       PD4
 #define PINJUMPER_INPORT    PIND
 #define PINJUMPER_OUTPORT   PORTD
@@ -57,6 +59,7 @@ PGM_P smsStatusStrings[] PROGMEM =
 // states
 typedef enum CellularCommState_enum {
     ccs_initial,
+    ccs_disabling,
     ccs_disabled,
     ccs_idle,
     ccs_waitingForOnkeyResponse,
@@ -363,8 +366,10 @@ static bool responseIsNeedPIN (void)
 
 void CellularComm_Initialize (void)
 {
+#if CONSULT_PINJUMPER
     // enable pull-up on US/International PIN selection jumper
     PINJUMPER_OUTPORT |= (1 << PINJUMPER_PIN);
+#endif
 
     SIM800_Initialize();
     CMGLSMSMessageStatus = sms_all; // initially clean out all messages
@@ -455,17 +460,19 @@ void CellularComm_task (void)
                     ccState = ccs_disabled;
                 }
                 break;
+            case ccs_disabling :
+                // wait until tcpip disconnects
+                CellularTCPIP_Subtask();
+                if (CellularTCPIP_connectionStatus() == cs_disconnected) {
+                    powerDownCellularModule();
+                    ccState = ccs_disabled;
+                }
+                break;
             case ccs_disabled :
                 if (ccEnabled) {
                     // exit the disabled state
-                    TCPIPConsole_restoreEnablement();
+                    // TCPIPConsole_restoreEnablement();
                     ccState = ccs_initial;
-                } else {
-                    // wait until tcpip disconnects
-                    CellularTCPIP_Subtask();
-                    if (CellularTCPIP_connectionStatus() == cs_disconnected) {
-                        powerDownCellularModule();
-                    }
                 }
                 break;
             case ccs_idle : {
@@ -517,7 +524,7 @@ void CellularComm_task (void)
                 } else {
                     // cellular com is disabled. enter disabled state
                     TCPIPConsole_disable(false);
-                    ccState = ccs_disabled;
+                    ccState = ccs_disabling;
                     Console_printP(PSTR(">>>> Disabling Cellular Module <<<<"));
                 }
                 }

@@ -23,6 +23,7 @@
 #include "StringUtils.h"
 
 #define USE_POWER_STATE 0
+#define DEBUG_TRACE 0
 
 #define TX_CHAN_INDEX 0
 
@@ -261,10 +262,12 @@ static void readCFUN (
     cp = StringUtils_scanInteger(cp, &isValid, &funclevel);
     if (isValid) {
 
+#if DEBUG_TRACE
         CharString_define(10, msgstr);
         CharString_copyP(PSTR("Funclevel: "), &msgstr);
         StringUtils_appendDecimal(funclevel, 1, 0, &msgstr);
         Console_printCS(&msgstr);
+#endif
 
         if (CFUNCallback != 0) {
             CFUNCallback(funclevel);
@@ -281,10 +284,12 @@ static void readCGATT (
     StringUtils_scanInteger(cp, &isValid, &value);
     if (isValid) {
 
+#if DEBUG_TRACE
         CharString_define(10, msgidstr);
         CharString_copyP(PSTR("CGATT: "), &msgidstr);
         StringUtils_appendDecimal(value, 1, 0, &msgidstr);
         Console_printCS(&msgidstr);
+#endif
 
         if (cgattCallback != 0) {
             cgattCallback(value != 0);
@@ -320,6 +325,7 @@ static void readCIPACK (
         cp = StringUtils_scanIntegerU32(cp, &isValid, &cipackData.dataNotConfirmed);
     }
     if (isValid) {
+#if DEBUG_TRACE
         CharString_define(30, dataStr);
         CharString_copyP(PSTR("CIPACK: "), &dataStr);
         StringUtils_appendDecimal32(cipackData.dataSent, 1, 0, &dataStr);
@@ -328,6 +334,7 @@ static void readCIPACK (
         CharString_appendP(PSTR(","),  &dataStr);
         StringUtils_appendDecimal32(cipackData.dataNotConfirmed, 1, 0, &dataStr);
         Console_printCS(&dataStr);
+#endif
 
         if (cipackCallback != 0) {
             cipackCallback(&cipackData);
@@ -369,10 +376,12 @@ static void readCMTI (
         StringUtils_scanInteger(cp, &isValid, &msgid);
         if (isValid) {
 
+#if DEBUG_TRACE
             CharString_define(10, msgidstr);
             CharString_copyP(PSTR("SMS id: "), &msgidstr);
             StringUtils_appendDecimal(msgid, 1, 0, &msgidstr);
             Console_printCS(&msgidstr);
+#endif
 
             if (CMTICallback != 0) {
                 CMTICallback(msgid);
@@ -404,10 +413,12 @@ static void readCREG (
         cp = StringUtils_scanInteger(cp, &isValid, &reg);
         if (isValid) {
 
+#if DEBUG_TRACE
             CharString_define(10, msgstr);
             CharString_copyP(PSTR("Reg: "), &msgstr);
             StringUtils_appendDecimal(reg, 1, 0, &msgstr);
             Console_printCS(&msgstr);
+#endif
 
             if (CREGCallback != 0) {
                 CREGCallback(reg);
@@ -425,10 +436,12 @@ static void readCSQ (
     cp = StringUtils_scanInteger(cp, &isValid, &sigStrength);
     if (isValid) {
 
+#if DEBUG_TRACE
         CharString_define(10, msgstr);
         CharString_copyP(PSTR("Sig: "), &msgstr);
         StringUtils_appendDecimal(sigStrength, 1, 0, &msgstr);
         Console_printCS(&msgstr);
+#endif
 
         if (CSQCallback != 0) {
             CSQCallback(sigStrength);
@@ -512,7 +525,9 @@ static void processResponseMessage (
         case rm_OK                  :
         case rm_SEND_OK             :
         case rm_SHUT_OK             :
+#if DEBUG_TRACE
             Console_printP(PSTR("Successful"));
+#endif
             break;
         case rm_SEND_FAIL           :
         case rm_ERROR               :
@@ -548,8 +563,10 @@ static void interpretResponse (
             processPlusMessage(response);
         } else if ((firstChar >= '0') && (firstChar <= '9')) {
             // TCP/IP address
+#if DEBUG_TRACE
             Console_printP(PSTR("Got TCP/IP address: "));
             Console_printCS(response);
+#endif
             if (ipAddressCallback != 0) {
                 ipAddressCallback(response);
             }
@@ -585,7 +602,9 @@ static bool interpretNonterminatedResponse (
         const char secondChar = cp[1];
         if ((firstChar == '>') && (secondChar == ' ')) {
             // got prompt
+#if DEBUG_TRACE
             Console_printP(PSTR("Got prompt"));
+#endif
             if (promptCallback != 0) {
                 promptCallback();
             }
@@ -621,12 +640,14 @@ static void processResponseBytes (void)
             case rps_interpret :
                 if (inByte == 13) {
 
+#if DEBUG_TRACE
                     // limit console print message to 65 chars
                     CharString_define(65, msg);
                     CharString_copyP(PSTR("SIM800: '"), &msg);
                     CharString_appendCS(&SIM800Response, &msg);
                     CharString_appendC('\'', &msg);
                     Console_printCS(&msg);
+#endif
 
                     interpretResponse(&SIM800Response);
                     CharString_clear(&SIM800Response);
@@ -642,13 +663,15 @@ static void processResponseBytes (void)
                 if (CharString_length(&SIM800Response) >= ipDataLength) {
                     // got all IP data
 
-                    CharString_define(70, msg);
+#if DEBUG_TRACE
+                    CharString_define(30, msg);
                     CharString_copyP(PSTR("Got IP data ("), &msg);
                     StringUtils_appendDecimal(ipDataLength, 0, 0, &msg);
                     CharString_appendP(PSTR(") '"), &msg);
                     CharString_appendCS(&SIM800Response, &msg);
                     CharString_appendC('\'', &msg);
                     Console_printCS(&msg);
+#endif
 
                     if (ipDataCallback != 0) {
                         ipDataCallback(&SIM800Response);
@@ -662,9 +685,11 @@ static void processResponseBytes (void)
                     // got raw data line
                     if ((latestPlusMessage == pm_CMGL) ||
                         (latestPlusMessage == pm_CMGR)) {
+#if DEBUG_TRACE
                         Console_printCS(&smsPhoneNumber);
                         Console_printCS(&SIM800Response);
-                        
+#endif
+
                         if (smsMessageReceivedCallback != 0) {
                             smsMessageReceivedCallback(
                                 smsMsgID, &smsMsgStatus, &smsPhoneNumber, &SIM800Response);
@@ -960,7 +985,9 @@ void SIM800_setPromptCallback (
 void SIM800_sendString (
     const char* str)
 {
+#if DEBUG_TRACE
     Console_print(str);
+#endif
 
     SoftwareSerialTx_send(TX_CHAN_INDEX, str);
 }
@@ -968,7 +995,9 @@ void SIM800_sendString (
 void SIM800_sendStringP (
     PGM_P str)
 {
+#if DEBUG_TRACE
     Console_printP(str);
+#endif
 
     SoftwareSerialTx_sendP(TX_CHAN_INDEX, str);
 }

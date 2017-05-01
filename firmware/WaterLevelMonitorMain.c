@@ -24,6 +24,7 @@
 #include "SoftwareSerialRx0.h"
 #include "SoftwareSerialRx2.h"
 #include "SoftwareSerialTx.h"
+#include "WaterLevelMonitor.h"
 #include "RAMSentinel.h"
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -44,6 +45,7 @@ static void Initialize (void)
     CellularComm_Initialize();
     CellularTCPIP_Initialize();
     TCPIPConsole_Initialize();
+    WaterLevelMonitor_Initialize();
     RAMSentinel_Initialize();
 }
  
@@ -64,6 +66,7 @@ int main (void)
         Console_task();
         TCPIPConsole_task();
         CellularComm_task();
+        WaterLevelMonitor_task();
         if (!RAMSentinel_sentinelIntact()) {
             Console_printP(PSTR("stack collision!"));
             SystemTime_commenceShutdown();

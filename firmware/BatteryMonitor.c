@@ -16,9 +16,9 @@
 
 #define BATTERY_ADC_CHANNEL ADC_SINGLE_ENDED_INPUT_ADC0
 
-#define BATTERY_DIVIDER_R1 6.72
+#define BATTERY_DIVIDER_R1 9.71
 #define BATTERY_DIVIDER_R2 21.69
-#define REFERENCE_VOLTAGE 1.1
+#define REFERENCE_VOLTAGE 3.368
 
 #define RESISTOR_DIVIDER_COUNTS(VIN, REF, R1, R2) ((uint16_t)((((R1/(R1+R2))*VIN)/REF)*1024+0.5))
 #define BATTERY_VOLTAGE_COUNTS(VIN) RESISTOR_DIVIDER_COUNTS(VIN, REFERENCE_VOLTAGE, BATTERY_DIVIDER_R1, BATTERY_DIVIDER_R2)
@@ -28,7 +28,7 @@
 
 #define RESOLUTION 1000
 #define SCALE 100
-#define NUMERATOR (((BATTERY_DIVIDER_R1 + BATTERY_DIVIDER_R2) / BATTERY_DIVIDER_R1) * (1.1 / 1024.0) * RESOLUTION * SCALE)
+#define NUMERATOR (((BATTERY_DIVIDER_R1 + BATTERY_DIVIDER_R2) / BATTERY_DIVIDER_R1) * (REFERENCE_VOLTAGE / 1024.0) * RESOLUTION * SCALE)
 
 #define BATTERY_VOLTAGE_SAMPLES 10
 // sample 10 times per second (10 1/100ths)
@@ -54,7 +54,7 @@ void BatteryMonitor_Initialize (void)
     DataHistory_clear(&batteryVoltageHistory);
 
     // set up the ADC channel for measuring battery voltage
-    ADCManager_setupChannel(BATTERY_ADC_CHANNEL, ADC_VOLTAGE_REF_INTERNAL_1V1, false);
+    ADCManager_setupChannel(BATTERY_ADC_CHANNEL, ADC_VOLTAGE_REF_AVCC, false);
 }
 
 BatteryMonitor_batteryStatus BatteryMonitor_currentStatus (void)
