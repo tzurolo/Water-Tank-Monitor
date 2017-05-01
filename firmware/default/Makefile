@@ -28,6 +28,9 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 LDFLAGS = $(COMMON)
 LDFLAGS += -Wl,-Map,WaterLevelMonitor.map
 
+## Flag to prevent the 'count leading zeros' table from consuming 256 bytes of RAM
+LIBS = -lm
+
 
 ## Intel Hex file production flags
 HEX_FLASH_FLAGS = -R .eeprom
@@ -41,8 +44,9 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 INCLUDES = -I"C:\WinAVR-20100110\avr\include" -I"C:\WinAVR-20100110\avr\bin" -I".." 
 
 ## Objects that must be built in order to link
-OBJECTS = WaterLevelMonitorMain.o SystemTime.o ADCManager.o DataHistory.o \
+OBJECTS = WaterLevelMonitorMain.o WaterLevelMonitor.o \
         CommandProcessor.o EEPROMStorage.o Console.o \
+        SystemTime.o ADCManager.o DataHistory.o \
         BatteryMonitor.o InternalTemperatureMonitor.o UltrasonicSensorMonitor.o \
         CellularComm_SIM800.o CellularTCPIP_SIM800.o TCPIPConsole.o SIM800.o \
         SoftwareSerialTx.o SoftwareSerialRx0.o SoftwareSerialRx2.o \
@@ -58,6 +62,9 @@ all: $(TARGET) WaterLevelMonitor.hex WaterLevelMonitor.eep size
 
 ## Compile
 WaterLevelMonitorMain.o: ../WaterLevelMonitorMain.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+WaterLevelMonitor.o: ../WaterLevelMonitor.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 SystemTime.o: ../SystemTime.c
