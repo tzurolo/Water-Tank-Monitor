@@ -66,7 +66,7 @@ int main (void)
         Console_task();
         TCPIPConsole_task();
         CellularComm_task();
-        WaterLevelMonitor_task();
+        //WaterLevelMonitor_task();
         if (!RAMSentinel_sentinelIntact()) {
             Console_printP(PSTR("stack collision!"));
             SystemTime_commenceShutdown();

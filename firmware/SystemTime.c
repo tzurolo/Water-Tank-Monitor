@@ -8,6 +8,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#include <avr/power.h>
+#include <avr/sleep.h>
 #include "CellularComm_SIM800.h"
 #include "StringUtils.h"
 #include "Console.h"
@@ -91,6 +93,52 @@ bool SystemTime_timeHasArrived (
     return timeHasArrived;
 }
 
+void SystemTime_sleepFor (
+    const uint16_t seconds)
+{
+    uint16_t secondsRemaining = seconds;
+    while (secondsRemaining > 0) {
+        uint8_t wdtTimeout;
+        uint8_t secondsThisLoop;
+        if (secondsRemaining >= 8) {
+            wdtTimeout = WDTO_8S;
+            secondsThisLoop = 8;
+        } else if (secondsRemaining >= 4) {
+            wdtTimeout = WDTO_4S;
+            secondsThisLoop = 4;
+        } else if (secondsRemaining >= 2) {
+            wdtTimeout = WDTO_2S;
+            secondsThisLoop = 2;
+        } else {
+            wdtTimeout = WDTO_1S;
+            secondsThisLoop = 1;
+        }
+            secondsRemaining -= secondsThisLoop;
+            ADCSRA &= ~(1 << ADEN);
+            wdt_enable(wdtTimeout);
+            WDTCSR |= (1 << WDIE);
+             set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+              cli();
+              hundredthsSinceReset += secondsThisLoop * 100;
+                sleep_enable();
+                sleep_bod_disable();
+                power_all_disable();
+
+                // disable all digital inputs
+                DIDR0 = 0x3F;
+                DIDR1 = 3;
+                // turn off all pullups
+                PORTD = 0;
+
+              sei();
+                sleep_cpu();
+                sleep_disable();
+              sei();
+
+    }
+    power_all_enable();
+}
+
 void SystemTime_commenceShutdown (void)
 {
     shuttingDown = true;
@@ -164,4 +212,8 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
         notificationFunction();
     }
 
+}
+
+ISR(WDT_vect, ISR_BLOCK)
+{
 }

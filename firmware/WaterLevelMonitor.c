@@ -1,15 +1,11 @@
 //
-//  LED Lighting UPS monitor
+//  Water Level Monitor
 //
-//      uses the hardware UART to communicate with LED lighting UPS
+//  Main logic of monitor
 //      use the TCPIP Console to communicate with the remote host
 //
 //
 #include "WaterLevelMonitor.h"
-
-#include <avr/power.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
 
 #include "SystemTime.h"
 #include "EEPROMStorage.h"
@@ -137,26 +133,10 @@ void WaterLevelMonitor_task (void)
             DDRC |= (1 << PC5);
             PORTC &= ~(1 << PC5);
 
+            // disable ADC (move to ADCManager)
             ADCSRA &= ~(1 << ADEN);
-            wdt_enable(WDTO_8S);
-            // WDTCSR |= (1 << WDIE);
-            do {
-              set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-              cli();
-                sleep_enable();
-                sleep_bod_disable();
-                power_all_disable();
-                // disable all digital inputs
-                DIDR0 = 0x3F;
-                DIDR1 = 3;
-                // turn off all pullups
-                PORTD = 0;
 
-              sei();
-                sleep_cpu();
-                sleep_disable();
-              sei();
-            }  while (0);
+            SystemTime_sleepFor(10);
             break;
     }
 }

@@ -43,6 +43,10 @@ extern void SystemTime_futureTime (
 extern bool SystemTime_timeHasArrived (
     const SystemTime_t* time);
 
+// sleep for up to 18 hours
+extern void SystemTime_sleepFor (
+    const uint16_t seconds);
+
 extern void SystemTime_commenceShutdown (void);
 extern bool SystemTime_shuttingDown (void);
 

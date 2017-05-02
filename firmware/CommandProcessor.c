@@ -333,26 +333,12 @@ void CommandProcessor_processCommand (
             }
         } else if (strcasecmp_P(cmdToken, PSTR("sleep")) == 0) {
             //clock_prescale_set(clock_div_256);
-            ADCSRA &= ~(1 << ADEN);
-            wdt_enable(WDTO_8S);
-            // WDTCSR |= (1 << WDIE);
-            do {
-              set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-              cli();
-                sleep_enable();
-                sleep_bod_disable();
-                power_all_disable();
-                // disable all digital inputs
-                DIDR0 = 0x3F;
-                DIDR1 = 3;
-                // turn off all pullups
-                PORTD = 0;
-
-              sei();
-                sleep_cpu();
-                sleep_disable();
-              sei();
-            }  while (0);
+            uint16_t sleepTime = 8;
+            cmdToken = strtok(NULL, tokenDelimiters);
+            if (cmdToken != NULL) {
+                sleepTime = atoi(cmdToken);
+            }
+            SystemTime_sleepFor(sleepTime);
         } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
             // reboot
             SystemTime_commenceShutdown();

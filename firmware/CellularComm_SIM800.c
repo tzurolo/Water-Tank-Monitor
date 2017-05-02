@@ -29,7 +29,7 @@
 // if the state machine is in the same state for more than
 // this many hundredths of a second (such as if the cell module freezes up)
 // the system will commence shutdown and reboot
-#define STATE_TIMEOUT_TIME 24000L
+#define STATE_TIMEOUT_TIME 12000L
 
 typedef enum SMSMessageStatus_enum {
     sms_unknown,
