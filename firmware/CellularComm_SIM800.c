@@ -89,7 +89,7 @@ typedef enum CellularCommState_enum {
 static bool ccEnabled;
 static CellularCommState ccState = ccs_initial;
 static CellularCommState prevCcState = ccs_initial;
-static SystemTime_t stateTimeoutTime = STATE_TIMEOUT_TIME;
+static SystemTime_t stateTimeoutTime;
 
 static SystemTime_t powerupResumeTime;
 static bool needToEnterPIN;
@@ -399,7 +399,7 @@ void CellularComm_Initialize (void)
     gotSignalQuality = false;
     signalQuality = 0;
     ccState = ccs_initial;
-    stateTimeoutTime = STATE_TIMEOUT_TIME;
+    SystemTime_futureTime(STATE_TIMEOUT_TIME, &stateTimeoutTime);
     gotCREG = false;
     gotCPIN = false;
     batteryChargeStatus = 0;
@@ -430,7 +430,7 @@ void CellularComm_task (void)
                 Console_printP(PSTR("Rebooting due to timeout in state:"));
                 Console_print(msgStr);
                 Console_printP(PSTR("timeout time:"));
-                ltoa(stateTimeoutTime, msgStr, 10);
+                ltoa(stateTimeoutTime.seconds, msgStr, 10);
                 Console_print(msgStr);
 
                 EEPROMStorage_setTimeoutState((int)ccState);

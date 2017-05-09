@@ -8,17 +8,18 @@
 
 #include <stdlib.h>
 #include <avr/pgmspace.h>
-
 #include <avr/power.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
 
+#include "ADCManager.h"
+#include "SoftwareSerialRx0.h"
+#include "SoftwareSerialRx2.h"
 #include "CellularComm_SIM800.h"
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
 #include "BatteryMonitor.h"
 #include "InternalTemperatureMonitor.h"
 #include "UltrasonicSensorMonitor.h"
+#include "WaterLevelMonitor.h"
 #include "SystemTime.h"
 #include "SIM800.h"
 #include "Console.h"
@@ -77,10 +78,6 @@ void CommandProcessor_createStatusMessage (
     CharString_t *msg)
 {
     CharString_clear(msg);
-    StringUtils_appendDecimal(CellularComm_currentTime()->hour, 2, 0, msg);
-    CharString_appendP(PSTR(":"), msg);
-    StringUtils_appendDecimal(CellularComm_currentTime()->minutes, 2, 0, msg);
-    CharString_appendP(PSTR(", up:"), msg);
     SystemTime_appendCurrentToString(msg);
     CharString_appendP(PSTR(", st:"), msg);
     StringUtils_appendDecimal(CellularComm_state(), 2, 0, msg);
@@ -138,21 +135,18 @@ void CommandProcessor_processCommand (
 	    CommandProcessor_createStatusMessage(
                 &CellularComm_outgoingSMSMessageText);
             postReply(statusToNumber);
-        } else if (strcasecmp_P(cmdToken, PSTR("led")) == 0) {
+        } else if (strcasecmp_P(cmdToken, PSTR("tset")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("status")) == 0) {
-//                    CharString_copyCS(LEDLightingUPSMonitor_UPSStatusStr(),
-//                        &CellularComm_outgoingSMSMessageText);
-//                    postReply(phoneNumber);
-                } else if (strcasecmp_P(cmdToken, PSTR("settings")) == 0) {
-//                    CharString_copyCS(LEDLightingUPSMonitor_UPSSettings(),
-//                        &CellularComm_outgoingSMSMessageText);
-//                    postReply(phoneNumber);
-                } else {
-//                    LEDLightingUPSMonitor_sendCommand(command + 4);
+                const uint32_t serverTime = atol(cmdToken);
+                if (serverTime != 0) {
+                    SystemTime_setTimeAdjustment(&serverTime);
                 }
             }
+        } else if (strcasecmp_P(cmdToken, PSTR("apply")) == 0) {
+            SystemTime_applyTimeAdjustment();
+        } else if (strcasecmp_P(cmdToken, PSTR("resume")) == 0) {
+            WaterLevelMonitor_resume();
         } else if (strcasecmp_P(cmdToken, PSTR("set")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
@@ -338,7 +332,27 @@ void CommandProcessor_processCommand (
             if (cmdToken != NULL) {
                 sleepTime = atoi(cmdToken);
             }
+            ADCSRA &= ~(1 << ADEN);
+            power_all_disable();
+            // disable all digital inputs
+            DIDR0 = 0x3F;
+            DIDR1 = 3;
+            // turn off all pullups
+            PORTB = 0;
+            PORTC = 0;
+            PORTD = 0;
             SystemTime_sleepFor(sleepTime);
+            power_all_enable();
+            ADCManager_Initialize();
+            BatteryMonitor_Initialize();
+            InternalTemperatureMonitor_Initialize();
+            UltrasonicSensorMonitor_Initialize();
+            SoftwareSerialRx0_Initialize();
+            SoftwareSerialRx2_Initialize();
+            Console_Initialize();
+            CellularComm_Initialize();
+            CellularTCPIP_Initialize();
+            TCPIPConsole_Initialize();
         } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
             // reboot
             SystemTime_commenceShutdown();

@@ -10,9 +10,10 @@
 #include <avr/wdt.h>
 #include <avr/power.h>
 #include <avr/sleep.h>
-#include "CellularComm_SIM800.h"
 #include "StringUtils.h"
 #include "Console.h"
+
+#define DEBUG_TRACE 1
 
 // when to reboot daily
 #define REBOOT_HOUR 12
@@ -21,14 +22,19 @@
 #define REBOOT_FULL_DAY 8640000L
 
 static volatile uint16_t tickCounter = 0;
-static volatile SystemTime_t hundredthsSinceReset = 0;
+static volatile SystemTime_t currentTime;
+static int32_t timeAdjustment;
+static uint16_t timeAsleep;
 static bool shuttingDown = false;
 static SystemTime_TickNotification notificationFunction;
 
 void SystemTime_Initialize (void)
 {
     tickCounter = 0;
-    hundredthsSinceReset = 0;
+    currentTime.seconds = 0;
+    currentTime.hundredths = 0;
+    timeAdjustment = 0;
+    timeAsleep = 0;
     notificationFunction = 0;
 
     // set up timer3 to fire interrupt once per second
@@ -46,18 +52,6 @@ void SystemTime_registerForTickNotification (
     notificationFunction = notificationFcn;
 }
 
-uint16_t currentTick (void)
-{
-    uint16_t tick;
-
-    char SREGSave = SREG;
-    cli();
-    tick = tickCounter;
-    SREG = SREGSave;
-
-    return tick;
-}
-
 void SystemTime_getCurrentTime (
     SystemTime_t *curTime)
 {
@@ -66,7 +60,8 @@ void SystemTime_getCurrentTime (
     char SREGSave;
     SREGSave = SREG;
     cli();
-    *curTime = hundredthsSinceReset;
+    curTime->seconds = currentTime.seconds;
+    curTime->hundredths = currentTime.hundredths;
     SREG = SREGSave;
 }
 
@@ -74,23 +69,56 @@ void SystemTime_futureTime (
     const int hundredthsFromNow,
     SystemTime_t* futureTime)
 {
-    SystemTime_t currentTime;
-    SystemTime_getCurrentTime(&currentTime);
-    *futureTime = currentTime + (SystemTime_t)hundredthsFromNow;
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+    SystemTime_copy(&curTime, futureTime);
+    futureTime->hundredths += hundredthsFromNow % 100;
+    if (futureTime->hundredths >= 100) {
+        // overflow - carry
+        futureTime->hundredths -= 100;
+        ++futureTime->seconds;
+    }
+    futureTime->seconds += hundredthsFromNow / 100;
 }
 
 bool SystemTime_timeHasArrived (
     const SystemTime_t* time)
 {
-    bool timeHasArrived = false;
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+    return (curTime.seconds > time->seconds)
+        ? true
+        : (curTime.seconds == time->seconds)
+            ? curTime.hundredths >= time->hundredths
+            : false;
+}
 
-    SystemTime_t currentTime;
-    SystemTime_getCurrentTime(&currentTime);
-    if (currentTime >= (*time)) {
-        timeHasArrived = true;
+void SystemTime_setTimeAdjustment (
+    const uint32_t *newTime)
+{
+    char SREGSave;
+    SREGSave = SREG;
+    cli();
+    timeAdjustment = *newTime - currentTime.seconds;
+    SREG = SREGSave;
+#if DEBUG_TRACE
+    {
+        CharString_define(20, msg);
+        CharString_copyP(PSTR("Tadj: "), &msg);
+        StringUtils_appendDecimal32(timeAdjustment, 1, 0, &msg);
+        Console_printCS(&msg);
     }
-    
-    return timeHasArrived;
+#endif
+}
+
+void SystemTime_applyTimeAdjustment ()
+{
+    char SREGSave;
+    SREGSave = SREG;
+    cli();
+    currentTime.seconds += timeAdjustment;
+    timeAdjustment = 0;
+    SREG = SREGSave;
 }
 
 void SystemTime_sleepFor (
@@ -114,21 +142,13 @@ void SystemTime_sleepFor (
             secondsThisLoop = 1;
         }
             secondsRemaining -= secondsThisLoop;
-            ADCSRA &= ~(1 << ADEN);
             wdt_enable(wdtTimeout);
             WDTCSR |= (1 << WDIE);
              set_sleep_mode(SLEEP_MODE_PWR_DOWN);
               cli();
-              hundredthsSinceReset += secondsThisLoop * 100;
+              currentTime.seconds += secondsThisLoop;
                 sleep_enable();
                 sleep_bod_disable();
-                power_all_disable();
-
-                // disable all digital inputs
-                DIDR0 = 0x3F;
-                DIDR1 = 3;
-                // turn off all pullups
-                PORTD = 0;
 
               sei();
                 sleep_cpu();
@@ -136,7 +156,7 @@ void SystemTime_sleepFor (
               sei();
 
     }
-    power_all_enable();
+    timeAsleep += seconds;
 }
 
 void SystemTime_commenceShutdown (void)
@@ -178,25 +198,27 @@ void SystemTime_task (void)
 void SystemTime_appendCurrentToString (
     CharString_t* timeString)
 {
-
     // get current time
-    SystemTime_t curTimeHundredths;
-    SystemTime_getCurrentTime(&curTimeHundredths);
-    uint32_t curTimeSeconds = curTimeHundredths / 100;
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+
+    // append day of week
+    const uint8_t dayOfWeek = (curTime.seconds / 86400L) % 7;
+    StringUtils_appendDecimal(dayOfWeek, 1, 0, timeString);
+    CharString_appendP(PSTR(":"), timeString);
 
     // append hours
-    const uint8_t hours = curTimeSeconds / 3600;
+    const uint8_t hours = (curTime.seconds / 3600) % 24;
     StringUtils_appendDecimal(hours, 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append minutes
-    curTimeSeconds = (curTimeSeconds % 3600);
-    const uint8_t minutes =  curTimeSeconds / 60;
+    const uint8_t minutes =  (curTime.seconds / 60) % 60;
     StringUtils_appendDecimal(minutes, 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append seconds
-    const uint8_t seconds = (curTimeSeconds % 60);
+    const uint8_t seconds = curTime.seconds % 60;
     StringUtils_appendDecimal(seconds, 2, 0, timeString);
 }
 
@@ -205,7 +227,11 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
     ++tickCounter;
     if (tickCounter > (SYSTEMTIME_TICKS_PER_SECOND / 100)) {
         tickCounter = 0;
-        ++hundredthsSinceReset;
+        ++currentTime.hundredths;
+        if (currentTime.hundredths >= 100) {
+            currentTime.hundredths = 0;
+            ++currentTime.seconds;
+        }
     }
 
     if (notificationFunction != NULL) {

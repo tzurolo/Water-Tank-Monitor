@@ -17,8 +17,11 @@
 
 #define SYSTEMTIME_TICKS_PER_SECOND 4800
 
-// time in 1/100 second
-typedef uint32_t SystemTime_t;
+// absolute time from beginning of GPS epoch
+typedef struct SystemTime_t_struct {
+    uint32_t seconds;   // seconds
+    uint8_t hundredths; // 1/100 second
+} SystemTime_t;
 
 // prototype for functions that clients supply to
 // get notification when a tick occurs
@@ -43,6 +46,15 @@ extern void SystemTime_futureTime (
 extern bool SystemTime_timeHasArrived (
     const SystemTime_t* time);
 
+// this function is used to resynchronize system time to
+// server time, but not immediately. This function stores
+// an offset from the given time to the current system time.
+// The adjustment takes effect when you call
+// SystemTime_applyTimeAdjustment()
+extern void SystemTime_setTimeAdjustment (
+    const uint32_t *newTime);
+extern void SystemTime_applyTimeAdjustment ();
+
 // sleep for up to 18 hours
 extern void SystemTime_sleepFor (
     const uint16_t seconds);
@@ -52,7 +64,15 @@ extern bool SystemTime_shuttingDown (void);
 
 extern void SystemTime_task (void);
 
-// writes current time as HH:MM:SS
+inline void SystemTime_copy (
+    const SystemTime_t *from,
+    SystemTime_t *to)
+{
+    to->seconds = from->seconds;
+    to->hundredths = from->hundredths;
+}
+
+// writes current time as W D HH:MM:SS
 extern void SystemTime_appendCurrentToString (
     CharString_t* timeString);
 

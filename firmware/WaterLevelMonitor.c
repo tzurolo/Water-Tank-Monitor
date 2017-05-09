@@ -40,8 +40,6 @@ static WaterLevelMonitorState wlmState;
 static SendDataStatus sendDataStatus;
 static SystemTime_t powerdownDelay;
 static bool gotDataFromHost;
-static int16_t latestBatteryVoltage;
-static int16_t latestTemperature;
 
 static void dataSender (void)
 {
@@ -67,9 +65,8 @@ void IPDataCallback (
 
 void WaterLevelMonitor_Initialize (void)
 {
-    wlmState = wlms_initial;
-
-    latestBatteryVoltage = 0;
+    // wlmState = wlms_initial;
+    wlmState = wlms_sleeping;
 }
 
 void WaterLevelMonitor_task (void)
@@ -118,25 +115,33 @@ void WaterLevelMonitor_task (void)
             break;
         case wlms_waitingForCellularCommDisable :
             if (!CellularComm_isEnabled()) {
-                // give it another second of power to properly close the connection
-                SystemTime_futureTime(100, &powerdownDelay);
+                // give it another two seconds of power to properly close the connection
+                SystemTime_futureTime(200, &powerdownDelay);
                 wlmState = wlms_poweringDown;
             }
             break;
         case wlms_poweringDown :
             if (SystemTime_timeHasArrived(&powerdownDelay)) {
+                // power down peripherals
+                DDRC |= (1 << PC5);
+                PORTC &= ~(1 << PC5);
+                Console_printP(PSTR("done"));
                 wlmState = wlms_sleeping;
             }
             break;
         case wlms_sleeping :
-            // power down peripherals
-            DDRC |= (1 << PC5);
-            PORTC &= ~(1 << PC5);
-
+#if 0
             // disable ADC (move to ADCManager)
             ADCSRA &= ~(1 << ADEN);
 
             SystemTime_sleepFor(10);
+#else
+#endif
             break;
     }
+}
+
+void WaterLevelMonitor_resume (void)
+{
+    wlmState = wlms_resuming;
 }

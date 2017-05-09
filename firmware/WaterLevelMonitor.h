@@ -1,8 +1,7 @@
 //
-//  LED Lighting UPS Monitor
+//  Water Level Monitor
 //
-//  Continually polls the LED Lighting UPS for current status and
-//  sends updates through the TCPIP Console
+//  Main logic of monitor
 //
 #ifndef WATERLEVELMONITOR_H
 #define WATERLEVELMONITOR_H
@@ -16,5 +15,7 @@ extern void WaterLevelMonitor_Initialize (void);
 
 // called in each iteration of the mainloop
 extern void WaterLevelMonitor_task (void);
+
+extern void WaterLevelMonitor_resume (void);
 
 #endif  // WATERLEVELMONITOR_H
