@@ -50,6 +50,8 @@ static bool rxBit (void)
 
 void SoftwareSerialRx0_Initialize (void)
 {
+    ByteQueue_clear(&rxQueue);
+
     // make rx pin an input and enable pullup
     SERIAL_RX_DDR &= (~(1 << SERIAL_RX_PIN));
     SERIAL_RX_PORT |= (1 << SERIAL_RX_PIN);

@@ -211,6 +211,13 @@ void CommandProcessor_processCommand (
                     CharString_appendP(PSTR("'"),
                         &CellularComm_outgoingSMSMessageText);
                     postReply(phoneNumber);
+                } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
+                    CharString_copyP(PSTR("Sample Interval:"),
+                        &CellularComm_outgoingSMSMessageText);
+                    StringUtils_appendDecimal(
+                        EEPROMStorage_sampleInterval(), 1, 0,
+                        &CellularComm_outgoingSMSMessageText);
+                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
                     CharString_clear(&CellularComm_outgoingSMSMessageText);
                     CharString_appendP(PSTR("Logging Interval:"),
@@ -332,6 +339,7 @@ void CommandProcessor_processCommand (
             if (cmdToken != NULL) {
                 sleepTime = atoi(cmdToken);
             }
+            // disable ADC (move to ADCManager)
             ADCSRA &= ~(1 << ADEN);
             power_all_disable();
             // disable all digital inputs

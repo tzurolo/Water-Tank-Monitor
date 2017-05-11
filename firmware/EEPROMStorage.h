@@ -55,6 +55,9 @@ extern void EEPROMStorage_setAPN (
     const char* APN);
 extern void EEPROMStorage_getAPN (
     char* APN);
+extern void EEPROMStorage_setSampleInterval (
+    const uint16_t updateInterval); // in seconds
+extern uint16_t EEPROMStorage_sampleInterval (void);
 extern void EEPROMStorage_setLoggingUpdateInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_LoggingUpdateInterval (void);

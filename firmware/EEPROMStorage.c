@@ -5,7 +5,7 @@
 #include "EEPROMStorage.h"
 
 #include "EEPROM_Util.h"
-#include "Console.h"
+#include "CharString.h"
 #include "avr/pgmspace.h"
 
 // This prevents the MSVC editor from tripping over EEMEM in definitions
@@ -19,7 +19,8 @@ uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as 
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 uint8_t EEMEM notification = 0;
-uint16_t EEMEM loggingUpdateInterval = 600;
+uint16_t EEMEM sampleInterval = 600;
+uint16_t EEMEM loggingUpdateInterval = 3600;
 uint8_t EEMEM timeoutState = 0;
 
 // filter parameters
@@ -56,7 +57,6 @@ void EEPROMStorage_Initialize (void)
     const uint8_t initLevel = (initFlag == 0xFF) ? 0 : initFlag;
 
     if (initLevel < 1) {
-        Console_printP(PSTR("re-initializing EEPROM"));
         // EE has not been initialized. Initialize now.
         CharString_define(40, stringBuffer);
 
@@ -73,7 +73,8 @@ void EEPROMStorage_Initialize (void)
 
         EEPROMStorage_setAPN("mobiledata");
 
-        EEPROMStorage_setLoggingUpdateInterval(600);
+        EEPROMStorage_setSampleInterval(60);
+        EEPROMStorage_setLoggingUpdateInterval(3600);
         EEPROMStorage_setThingspeak(false);
         CharString_copyP(thingspeakHostAddressP, &stringBuffer);
         EEPROMStorage_setThingspeakHostAddress(CharString_cstr(&stringBuffer));
@@ -182,6 +183,17 @@ void EEPROMStorage_getAPN (
     char* APN)
 {
     EEPROM_readString(apn, sizeof(apn), APN);
+}
+
+void EEPROMStorage_setSampleInterval (
+    const uint16_t interval)
+{
+    EEPROM_writeWord(&sampleInterval, interval);
+}
+
+uint16_t EEPROMStorage_sampleInterval (void)
+{
+    return EEPROM_readWord(&sampleInterval);
 }
 
 void EEPROMStorage_setLoggingUpdateInterval (

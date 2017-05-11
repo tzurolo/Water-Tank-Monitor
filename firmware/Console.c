@@ -24,6 +24,7 @@
 #define ESC_ERASE_LINE                  ANSI_ESCAPE_SEQUENCE("K")
 #define ESC_CURSOR_POS_RESTORE          ANSI_ESCAPE_SEQUENCE("u")
 
+const prog_char crP[] = {13,0};
 const prog_char crlfP[] = {13,10,0};
 
 // state variables
@@ -40,6 +41,9 @@ void Console_Initialize (void)
 {
     SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_c, 3);
     SoftwareSerialTx_enable(TX_CHAN_INDEX);
+    SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
+
+    SystemTime_futureTime(0, &nextStatusPrintTime); // start right away
 }
 
 void Console_task (void)
@@ -50,13 +54,8 @@ void Console_task (void)
         switch (cmdByte) {
             case '\r' : {
                 // command complete. execute it
+                SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
                 CommandProcessor_processCommand(CharString_cstr(&commandBuffer), "", "");
-
-#if SINGLE_SCREEN
-                 SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(2, 1));
-#endif
-                SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
-                SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
                 CharString_clear(&commandBuffer);
                 }
                 break;
@@ -71,26 +70,26 @@ void Console_task (void)
                 }
                 break;
         }
-		// echo current command
-#if SINGLE_SCREEN
-         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(1, 1));
-#endif
+        // echo current command
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crP);
         SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
-#if SINGLE_SCREEN
-         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
-#endif
+        SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
     }
 
     // display status
     if (consoleIsConnected() &&
         SystemTime_timeHasArrived(&nextStatusPrintTime)) {
-#if SINGLE_SCREEN
-         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS(3, 1));
-#endif
         CharString_define(120, statusMsg)
         CommandProcessor_createStatusMessage(&statusMsg);
+        SoftwareSerialTx_sendP(TX_CHAN_INDEX, crP);
         SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &statusMsg);
         SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
+
+        if (!CharString_isEmpty(&commandBuffer)) {
+            // echo current command
+            SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
+            SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
+        }
 
 	// schedule next display
 	SystemTime_futureTime(100, &nextStatusPrintTime);

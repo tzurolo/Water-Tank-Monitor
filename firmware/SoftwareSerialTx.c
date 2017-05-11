@@ -95,6 +95,7 @@ void SoftwareSerialTx_Initialize (
         case 0: channel->txQueue = &txQueue0;   break;
         case 1: channel->txQueue = &txQueue1;   break;
     }
+    ByteQueue_clear(channel->txQueue);
 
     SystemTime_registerForTickNotification(systemTimeTickTask);
 }

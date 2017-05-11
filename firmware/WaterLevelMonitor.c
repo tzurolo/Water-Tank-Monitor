@@ -31,7 +31,7 @@ typedef enum WaterLevelMonitorState_enum {
     wlms_waitingForHostData,
     wlms_waitingForCellularCommDisable,
     wlms_poweringDown,
-    wlms_sleeping
+    wlms_done
 } WaterLevelMonitorState;
 
 // state variables
@@ -65,8 +65,8 @@ void IPDataCallback (
 
 void WaterLevelMonitor_Initialize (void)
 {
-    // wlmState = wlms_initial;
-    wlmState = wlms_sleeping;
+    wlmState = wlms_initial;
+    // wlmState = wlms_done;
 }
 
 void WaterLevelMonitor_task (void)
@@ -125,20 +125,18 @@ void WaterLevelMonitor_task (void)
                 // power down peripherals
                 DDRC |= (1 << PC5);
                 PORTC &= ~(1 << PC5);
-                Console_printP(PSTR("done"));
-                wlmState = wlms_sleeping;
+
+                wlmState = wlms_done;
             }
             break;
-        case wlms_sleeping :
-#if 0
-            // disable ADC (move to ADCManager)
-            ADCSRA &= ~(1 << ADEN);
-
-            SystemTime_sleepFor(10);
-#else
-#endif
+        case wlms_done :
             break;
     }
+}
+
+bool WaterLevelMonitor_taskIsDone (void)
+{
+    return wlmState == wlms_done;
 }
 
 void WaterLevelMonitor_resume (void)
