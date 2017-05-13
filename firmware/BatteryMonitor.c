@@ -57,6 +57,11 @@ void BatteryMonitor_Initialize (void)
     ADCManager_setupChannel(BATTERY_ADC_CHANNEL, ADC_VOLTAGE_REF_AVCC, false);
 }
 
+bool BatteryMonitor_haveValidSample (void)
+{
+    return DataHistory_length(&batteryVoltageHistory) >= BATTERY_VOLTAGE_SAMPLES;
+}
+
 BatteryMonitor_batteryStatus BatteryMonitor_currentStatus (void)
 {
     return battStatus;

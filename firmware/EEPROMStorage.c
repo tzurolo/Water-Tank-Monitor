@@ -67,14 +67,14 @@ void EEPROMStorage_Initialize (void)
 	EEPROMStorage_setWaterTankFullDistance(30);
 
 	EEPROMStorage_setWaterHighNotificationLevel(90);
-	EEPROMStorage_setWaterLowNotificationLevel(33);
+	EEPROMStorage_setWaterLowNotificationLevel(45);
 
 	EEPROMStorage_setNotification(false);
 
         EEPROMStorage_setAPN("mobiledata");
 
-        EEPROMStorage_setSampleInterval(60);
-        EEPROMStorage_setLoggingUpdateInterval(3600);
+        EEPROMStorage_setSampleInterval(300);
+        EEPROMStorage_setLoggingUpdateInterval(1800);
         EEPROMStorage_setThingspeak(false);
         CharString_copyP(thingspeakHostAddressP, &stringBuffer);
         EEPROMStorage_setThingspeakHostAddress(CharString_cstr(&stringBuffer));

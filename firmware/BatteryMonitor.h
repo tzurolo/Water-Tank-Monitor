@@ -7,16 +7,18 @@
 #define BATTERYMONITOR_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
     bs_unknown,
-    bs_underVoltage,        // below minimun voltage (10.8V)
-    bs_lowVoltage,          // low (between 11 and 12V)
-    bs_goodVoltage,         // good (between 12 and 13V)
-    bs_fullVoltage          // full (over 13V)
+    bs_lowVoltage,          // low
+    bs_goodVoltage,         // good
+    bs_fullVoltage          // full
 } BatteryMonitor_batteryStatus;
 
 extern void BatteryMonitor_Initialize (void);
+
+extern bool BatteryMonitor_haveValidSample (void);
 
 extern BatteryMonitor_batteryStatus BatteryMonitor_currentStatus (void);
 

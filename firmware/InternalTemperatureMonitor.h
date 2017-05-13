@@ -7,8 +7,11 @@
 #define INTERNALTEMPMONITOR_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 extern void InternalTemperatureMonitor_Initialize (void);
+
+extern bool InternalTemperatureMonitor_haveValidSample (void);
 
 // temperature in units of degree C
 extern int16_t InternalTemperatureMonitor_currentTemperature (void);

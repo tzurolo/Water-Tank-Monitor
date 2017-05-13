@@ -82,10 +82,6 @@ int main (void)
             // apply adjustment from server time
             SystemTime_applyTimeAdjustment();
 
-            // compute how long to sleep until the next sample
-            uint16_t sampleInterval = EEPROMStorage_sampleInterval();
-            //nextSampleT = (floor((t + (sampleInterval / 2)) / sampleInterval) + 1) * sampleInterval;
-
             // disable ADC (move to ADCManager)
             ADCSRA &= ~(1 << ADEN);
             power_all_disable();
@@ -97,7 +93,22 @@ int main (void)
             PORTC = 0;
             PORTD = 0;
 
-            SystemTime_sleepFor(sampleInterval);
+            // compute how long to sleep until the next sample
+            const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            SystemTime_t nextSampleTime;
+            nextSampleTime.seconds =
+                (((curTime.seconds + (sampleInterval / 2)) / sampleInterval) + 1) * sampleInterval;
+            nextSampleTime.hundredths = 0;
+            int32_t sec32 = SystemTime_diffSec(&nextSampleTime, &curTime);
+            uint16_t sleepTime = (sec32 > 65535)
+                ? 65535
+                : (sec32 < 0)
+                    ? 0
+                    : ((uint16_t)sec32);
+
+            SystemTime_sleepFor(sleepTime);
 
             power_all_enable();
             ADCManager_Initialize();

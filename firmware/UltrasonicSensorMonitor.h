@@ -7,8 +7,11 @@
 #define ULTRASONICSENSORMONITOR_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 extern void UltrasonicSensorMonitor_Initialize (void);
+
+extern bool UltrasonicSensorMonitor_haveValidSample (void);
 
 // distance in units of CM
 extern int16_t UltrasonicSensorMonitor_currentDistance (void);

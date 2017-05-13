@@ -10,6 +10,9 @@
 #include "SystemTime.h"
 #include "EEPROMStorage.h"
 //#include "Thingspeak.h"
+#include "BatteryMonitor.h"
+#include "InternalTemperatureMonitor.h"
+#include "UltrasonicSensorMonitor.h"
 #include "CommandProcessor.h"
 #include "Console.h"
 #include "StringUtils.h"
@@ -26,6 +29,7 @@ typedef enum SendDataStatus_enum {
 typedef enum WaterLevelMonitorState_enum {
     wlms_initial,
     wlms_resuming,
+    wlms_waitingForSensorData,
     wlms_waitingForConnection,
     wlms_sendingData,
     wlms_waitingForHostData,
@@ -80,12 +84,35 @@ void WaterLevelMonitor_task (void)
             DDRC |= (1 << PC5);
             PORTC |= (1 << PC5);
 
-            gotDataFromHost = false;
-            CellularComm_Enable();
-            TCPIPConsole_setDataReceiver(IPDataCallback);
-            TCPIPConsole_enable(false);
+            // determine if it's time to log to server
+            const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
+            const uint16_t logInterval = EEPROMStorage_LoggingUpdateInterval();
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            if (((curTime.seconds + (sampleInterval / 2)) % logInterval) < sampleInterval) {
+                // time to log to server
+                gotDataFromHost = false;
+                CellularComm_Enable();
+                TCPIPConsole_setDataReceiver(IPDataCallback);
+                TCPIPConsole_enable(false);
 
-            wlmState = wlms_waitingForConnection;
+                wlmState = wlms_waitingForConnection;
+            } else {
+                // just a sample interval
+                wlmState = wlms_waitingForSensorData;
+            }
+            break;
+        case wlms_waitingForSensorData :
+            if (BatteryMonitor_haveValidSample() &&
+                InternalTemperatureMonitor_haveValidSample() &&
+                UltrasonicSensorMonitor_haveValidSample()) {
+                CharString_define(10, usMsg);
+                CharString_appendP(PSTR("U:"), &usMsg);
+                StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, &usMsg);
+                Console_printCS(&usMsg);
+                SystemTime_futureTime(50, &powerdownDelay);
+                wlmState = wlms_poweringDown;
+            }
             break;
         case wlms_waitingForConnection :
             if (TCPIPConsole_readyToSend()) {

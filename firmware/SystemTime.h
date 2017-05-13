@@ -72,6 +72,14 @@ inline void SystemTime_copy (
     to->hundredths = from->hundredths;
 }
 
+// returns t1.seconds - t2.seconds
+inline int32_t SystemTime_diffSec (
+    const SystemTime_t *t1,
+    const SystemTime_t *t2)
+{
+    return t1->seconds - t2->seconds;
+}
+
 // writes current time as W D HH:MM:SS
 extern void SystemTime_appendCurrentToString (
     CharString_t* timeString);

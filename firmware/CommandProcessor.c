@@ -155,6 +155,12 @@ void CommandProcessor_processCommand (
                     if (cmdToken != NULL) {
                         EEPROMStorage_setAPN(cmdToken);
                     }
+                } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
+                    cmdToken = strtok(NULL, tokenDelimiters);
+                    if (cmdToken != NULL) {
+                        const uint16_t sampleInterval = atoi(cmdToken);
+                        EEPROMStorage_setSampleInterval(sampleInterval);
+                    }
                 } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
                     cmdToken = strtok(NULL, tokenDelimiters);
                     if (cmdToken != NULL) {

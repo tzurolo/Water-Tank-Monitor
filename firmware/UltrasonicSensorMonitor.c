@@ -15,7 +15,7 @@
 #include "StringUtils.h"
 #include "DataHistory.h"
 
-#define SENSOR_SAMPLES 10
+#define SENSOR_SAMPLES 5
 
 CharString_define(16, sensorDataStr);
 DataHistory_define(SENSOR_SAMPLES, distanceHistory);
@@ -25,6 +25,11 @@ void UltrasonicSensorMonitor_Initialize (void)
     UART_init(true);
     UART_set_baud_rate(9600);
     DataHistory_clear(&distanceHistory);
+}
+
+bool UltrasonicSensorMonitor_haveValidSample (void)
+{
+    return DataHistory_length(&distanceHistory) >= SENSOR_SAMPLES;
 }
 
 int16_t UltrasonicSensorMonitor_currentDistance (void)

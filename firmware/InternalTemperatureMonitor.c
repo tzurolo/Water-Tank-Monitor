@@ -45,6 +45,11 @@ void InternalTemperatureMonitor_Initialize (void)
     ADCManager_setupChannel(SENSOR_ADC_CHANNEL, ADC_VOLTAGE_REF_INTERNAL_1V1, false);
 }
 
+bool InternalTemperatureMonitor_haveValidSample (void)
+{
+    return DataHistory_length(&temperatureHistory) >= SENSOR_SAMPLES;
+}
+
 int16_t InternalTemperatureMonitor_currentTemperature (void)
 {
     uint16_t avgTemperature = 0;
