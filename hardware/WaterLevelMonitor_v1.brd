@@ -146,7 +146,7 @@
 <wire x1="0" y1="49.52" x2="0" y2="0" width="0" layer="20"/>
 <text x="40.005" y="48.895" size="1.778" layer="21" rot="R180">Water Level Monitor
 V1 June 2017</text>
-<text x="80.01" y="25.4" size="1.27" layer="21" font="vector" rot="R180">2N3904</text>
+<text x="79.375" y="26.035" size="1.27" layer="21" font="vector" rot="R180">2N3904</text>
 <text x="83.185" y="22.86" size="1.27" layer="21" font="vector">NDP6020P</text>
 <text x="58.42" y="23.495" size="1.27" layer="21" font="vector">100uF</text>
 <text x="6.985" y="29.845" size="1.3208" layer="21" font="vector" distance="90" align="bottom-right">MISO
@@ -204,10 +204,10 @@ Bat</text>
 <text x="24.13" y="19.05" size="1.3208" layer="21" font="vector" distance="90">VSEN
 GND
 VCC</text>
-<text x="50.165" y="37.465" size="1.3208" layer="21" font="vector" distance="90">PB0
-PD7
+<text x="50.165" y="37.465" size="1.3208" layer="21" font="vector" distance="90">PD7
 PD6</text>
 <text x="88.265" y="10.795" size="1.27" layer="21" font="vector" rot="R180" align="top-right">+VBAT</text>
+<text x="48.895" y="42.545" size="1.3208" layer="21" font="vector" distance="90">PB0</text>
 </plain>
 <libraries>
 <library name="SparkFun-Passives">
@@ -2315,7 +2315,10 @@ design rules under a new name.</description>
 <attribute name="NAME" x="70.5866" y="19.1516" size="0.9906" layer="25" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="70.7136" y="22.6314" size="0.9906" layer="27" ratio="10" rot="R180"/>
 </element>
-<element name="R4" library="resistor" package="0204/5" value="22K" x="69.85" y="27.94"/>
+<element name="R4" library="resistor" package="0204/5" value="22K" x="69.85" y="27.94" smashed="yes">
+<attribute name="NAME" x="69.1134" y="25.9334" size="0.9906" layer="25" ratio="10"/>
+<attribute name="VALUE" x="67.7164" y="25.6286" size="0.9906" layer="27" ratio="10"/>
+</element>
 <element name="R5" library="resistor" package="0204/5" value="10K" x="64.135" y="30.48" smashed="yes" rot="R270">
 <attribute name="NAME" x="65.3034" y="32.4866" size="0.9906" layer="25" ratio="10" rot="R270"/>
 <attribute name="VALUE" x="61.8236" y="32.6136" size="0.9906" layer="27" ratio="10" rot="R270"/>
@@ -2435,9 +2438,9 @@ design rules under a new name.</description>
 <attribute name="NAME" x="47.7266" y="47.7266" size="0.9906" layer="25" ratio="10" rot="R180"/>
 <attribute name="VALUE" x="49.1236" y="48.0314" size="0.9906" layer="27" ratio="10" rot="R180"/>
 </element>
-<element name="LED1" library="led" package="LED5MM" value="" x="52.705" y="45.72" smashed="yes">
-<attribute name="NAME" x="56.6166" y="43.815" size="1.27" layer="25" ratio="10" rot="R90"/>
-<attribute name="VALUE" x="55.9054" y="43.9166" size="1.27" layer="27" ratio="10"/>
+<element name="LED1" library="led" package="LED5MM" value="" x="53.975" y="45.72" smashed="yes">
+<attribute name="NAME" x="54.5084" y="44.45" size="1.27" layer="25" ratio="10" rot="R270"/>
+<attribute name="VALUE" x="57.1754" y="43.9166" size="1.27" layer="27" ratio="10"/>
 </element>
 <element name="J19" library="SparkFun-Connectors" package="1X01_NO_SILK" value="" x="41.91" y="45.72" smashed="yes">
 <attribute name="NAME" x="37.3888" y="45.0088" size="1.27" layer="25"/>
@@ -2751,9 +2754,9 @@ design rules under a new name.</description>
 <contactref element="J1" pad="5"/>
 <contactref element="U1" pad="1"/>
 <wire x1="39.37" y1="10.16" x2="38.1" y2="10.16" width="0.254" layer="1"/>
-<wire x1="38.1" y1="10.16" x2="34.29" y2="13.97" width="0.254" layer="1"/>
-<wire x1="34.29" y1="13.97" x2="34.29" y2="17.78" width="0.254" layer="1"/>
-<wire x1="34.29" y1="17.78" x2="33.02" y2="19.05" width="0.254" layer="1"/>
+<wire x1="38.1" y1="10.16" x2="35.56" y2="12.7" width="0.254" layer="1"/>
+<wire x1="35.56" y1="12.7" x2="35.56" y2="16.51" width="0.254" layer="1"/>
+<wire x1="35.56" y1="16.51" x2="33.02" y2="19.05" width="0.254" layer="1"/>
 <wire x1="22.225" y1="33.02" x2="22.225" y2="32.385" width="0.254" layer="1"/>
 <wire x1="22.225" y1="32.385" x2="24.13" y2="30.48" width="0.254" layer="1"/>
 <wire x1="24.13" y1="30.48" x2="25.4" y2="30.48" width="0.254" layer="1"/>
@@ -2974,7 +2977,7 @@ design rules under a new name.</description>
 <signal name="N$12">
 <contactref element="R6" pad="1"/>
 <contactref element="LED1" pad="A"/>
-<wire x1="49.53" y1="45.72" x2="51.435" y2="45.72" width="0.254" layer="1"/>
+<wire x1="49.53" y1="45.72" x2="52.705" y2="45.72" width="0.254" layer="1"/>
 </signal>
 </signals>
 </board>
