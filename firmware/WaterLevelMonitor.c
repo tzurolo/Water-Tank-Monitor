@@ -4,6 +4,8 @@
 //  Main logic of monitor
 //      use the TCPIP Console to communicate with the remote host
 //
+//  Pin usage:
+//      PC1 - power switch
 //
 #include "WaterLevelMonitor.h"
 
@@ -81,8 +83,8 @@ void WaterLevelMonitor_task (void)
             break;
         case wlms_resuming :
             // turn on peripheral power
-            DDRC |= (1 << PC5);
-            PORTC |= (1 << PC5);
+            DDRC |= (1 << PC1);
+            PORTC |= (1 << PC1);
 
             // determine if it's time to log to server
             const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
@@ -150,8 +152,8 @@ void WaterLevelMonitor_task (void)
         case wlms_poweringDown :
             if (SystemTime_timeHasArrived(&powerdownDelay)) {
                 // power down peripherals
-                DDRC |= (1 << PC5);
-                PORTC &= ~(1 << PC5);
+                DDRC |= (1 << PC1);
+                PORTC &= ~(1 << PC1);
 
                 wlmState = wlms_done;
             }

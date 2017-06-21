@@ -5,10 +5,10 @@
 //  software serial with the same pinout as the Adafruit Feather FONA
 
 //  I/O Pin usage
-//      D2 (Rx)   -> TX0
-//      D3 (Tx)   -> RX0
-//      D4        -> OnKey
-//      D5        -> Power Status (optional)
+//      D2        -> Power Status (optional)
+//      D3 (Rx)   -> TX0
+//      D4 (Tx)   -> RX0
+//      D5        -> OnKey
 //
 #include "SIM800.h"
 
@@ -27,11 +27,11 @@
 
 #define TX_CHAN_INDEX 0
 
-#define ONKEY_PIN           PD4
+#define ONKEY_PIN           PD5
 #define ONKEY_OUTPORT       PORTD
 #define ONKEY_DIR           DDRD
 
-#define POWERSTATE_PIN      PD5
+#define POWERSTATE_PIN      PD2
 #define POWERSTATE_INPORT   PIND
 #define POWERSTATE_DIR      DDRD
 
@@ -781,7 +781,7 @@ void SIM800_Initialize (void)
     CBCCallback = 0;
     promptCallback = 0;
 
-    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_d, 3);
+    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_d, 4);
     SoftwareSerialTx_enable(TX_CHAN_INDEX);
 }
 

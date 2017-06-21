@@ -35,7 +35,9 @@ uint8_t EEMEM lowNotification = 50;
 uint8_t EEMEM highNotification = 90;
 
 // internet
-char EEMEM apn[32] = "mobiledata";
+//char EEMEM apn[32] = "mobiledata";    // T-Mobile
+char EEMEM apn[32]  = "hologram";        // hologram.io
+char apnP[] PROGMEM = "hologram";
 
 // thingspeak
 uint8_t EEMEM thingspeakEnabled = 0;
@@ -53,8 +55,8 @@ uint16_t EEMEM ipConsoleServerPort = 3000;
 void EEPROMStorage_Initialize (void)
 {
     // check if EE has been initialized
-    const uint8_t initFlag = EEPROM_read(&initFlag);
-    const uint8_t initLevel = (initFlag == 0xFF) ? 0 : initFlag;
+    const uint8_t iFlag = EEPROM_read(&initFlag);
+    const uint8_t initLevel = (iFlag == 0xFF) ? 0 : iFlag;
 
     if (initLevel < 1) {
         // EE has not been initialized. Initialize now.
@@ -71,7 +73,8 @@ void EEPROMStorage_Initialize (void)
 
 	EEPROMStorage_setNotification(false);
 
-        EEPROMStorage_setAPN("mobiledata");
+        CharString_copyP(apnP, &stringBuffer);
+        EEPROMStorage_setAPN(CharString_cstr(&stringBuffer));
 
         EEPROMStorage_setSampleInterval(300);
         EEPROMStorage_setLoggingUpdateInterval(1800);
@@ -91,7 +94,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setIPConsoleServerPort(3000);
 
         // indicate EE has been initialized
-        EEPROM_write(0, 1);
+        EEPROM_write(&initFlag, 1);
     }
 }
 
