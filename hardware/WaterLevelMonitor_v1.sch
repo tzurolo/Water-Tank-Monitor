@@ -8874,80 +8874,6 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </deviceset>
 </devicesets>
 </library>
-<library name="con-wago-500">
-<description>&lt;b&gt;Wago Screw Clamps&lt;/b&gt;&lt;p&gt;
-Grid 5.00 mm&lt;p&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
-<package name="W237-102">
-<description>&lt;b&gt;WAGO SCREW CLAMP&lt;/b&gt;</description>
-<wire x1="-3.491" y1="-2.286" x2="-1.484" y2="-0.279" width="0.254" layer="51"/>
-<wire x1="1.488" y1="-2.261" x2="3.469" y2="-0.254" width="0.254" layer="51"/>
-<wire x1="-4.989" y1="-5.461" x2="4.993" y2="-5.461" width="0.1524" layer="21"/>
-<wire x1="4.993" y1="3.734" x2="4.993" y2="3.531" width="0.1524" layer="21"/>
-<wire x1="4.993" y1="3.734" x2="-4.989" y2="3.734" width="0.1524" layer="21"/>
-<wire x1="-4.989" y1="-5.461" x2="-4.989" y2="-3.073" width="0.1524" layer="21"/>
-<wire x1="-4.989" y1="-3.073" x2="-3.389" y2="-3.073" width="0.1524" layer="21"/>
-<wire x1="-3.389" y1="-3.073" x2="-1.611" y2="-3.073" width="0.1524" layer="51"/>
-<wire x1="-1.611" y1="-3.073" x2="1.615" y2="-3.073" width="0.1524" layer="21"/>
-<wire x1="3.393" y1="-3.073" x2="4.993" y2="-3.073" width="0.1524" layer="21"/>
-<wire x1="-4.989" y1="-3.073" x2="-4.989" y2="3.531" width="0.1524" layer="21"/>
-<wire x1="4.993" y1="-3.073" x2="4.993" y2="-5.461" width="0.1524" layer="21"/>
-<wire x1="-4.989" y1="3.531" x2="4.993" y2="3.531" width="0.1524" layer="21"/>
-<wire x1="-4.989" y1="3.531" x2="-4.989" y2="3.734" width="0.1524" layer="21"/>
-<wire x1="4.993" y1="3.531" x2="4.993" y2="-3.073" width="0.1524" layer="21"/>
-<wire x1="1.615" y1="-3.073" x2="3.393" y2="-3.073" width="0.1524" layer="51"/>
-<circle x="-2.5" y="-1.27" radius="1.4986" width="0.1524" layer="51"/>
-<circle x="-2.5" y="2.2098" radius="0.508" width="0.1524" layer="21"/>
-<circle x="2.5038" y="-1.27" radius="1.4986" width="0.1524" layer="51"/>
-<circle x="2.5038" y="2.2098" radius="0.508" width="0.1524" layer="21"/>
-<pad name="1" x="-2.5" y="-1.27" drill="1.1938" shape="long" rot="R90"/>
-<pad name="2" x="2.5" y="-1.27" drill="1.1938" shape="long" rot="R90"/>
-<text x="-5.04" y="-7.62" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
-<text x="-3.8462" y="-5.0038" size="1.27" layer="25" ratio="10">&gt;NAME</text>
-<text x="-4.532" y="0.635" size="1.27" layer="21" ratio="10">1</text>
-<text x="0.421" y="0.635" size="1.27" layer="21" ratio="10">2</text>
-</package>
-</packages>
-<symbols>
-<symbol name="KL">
-<circle x="1.27" y="0" radius="1.27" width="0.254" layer="94"/>
-<text x="0" y="0.889" size="1.778" layer="95" rot="R180">&gt;NAME</text>
-<pin name="KL" x="5.08" y="0" visible="off" length="short" direction="pas" rot="R180"/>
-</symbol>
-<symbol name="KL+V">
-<circle x="1.27" y="0" radius="1.27" width="0.254" layer="94"/>
-<text x="-2.54" y="-3.683" size="1.778" layer="96">&gt;VALUE</text>
-<text x="0" y="0.889" size="1.778" layer="95" rot="R180">&gt;NAME</text>
-<pin name="KL" x="5.08" y="0" visible="off" length="short" direction="pas" rot="R180"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="W237-102" prefix="X" uservalue="yes">
-<description>&lt;b&gt;WAGO SCREW CLAMP&lt;/b&gt;</description>
-<gates>
-<gate name="-1" symbol="KL" x="0" y="5.08" addlevel="always"/>
-<gate name="-2" symbol="KL+V" x="0" y="0" addlevel="always"/>
-</gates>
-<devices>
-<device name="" package="W237-102">
-<connects>
-<connect gate="-1" pin="KL" pad="1"/>
-<connect gate="-2" pin="KL" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MF" value="" constant="no"/>
-<attribute name="MPN" value="237-102" constant="no"/>
-<attribute name="OC_FARNELL" value="unknown" constant="no"/>
-<attribute name="OC_NEWARK" value="70K9898" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
 <library name="adafruit">
 <packages>
 <package name="SMADIODE">
@@ -13467,10 +13393,8 @@ Source: www.kingbright.com</description>
 <part name="Q3" library="transistor-power" deviceset="PMOSFET_P" device="TO220BV" value="NDP6020P"/>
 <part name="Q2" library="SparkFun-DiscreteSemi" deviceset="TRANSISTOR_NPN" device="TO-92-AMMO" value="2N3904"/>
 <part name="R2" library="resistor" deviceset="R-US_" device="0204/5" value="10K"/>
-<part name="X1" library="con-wago-500" deviceset="W237-102" device=""/>
 <part name="R1" library="resistor" deviceset="R-US_" device="0204/5" value="10K"/>
 <part name="GND9" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
-<part name="GND11" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="C9" library="SparkFun-Passives" deviceset="CAP" device="PTH1" value="0.01uF"/>
 <part name="R4" library="resistor" deviceset="R-US_" device="0204/5" value="22K"/>
 <part name="R5" library="resistor" deviceset="R-US_" device="0204/5" value="10K"/>
@@ -13548,8 +13472,8 @@ Source: www.kingbright.com</description>
 <sheets>
 <sheet>
 <plain>
-<text x="0" y="241.3" size="1.778" layer="91">Battery
-12V</text>
+<text x="-60.96" y="228.6" size="1.778" layer="91">Battery
+In (5-9VDC)</text>
 <wire x1="-137.16" y1="144.78" x2="-96.52" y2="144.78" width="0.1524" layer="97" style="longdash"/>
 <wire x1="-96.52" y1="144.78" x2="-96.52" y2="114.3" width="0.1524" layer="97" style="longdash"/>
 <wire x1="-96.52" y1="114.3" x2="-137.16" y2="114.3" width="0.1524" layer="97" style="longdash"/>
@@ -13595,11 +13519,8 @@ GND</text>
 <instance part="Q3" gate="G$1" x="5.08" y="200.66"/>
 <instance part="Q2" gate="G$1" x="-12.7" y="185.42"/>
 <instance part="R2" gate="G$1" x="-10.16" y="210.82" rot="R90"/>
-<instance part="X1" gate="-1" x="7.62" y="233.68" rot="R270"/>
-<instance part="X1" gate="-2" x="2.54" y="233.68" rot="R270"/>
 <instance part="R1" gate="G$1" x="-22.86" y="185.42" rot="R180"/>
 <instance part="GND9" gate="1" x="-10.16" y="175.26"/>
-<instance part="GND11" gate="1" x="2.54" y="223.52"/>
 <instance part="C9" gate="G$1" x="15.24" y="160.02"/>
 <instance part="R4" gate="G$1" x="7.62" y="182.88" rot="R90"/>
 <instance part="R5" gate="G$1" x="7.62" y="162.56" rot="R90"/>
@@ -13678,11 +13599,6 @@ GND</text>
 </busses>
 <nets>
 <net name="GND" class="0">
-<segment>
-<pinref part="GND11" gate="1" pin="GND"/>
-<pinref part="X1" gate="-2" pin="KL"/>
-<wire x1="2.54" y1="226.06" x2="2.54" y2="228.6" width="0.1524" layer="91"/>
-</segment>
 <segment>
 <pinref part="Q2" gate="G$1" pin="E"/>
 <pinref part="GND9" gate="1" pin="GND"/>
@@ -13867,9 +13783,7 @@ GND</text>
 </net>
 <net name="VBAT" class="0">
 <segment>
-<pinref part="X1" gate="-1" pin="KL"/>
 <pinref part="Q3" gate="G$1" pin="S"/>
-<wire x1="7.62" y1="228.6" x2="7.62" y2="218.44" width="0.1524" layer="91"/>
 <pinref part="R2" gate="G$1" pin="2"/>
 <wire x1="7.62" y1="218.44" x2="7.62" y2="205.74" width="0.1524" layer="91"/>
 <wire x1="-10.16" y1="215.9" x2="-10.16" y2="218.44" width="0.1524" layer="91"/>
