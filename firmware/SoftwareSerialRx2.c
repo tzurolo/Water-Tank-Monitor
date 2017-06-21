@@ -4,7 +4,7 @@
 //   Uses AtMega328P 8-bit Timer 2
 //
 //  Pin usage:
-//      PD2 - serial data in
+//      PD3 - serial data in
 //
 //  How it works:
 //    Upon initializaation it sets a pin change interrupt on the serial
@@ -22,9 +22,9 @@
 #define SERIAL_RX_DDR      DDRD
 #define SERIAL_RX_PORT     PORTD
 #define SERIAL_RX_INPORT   PIND
-#define SERIAL_RX_PIN      PD2
+#define SERIAL_RX_PIN      PD3
 #define SERIAL_RX_PCMSK    PCMSK2
-#define SERIAL_RX_PCINT    PCINT18
+#define SERIAL_RX_PCINT    PCINT19
 #define SERIAL_RX_PCIE     PCIE2
 
 // with 8 prescale this 1/4800 second
