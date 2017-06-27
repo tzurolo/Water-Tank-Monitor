@@ -15435,12 +15435,13 @@ Source: www.kingbright.com</description>
 <part name="J2" library="SparkFun-Connectors" deviceset="M02" device="PTH"/>
 <part name="GND11" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="J21" library="SparkFun-Connectors" deviceset="POWER_JACK" device="PTH_BREAD"/>
+<part name="J23" library="SparkFun-Connectors" deviceset="M01" device="PTH_NO_SILK_YES_STOP"/>
 </parts>
 <sheets>
 <sheet>
 <plain>
-<text x="-55.88" y="223.52" size="1.778" layer="91">Battery
-In (4-9 VDC)</text>
+<text x="-101.6" y="215.9" size="1.778" layer="91">Battery In
+(4-9 VDC)</text>
 <wire x1="-137.16" y1="144.78" x2="-96.52" y2="144.78" width="0.1524" layer="97" style="longdash"/>
 <wire x1="-96.52" y1="144.78" x2="-96.52" y2="114.3" width="0.1524" layer="97" style="longdash"/>
 <wire x1="-96.52" y1="114.3" x2="-137.16" y2="114.3" width="0.1524" layer="97" style="longdash"/>
@@ -15548,7 +15549,7 @@ GND</text>
 <instance part="GND22" gate="1" x="43.18" y="200.66"/>
 <instance part="J13" gate="J$1" x="66.04" y="154.94" rot="R180"/>
 <instance part="GND21" gate="1" x="40.64" y="149.86"/>
-<instance part="GND7" gate="1" x="-50.8" y="205.74"/>
+<instance part="GND7" gate="1" x="-66.04" y="205.74"/>
 <instance part="GND28" gate="1" x="71.12" y="104.14"/>
 <instance part="GND29" gate="1" x="71.12" y="91.44"/>
 <instance part="GND30" gate="1" x="71.12" y="78.74"/>
@@ -15562,7 +15563,8 @@ GND</text>
 <instance part="J19" gate="G$1" x="-101.6" y="185.42"/>
 <instance part="J2" gate="G$1" x="-35.56" y="213.36" rot="R180"/>
 <instance part="GND11" gate="1" x="-43.18" y="205.74"/>
-<instance part="J21" gate="G$1" x="-55.88" y="210.82"/>
+<instance part="J21" gate="G$1" x="-73.66" y="210.82"/>
+<instance part="J23" gate="G$1" x="-53.34" y="213.36" rot="R180"/>
 </instances>
 <busses>
 </busses>
@@ -15714,8 +15716,8 @@ GND</text>
 </segment>
 <segment>
 <pinref part="GND7" gate="1" pin="GND"/>
-<wire x1="-53.34" y1="213.36" x2="-50.8" y2="213.36" width="0.1524" layer="91"/>
-<wire x1="-50.8" y1="213.36" x2="-50.8" y2="208.28" width="0.1524" layer="91"/>
+<wire x1="-71.12" y1="213.36" x2="-66.04" y2="213.36" width="0.1524" layer="91"/>
+<wire x1="-66.04" y1="213.36" x2="-66.04" y2="208.28" width="0.1524" layer="91"/>
 <pinref part="J21" gate="G$1" pin="GND"/>
 </segment>
 <segment>
@@ -15776,7 +15778,7 @@ GND</text>
 <wire x1="20.32" y1="218.44" x2="20.32" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="20.32" y1="241.3" x2="25.4" y2="241.3" width="0.1524" layer="91"/>
 <junction x="20.32" y="218.44"/>
-<wire x1="-53.34" y1="218.44" x2="-43.18" y2="218.44" width="0.1524" layer="91"/>
+<wire x1="-71.12" y1="218.44" x2="-43.18" y2="218.44" width="0.1524" layer="91"/>
 <junction x="-22.86" y="218.44"/>
 <pinref part="J2" gate="G$1" pin="1"/>
 <wire x1="-43.18" y1="218.44" x2="-22.86" y2="218.44" width="0.1524" layer="91"/>
@@ -16312,6 +16314,14 @@ GND</text>
 <pinref part="R6" gate="G$1" pin="1"/>
 <wire x1="-81.28" y1="185.42" x2="-78.74" y2="185.42" width="0.1524" layer="91"/>
 <pinref part="LED1" gate="G$1" pin="A"/>
+</segment>
+</net>
+<net name="N$16" class="0">
+<segment>
+<pinref part="J21" gate="G$1" pin="GNDBREAK"/>
+<pinref part="J23" gate="G$1" pin="1"/>
+<wire x1="-71.12" y1="215.9" x2="-60.96" y2="215.9" width="0.1524" layer="91"/>
+<wire x1="-60.96" y1="215.9" x2="-60.96" y2="213.36" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
