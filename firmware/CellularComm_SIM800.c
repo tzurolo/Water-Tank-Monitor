@@ -67,6 +67,7 @@ typedef enum CellularCommState_enum {
     ccs_waitingForEchoOffResponse,
     ccs_waitingForCMGFResponse,
     ccs_waitingForCIPHEADResponse,
+    ccs_waitingForInitialCBCResponse,
     ccs_waitingForCIPQSENDResponse,
     ccs_waitingForCPINQueryResponse,
     ccs_waitingForCPINEntryResponse,
@@ -575,6 +576,11 @@ void CellularComm_task (void)
                 }
                 break;
             case ccs_waitingForCIPHEADResponse :
+                if (SIM800ResponseMsg == rm_OK) {
+                    sendCBCCommand();
+                    ccState = ccs_waitingForInitialCBCResponse;
+                }
+            case ccs_waitingForInitialCBCResponse :
                 if (SIM800ResponseMsg == rm_OK) {
                     CellularComm_requestRegistrationStatus();
                     ccState = ccs_waitingForCREGResponse;

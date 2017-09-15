@@ -23,6 +23,7 @@ extern void TCPIPConsole_enable (
 extern void TCPIPConsole_disable (
     const bool saveToEEPROM);
 extern void TCPIPConsole_restoreEnablement (void);
+extern bool TCPIPConsole_isEnabled (void);
 
 extern void TCPIPConsole_setDataReceiver (
     SIM800_IPDataCallback receiver);

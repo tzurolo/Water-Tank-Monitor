@@ -164,6 +164,11 @@ void TCPIPConsole_restoreEnablement (void)
     isEnabled = EEPROMStorage_ipConsoleEnabled();
 }
 
+bool TCPIPConsole_isEnabled (void)
+{
+    return isEnabled;
+}
+
 void TCPIPConsole_setDataReceiver (
     SIM800_IPDataCallback receiver)
 {

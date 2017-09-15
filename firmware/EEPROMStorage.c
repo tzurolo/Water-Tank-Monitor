@@ -18,9 +18,10 @@ uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as 
 
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
+int16_t EEMEM tempCalOffset = 327;
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM sampleInterval = 600;
-uint16_t EEMEM loggingUpdateInterval = 3600;
+uint16_t EEMEM loggingUpdateInterval = 1800;
 uint8_t EEMEM timeoutState = 0;
 
 // filter parameters
@@ -65,6 +66,8 @@ void EEPROMStorage_Initialize (void)
         CharString_copyP(tzPinP, &stringBuffer);
         EEPROMStorage_setPIN(CharString_cstr(&stringBuffer));
 
+        EEPROMStorage_setTempCalOffset(327);
+
 	EEPROMStorage_setWaterTankEmptyDistance(290);
 	EEPROMStorage_setWaterTankFullDistance(30);
 
@@ -76,7 +79,7 @@ void EEPROMStorage_Initialize (void)
         CharString_copyP(apnP, &stringBuffer);
         EEPROMStorage_setAPN(CharString_cstr(&stringBuffer));
 
-        EEPROMStorage_setSampleInterval(300);
+        EEPROMStorage_setSampleInterval(600);
         EEPROMStorage_setLoggingUpdateInterval(1800);
         EEPROMStorage_setThingspeak(false);
         CharString_copyP(thingspeakHostAddressP, &stringBuffer);
@@ -108,6 +111,17 @@ void EEPROMStorage_getPIN (
     char* PIN)
 {
     EEPROM_readString(cellPIN, sizeof(cellPIN), PIN);
+}
+
+void EEPROMStorage_setTempCalOffset (
+    const int16_t offset)
+{
+    EEPROM_writeWord((uint16_t*)&tempCalOffset, offset);
+}
+
+int16_t EEPROMStorage_tempCalOffset (void)
+{
+    return EEPROM_readWord((uint16_t*)&tempCalOffset);
 }
 
 void EEPROMStorage_setWaterTankEmptyDistance (

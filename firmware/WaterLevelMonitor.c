@@ -21,24 +21,14 @@
 #include "CellularComm_SIM800.h"
 #include "TCPIPConsole.h"
 #include "CommandProcessor.h"
+#include "SampleHistory.h"
 
+// Send data subtask states
 typedef enum SendDataStatus_enum {
     sds_sending,
     sds_completedSuccessfully,
     sds_completedFailed
 } SendDataStatus;
-// Send data subtask states
-typedef enum WaterLevelMonitorState_enum {
-    wlms_initial,
-    wlms_resuming,
-    wlms_waitingForSensorData,
-    wlms_waitingForConnection,
-    wlms_sendingData,
-    wlms_waitingForHostData,
-    wlms_waitingForCellularCommDisable,
-    wlms_poweringDown,
-    wlms_done
-} WaterLevelMonitorState;
 
 // state variables
 static const char tokenDelimiters[] = " \n\r";
@@ -46,6 +36,7 @@ static WaterLevelMonitorState wlmState;
 static SendDataStatus sendDataStatus;
 static SystemTime_t powerdownDelay;
 static bool gotDataFromHost;
+static SampleHistory_define(30, sampleHistory);
 
 static void dataSender (void)
 {
@@ -97,12 +88,8 @@ void WaterLevelMonitor_task (void)
                 CellularComm_Enable();
                 TCPIPConsole_setDataReceiver(IPDataCallback);
                 TCPIPConsole_enable(false);
-
-                wlmState = wlms_waitingForConnection;
-            } else {
-                // just a sample interval
-                wlmState = wlms_waitingForSensorData;
             }
+            wlmState = wlms_waitingForSensorData;
             break;
         case wlms_waitingForSensorData :
             if (BatteryMonitor_haveValidSample() &&
@@ -112,8 +99,21 @@ void WaterLevelMonitor_task (void)
                 CharString_appendP(PSTR("U:"), &usMsg);
                 StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, &usMsg);
                 Console_printCS(&usMsg);
-                SystemTime_futureTime(50, &powerdownDelay);
-                wlmState = wlms_poweringDown;
+                // log sensor data
+                SampleHistory_Sample sample;
+                sample.relSampleTime = 0;
+                sample.temperature =
+                    (uint8_t)InternalTemperatureMonitor_currentTemperature();
+                sample.waterDistance = UltrasonicSensorMonitor_currentDistance();
+                SampleHistory_insertSample(&sample, &sampleHistory);
+
+                if (TCPIPConsole_isEnabled()) {
+                    wlmState = wlms_waitingForConnection;
+                } else {
+                    // just a sample interval
+                    SystemTime_futureTime(50, &powerdownDelay);
+                    wlmState = wlms_poweringDown;
+                }
             }
             break;
         case wlms_waitingForConnection :
@@ -172,3 +172,9 @@ void WaterLevelMonitor_resume (void)
 {
     wlmState = wlms_resuming;
 }
+
+WaterLevelMonitorState WaterLevelMonitor_state (void)
+{
+    return wlmState;
+}
+

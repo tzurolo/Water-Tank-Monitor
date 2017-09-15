@@ -21,6 +21,11 @@ extern void EEPROMStorage_setPIN (
 extern void EEPROMStorage_getPIN (
 	char* PIN);
 
+// internal temperature sensor calibration offset
+extern void EEPROMStorage_setTempCalOffset (
+    const int16_t offset);
+extern int16_t EEPROMStorage_tempCalOffset (void);
+
 // distance from the water level sensor transducer to the
 // bottom of the tank when it is empty. units are cm
 extern void EEPROMStorage_setWaterTankEmptyDistance (

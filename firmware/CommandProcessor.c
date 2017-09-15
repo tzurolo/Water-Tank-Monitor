@@ -85,6 +85,8 @@ void CommandProcessor_createStatusMessage (
         CharString_appendC('.', msg);
         StringUtils_appendDecimal(CellularTCPIP_state(), 2, 0, msg);
     }
+    CharString_appendP(PSTR(","), msg);
+    StringUtils_appendDecimal(WaterLevelMonitor_state(), 1, 0, msg);
     CharString_appendP(PSTR(", U:"), msg);
     StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, msg);
     CharString_appendP(PSTR(", Vb:"), msg);
@@ -92,7 +94,11 @@ void CommandProcessor_createStatusMessage (
     CharString_appendP(PSTR(", Vc:"), msg);
     StringUtils_appendDecimal(CellularComm_batteryMillivolts(), 1, 3, msg);
     CharString_appendP(PSTR(", T:"), msg);
-    StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, msg);
+    if (InternalTemperatureMonitor_haveValidSample()) {
+        StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, msg);
+    } else {
+        CharString_appendP(PSTR("__"), msg);
+    }
     CharString_appendP(PSTR(", reg:"), msg);
     StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, msg);
     CharString_appendP(PSTR(", csq:"), msg);
@@ -150,7 +156,13 @@ void CommandProcessor_processCommand (
         } else if (strcasecmp_P(cmdToken, PSTR("set")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
+                if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
+                    cmdToken = strtok(NULL, tokenDelimiters);
+                    if (cmdToken != NULL) {
+                        const int16_t tempCalOffset = atoi(cmdToken);
+                        EEPROMStorage_setTempCalOffset(tempCalOffset);
+                    }
+                } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
                     cmdToken = strtok(NULL, tokenDelimiters);
                     if (cmdToken != NULL) {
                         EEPROMStorage_setAPN(cmdToken);
@@ -204,6 +216,12 @@ void CommandProcessor_processCommand (
                     CharString_appendP(PSTR("PIN: "),
                         &CellularComm_outgoingSMSMessageText);
                     CharString_append(pinBuffer,
+                        &CellularComm_outgoingSMSMessageText);
+                    postReply(phoneNumber);
+                } else if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
+                    CharString_copyP(PSTR(" offset: "),
+                        &CellularComm_outgoingSMSMessageText);
+                    StringUtils_appendDecimal(EEPROMStorage_tempCalOffset(), 1, 0,
                         &CellularComm_outgoingSMSMessageText);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {

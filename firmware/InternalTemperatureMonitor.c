@@ -52,18 +52,22 @@ bool InternalTemperatureMonitor_haveValidSample (void)
 
 int16_t InternalTemperatureMonitor_currentTemperature (void)
 {
+    int16_t curTempC = 0;
+
     uint16_t avgTemperature = 0;
-    if (DataHistory_length(&temperatureHistory) >= SENSOR_SAMPLES) {
+    if (InternalTemperatureMonitor_haveValidSample()) {
         uint16_t minTemmp;
         uint16_t maxTemp;
         DataHistory_getStatistics(
             &temperatureHistory, SENSOR_SAMPLES,
             &minTemmp, &maxTemp, &avgTemperature);
+
+        int32_t temp = avgTemperature;
+        // counts to degrees C
+        curTempC = ((int16_t)(((temp - ESTIMATED_ZERO_C_COUNTS) * NUMERATOR) / RESOLUTION));
     }
 
-    int32_t temp = avgTemperature;
-    // counts to degrees C
-    return ((int16_t)(((temp - ESTIMATED_ZERO_C_COUNTS) * NUMERATOR) / RESOLUTION));
+    return curTempC;
 }
 
 void InternalTemperatureMonitor_task (void)
