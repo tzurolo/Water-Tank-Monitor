@@ -982,6 +982,11 @@ void SIM800_setPromptCallback (
     promptCallback = cb;
 }
 
+uint16_t SIM800_availableSpaceForSend (void)
+{
+    return SoftwareSerialTx_availableSpace(TX_CHAN_INDEX);
+}
+
 void SIM800_sendString (
     const char* str)
 {

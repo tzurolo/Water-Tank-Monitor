@@ -82,14 +82,14 @@ void SystemTime_futureTime (
 }
 
 bool SystemTime_timeHasArrived (
-    const SystemTime_t* time)
+    const SystemTime_t* futureTime)
 {
     SystemTime_t curTime;
     SystemTime_getCurrentTime(&curTime);
-    return (curTime.seconds > time->seconds)
+    return (curTime.seconds > futureTime->seconds)
         ? true
-        : (curTime.seconds == time->seconds)
-            ? curTime.hundredths >= time->hundredths
+        : (curTime.seconds == futureTime->seconds)
+            ? curTime.hundredths >= futureTime->hundredths
             : false;
 }
 

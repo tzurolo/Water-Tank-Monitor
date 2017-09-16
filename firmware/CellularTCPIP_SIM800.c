@@ -41,6 +41,7 @@ typedef enum CellularTCPIPState_enum {
     cts_waitingForCIPSTARTResponse,
     cts_waitingForCIPACKResponse,
     cts_waitingForCIPSENDPrompt,
+    cts_sendingData,
     cts_waitingForCIPSENDResponse,
     cts_waitingForCIPCLOSEResponse,
     cts_waitingForCIPSHUTResponse,
@@ -369,10 +370,12 @@ void CellularTCPIP_sendData (
     CellularTCPIP_DataProvider provider,
     CellularTCPIP_SendCompletionCallaback completionCallback)
 {
-    ctDataProvider = provider;
-    ctSendCompletionCallback = completionCallback;
+    if (provider != NULL) {
+        ctDataProvider = provider;
+        ctSendCompletionCallback = completionCallback;
 
-    curCommand = c_sendData;
+        curCommand = c_sendData;
+    }
 }
 
 void CellularTCPIP_disconnect (void)
@@ -497,16 +500,19 @@ void CellularTCPIP_Subtask (void)
             break;
         case cts_waitingForCIPSENDPrompt :
             if (gotPrompt) {
-                if (ctDataProvider != 0) {
-                    ctDataProvider();
-                }
+                ctState = cts_sendingData;
+            } else if ((SIM800ResponseMsg == rm_ERROR) ||
+                       (SIM800ResponseMsg == rm_CLOSED)) {
+                endSubtask(cs_disconnected);
+            }
+            break;
+        case cts_sendingData :
+            if (ctDataProvider()) {
+                // completed providing data
                 SIM800_sendCtrlZ();
                 Console_printP(PSTR("sent Ctrl-Z"));
                 SystemTime_futureTime(SEND_TIMEOUT, &ctResponseTimeoutTime);
                 ctState = cts_waitingForCIPSENDResponse;
-            } else if ((SIM800ResponseMsg == rm_ERROR) ||
-                       (SIM800ResponseMsg == rm_CLOSED)) {
-                endSubtask(cs_disconnected);
             }
             break;
         case cts_waitingForCIPSENDResponse : {
@@ -586,6 +592,11 @@ void CellularTCPIP_Subtask (void)
 int CellularTCPIP_state (void)
 {
     return (int)ctState;
+}
+
+uint16_t CellularTCPIP_availableSpaceForWriteData (void)
+{
+    return SIM800_availableSpaceForSend();
 }
 
 void CellularTCPIP_writeData (

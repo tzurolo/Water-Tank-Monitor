@@ -59,8 +59,7 @@ void UltrasonicSensorMonitor_task (void)
                 uint8_t numFracDigits = 0;
                 StringUtils_scanDecimal(CharString_cstr(&sensorDataStr) + 1,
                     &isValid, &dist, &numFracDigits);
-                if (isValid &&
-                    (dist < 5000)) {
+                if (isValid) {
                     DataHistory_insertValue(dist, &distanceHistory);
                 }
             }

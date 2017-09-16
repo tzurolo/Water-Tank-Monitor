@@ -35,8 +35,13 @@ inline void SampleHistory_clear (
     sampleHistory->length = 0;
 }
 
+// if full, the oldest entry is overwritten
 extern void SampleHistory_insertSample (
     const SampleHistory_Sample* sample,
+    SampleHistory_t* sampleHistory);
+
+extern const SampleHistory_Sample* SampleHistory_getAt (
+    const uint8_t at,  // 0 to length-1, 0 is oldest
     SampleHistory_t* sampleHistory);
 
 inline uint8_t SampleHistory_length (

@@ -34,15 +34,54 @@ typedef enum SendDataStatus_enum {
 static const char tokenDelimiters[] = " \n\r";
 static WaterLevelMonitorState wlmState;
 static SendDataStatus sendDataStatus;
-static SystemTime_t powerdownDelay;
+static SystemTime_t time;   // used to measure how long it took to get a connection,
+                            // and for the powerdown delay future time
 static bool gotDataFromHost;
 static SampleHistory_define(30, sampleHistory);
+static int16_t dataSenderSampleIndex;
 
-static void dataSender (void)
+static bool dataSender (void)
 {
-    CharString_define(80, dataToSend);
-    CommandProcessor_createStatusMessage(&dataToSend);
-    CellularTCPIP_writeDataCS(&dataToSend);
+    bool sendComplete = false;
+
+    if (dataSenderSampleIndex == -1) {
+        // send per-post data
+        CharString_define(20, dataToSend);
+        //CommandProcessor_createStatusMessage(&dataToSend);
+        SystemTime_t curTime;
+        SystemTime_getCurrentTime(&curTime);
+        const int16_t secondsToConnect = SystemTime_diffSec(&curTime, &time);
+        CharString_copyP(PSTR("C"), &dataToSend);
+        StringUtils_appendDecimal(secondsToConnect, 1, 0, &dataToSend);
+        CharString_appendC('B', &dataToSend);
+        StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
+        CharString_appendC('R', &dataToSend);
+        StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
+        CharString_appendC('Q', &dataToSend);
+        StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
+        CellularTCPIP_writeDataCS(&dataToSend);
+        ++dataSenderSampleIndex;
+    } else {
+        // send sample data
+        const SampleHistory_Sample* sample =
+            SampleHistory_getAt(dataSenderSampleIndex, &sampleHistory);
+        CharString_define(20, dataToSend);
+        CharString_copyP(PSTR(";S"), &dataToSend);
+        StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
+        CharString_appendC('W', &dataToSend);
+        StringUtils_appendDecimal(sample->waterDistance, 1, 0, &dataToSend);
+        CharString_appendC('T', &dataToSend);
+        StringUtils_appendDecimal(sample->temperature, 1, 0, &dataToSend);
+
+        ++dataSenderSampleIndex;
+        if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
+            CharString_appendC('Z', &dataToSend);
+            sendComplete = true;
+        }
+        CellularTCPIP_writeDataCS(&dataToSend);
+    }
+
+    return sendComplete;
 }
 
 static void TCPIPSendCompletionCallaback (
@@ -64,6 +103,7 @@ void WaterLevelMonitor_Initialize (void)
 {
     wlmState = wlms_initial;
     // wlmState = wlms_done;
+    SampleHistory_clear(&sampleHistory);
 }
 
 void WaterLevelMonitor_task (void)
@@ -80,9 +120,8 @@ void WaterLevelMonitor_task (void)
             // determine if it's time to log to server
             const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
             const uint16_t logInterval = EEPROMStorage_LoggingUpdateInterval();
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            if (((curTime.seconds + (sampleInterval / 2)) % logInterval) < sampleInterval) {
+            SystemTime_getCurrentTime(&time);
+            if (((time.seconds + (sampleInterval / 2)) % logInterval) < sampleInterval) {
                 // time to log to server
                 gotDataFromHost = false;
                 CellularComm_Enable();
@@ -111,7 +150,7 @@ void WaterLevelMonitor_task (void)
                     wlmState = wlms_waitingForConnection;
                 } else {
                     // just a sample interval
-                    SystemTime_futureTime(50, &powerdownDelay);
+                    SystemTime_futureTime(50, &time);
                     wlmState = wlms_poweringDown;
                 }
             }
@@ -119,6 +158,7 @@ void WaterLevelMonitor_task (void)
         case wlms_waitingForConnection :
             if (TCPIPConsole_readyToSend()) {
                 sendDataStatus = sds_sending;
+                dataSenderSampleIndex = -1; // start with per-post data
                 TCPIPConsole_sendData(dataSender, TCPIPSendCompletionCallaback);
                 wlmState = wlms_sendingData;
             }
@@ -128,6 +168,7 @@ void WaterLevelMonitor_task (void)
                 case sds_sending :
                     break;
                 case sds_completedSuccessfully :
+                    SampleHistory_clear(&sampleHistory);
                     wlmState = wlms_waitingForHostData;
                     break;
                 case sds_completedFailed :
@@ -145,12 +186,12 @@ void WaterLevelMonitor_task (void)
         case wlms_waitingForCellularCommDisable :
             if (!CellularComm_isEnabled()) {
                 // give it another two seconds of power to properly close the connection
-                SystemTime_futureTime(200, &powerdownDelay);
+                SystemTime_futureTime(200, &time);
                 wlmState = wlms_poweringDown;
             }
             break;
         case wlms_poweringDown :
-            if (SystemTime_timeHasArrived(&powerdownDelay)) {
+            if (SystemTime_timeHasArrived(&time)) {
                 // power down peripherals
                 DDRC |= (1 << PC1);
                 PORTC &= ~(1 << PC1);

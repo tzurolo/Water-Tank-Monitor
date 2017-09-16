@@ -44,7 +44,7 @@ extern void SystemTime_futureTime (
 
 // returns true if the current time is >= the given time
 extern bool SystemTime_timeHasArrived (
-    const SystemTime_t* time);
+    const SystemTime_t* futureTime);
 
 // this function is used to resynchronize system time to
 // server time, but not immediately. This function stores

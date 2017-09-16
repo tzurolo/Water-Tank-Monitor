@@ -152,6 +152,8 @@ extern void SIM800_setCBCCallback (
 extern void SIM800_setPromptCallback (
     SIM800_promptCallback cb);
 
+extern uint16_t SIM800_availableSpaceForSend (void);
+
 extern void SIM800_sendString (
     const char* str);
 extern void SIM800_sendStringP (

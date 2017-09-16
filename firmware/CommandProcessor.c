@@ -59,9 +59,10 @@ static void postReply (
     }
 }
 
-static void dataSender (void)
+static bool dataSender (void)
 {
     CellularTCPIP_writeDataP(PSTR("data sent to host"));
+    return true;
 }
 
 static void sendCompletionCallaback (

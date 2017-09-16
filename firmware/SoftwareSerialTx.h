@@ -29,6 +29,9 @@ extern void SoftwareSerialTx_disable (
 extern bool SoftwareSerialTx_isIdle (
     const uint8_t channelIndex);
 
+extern uint16_t SoftwareSerialTx_availableSpace (
+    const uint8_t channelIndex);
+
 extern void SoftwareSerialTx_send (
     const uint8_t channelIndex,
     const char* text);

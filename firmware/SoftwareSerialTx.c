@@ -119,6 +119,13 @@ bool SoftwareSerialTx_isIdle (
     return ((channel->txState == ts_idle) && ByteQueue_is_empty(channel->txQueue));
 }
 
+uint16_t SoftwareSerialTx_availableSpace (
+    const uint8_t channelIndex)
+{
+    ByteQueue_t *txQueue = channels[channelIndex].txQueue;
+    return txQueue->capacity - txQueue->length;
+}
+
 void SoftwareSerialTx_send (
     const uint8_t channelIndex,
     const char* text)
