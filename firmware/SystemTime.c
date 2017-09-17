@@ -195,6 +195,30 @@ void SystemTime_task (void)
     }
 }
 
+uint8_t SystemTime_dayOfWeek (
+    const SystemTime_t *time)
+{
+    return (time->seconds / 86400L) % 7;
+}
+
+uint8_t SystemTime_hours (
+    const SystemTime_t *time)
+{
+    return (time->seconds / 3600) % 24;
+}
+
+uint8_t SystemTime_minutes (
+    const SystemTime_t *time)
+{
+    return (time->seconds / 60) % 60;
+}
+
+uint8_t SystemTime_seconds (
+    const SystemTime_t *time)
+{
+    return time->seconds % 60;
+}
+
 void SystemTime_appendCurrentToString (
     CharString_t* timeString)
 {
@@ -203,23 +227,19 @@ void SystemTime_appendCurrentToString (
     SystemTime_getCurrentTime(&curTime);
 
     // append day of week
-    const uint8_t dayOfWeek = (curTime.seconds / 86400L) % 7;
-    StringUtils_appendDecimal(dayOfWeek, 1, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append hours
-    const uint8_t hours = (curTime.seconds / 3600) % 24;
-    StringUtils_appendDecimal(hours, 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append minutes
-    const uint8_t minutes =  (curTime.seconds / 60) % 60;
-    StringUtils_appendDecimal(minutes, 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append seconds
-    const uint8_t seconds = curTime.seconds % 60;
-    StringUtils_appendDecimal(seconds, 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_seconds(&curTime), 2, 0, timeString);
 }
 
 ISR(TIMER1_COMPA_vect, ISR_BLOCK)

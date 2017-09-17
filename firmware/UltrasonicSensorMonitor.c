@@ -19,12 +19,16 @@
 
 CharString_define(16, sensorDataStr);
 DataHistory_define(SENSOR_SAMPLES, distanceHistory);
+static uint8_t numReadingsToIgnore;
 
 void UltrasonicSensorMonitor_Initialize (void)
 {
     UART_init(true);
     UART_set_baud_rate(9600);
     DataHistory_clear(&distanceHistory);
+
+    // ignore the first readings - they are not filtered
+    numReadingsToIgnore = 5;
 }
 
 bool UltrasonicSensorMonitor_haveValidSample (void)
@@ -60,7 +64,12 @@ void UltrasonicSensorMonitor_task (void)
                 StringUtils_scanDecimal(CharString_cstr(&sensorDataStr) + 1,
                     &isValid, &dist, &numFracDigits);
                 if (isValid) {
-                    DataHistory_insertValue(dist, &distanceHistory);
+                    if (numReadingsToIgnore > 0) {
+                        // ignoring first readings, which are not filtered
+                        --numReadingsToIgnore;
+                    } else {
+                        DataHistory_insertValue(dist, &distanceHistory);
+                    }
                 }
             }
             CharString_clear(&sensorDataStr);

@@ -80,7 +80,16 @@ inline int32_t SystemTime_diffSec (
     return t1->seconds - t2->seconds;
 }
 
-// writes current time as W D HH:MM:SS
+extern uint8_t SystemTime_dayOfWeek (
+    const SystemTime_t *time);
+extern uint8_t SystemTime_hours (
+    const SystemTime_t *time);
+extern uint8_t SystemTime_minutes (
+    const SystemTime_t *time);
+extern uint8_t SystemTime_seconds (
+    const SystemTime_t *time);
+
+// writes current time as D:HH:MM:SS
 extern void SystemTime_appendCurrentToString (
     CharString_t* timeString);
 

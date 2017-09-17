@@ -16,8 +16,12 @@
 
 extern void EEPROMStorage_Initialize (void);
 
+extern void EEPROMStorage_setUnitID (
+    const uint16_t id);
+extern uint16_t EEPROMStorage_unitID (void);
+
 extern void EEPROMStorage_setPIN (
-	const char* PIN);
+    const char* PIN);
 extern void EEPROMStorage_getPIN (
 	char* PIN);
 
@@ -29,24 +33,24 @@ extern int16_t EEPROMStorage_tempCalOffset (void);
 // distance from the water level sensor transducer to the
 // bottom of the tank when it is empty. units are cm
 extern void EEPROMStorage_setWaterTankEmptyDistance (
-	const uint16_t value);
+    const uint16_t value);
 extern uint16_t EEPROMStorage_waterTankEmptyDistance (void);
 // distance from the water level sensor transducer to the
 // surface of the water when the tank is full. units are cm
 extern void EEPROMStorage_setWaterTankFullDistance (
-	const uint16_t value);
+    const uint16_t value);
 extern uint16_t EEPROMStorage_waterTankFullDistance (void);
 
 // units are percent (tank percent full)
 extern void EEPROMStorage_setWaterLowNotificationLevel (
-	const uint8_t level);
+    const uint8_t level);
 extern uint8_t EEPROMStorage_waterLowNotificationLevel (void);
 extern void EEPROMStorage_setWaterHighNotificationLevel (
-	const uint8_t level);
+    const uint8_t level);
 extern uint8_t EEPROMStorage_waterHighNotificationLevel (void);
 
 extern void EEPROMStorage_setNotification (
-	const bool onOff);
+    const bool onOff);
 extern bool EEPROMStorage_notificationEnabled (void);
 
 extern void EEPROMStorage_setTimeoutState (

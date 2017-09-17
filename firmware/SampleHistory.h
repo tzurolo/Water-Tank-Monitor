@@ -50,4 +50,10 @@ inline uint8_t SampleHistory_length (
     return sampleHistory->length;
 }
 
+inline bool SampleHistory_empty (
+    SampleHistory_t* sampleHistory)
+{
+    return sampleHistory->length == 0;
+}
+
 #endif		// SAMPLEHISTORY_H

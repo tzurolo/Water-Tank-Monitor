@@ -68,6 +68,7 @@ typedef enum CellularCommState_enum {
     ccs_waitingForCMGFResponse,
     ccs_waitingForCIPHEADResponse,
     ccs_waitingForInitialCBCResponse,
+    ccs_waitingForInitialCSQResponse,
     ccs_waitingForCIPQSENDResponse,
     ccs_waitingForCPINQueryResponse,
     ccs_waitingForCPINEntryResponse,
@@ -593,7 +594,8 @@ void CellularComm_task (void)
 
                         SystemTime_futureTime(500, &nextCheckForIncomingSMSMessageTime);
                         SystemTime_futureTime(1000, &nextCheckForNetworkTimeAndCSQTime);
-                        ccState = ccs_idle;
+                        sendCSQCommand();
+                        ccState = ccs_waitingForInitialCSQResponse;
                     } else {
                         // not registered yet.
                         ccState = ccs_waitToRecheckCREG;
@@ -607,6 +609,11 @@ void CellularComm_task (void)
                     CellularComm_requestRegistrationStatus();
                     ccState = ccs_waitingForCREGResponse;
                 }
+                }
+                break;
+            case ccs_waitingForInitialCSQResponse :
+                if (SIM800ResponseMsg == rm_OK) {
+                    ccState = ccs_idle;
                 }
                 break;
             case ccs_waitingForCMGLResponse : {

@@ -16,6 +16,7 @@
 // storage address map
 uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as all one's
 
+uint16_t EEMEM unitID = 0;
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
@@ -63,6 +64,8 @@ void EEPROMStorage_Initialize (void)
         // EE has not been initialized. Initialize now.
         CharString_define(40, stringBuffer);
 
+        EEPROMStorage_setUnitID(0);
+
         CharString_copyP(tzPinP, &stringBuffer);
         EEPROMStorage_setPIN(CharString_cstr(&stringBuffer));
 
@@ -99,6 +102,17 @@ void EEPROMStorage_Initialize (void)
         // indicate EE has been initialized
         EEPROM_write(&initFlag, 1);
     }
+}
+
+void EEPROMStorage_setUnitID (
+    const uint16_t id)
+{
+    EEPROM_writeWord((uint16_t*)&unitID, id);
+}
+
+uint16_t EEPROMStorage_unitID (void)
+{
+    return EEPROM_readWord((uint16_t*)&unitID);
 }
 
 void EEPROMStorage_setPIN (

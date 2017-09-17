@@ -37,49 +37,67 @@ static SendDataStatus sendDataStatus;
 static SystemTime_t time;   // used to measure how long it took to get a connection,
                             // and for the powerdown delay future time
 static bool gotDataFromHost;
+static SystemTime_t lastSampleTime;
 static SampleHistory_define(30, sampleHistory);
 static int16_t dataSenderSampleIndex;
+
+static void appendTimeAbbreviated (
+    const SystemTime_t* time,
+    CharString_t* str)
+{
+}
 
 static bool dataSender (void)
 {
     bool sendComplete = false;
 
+    CharString_define(25, dataToSend);
     if (dataSenderSampleIndex == -1) {
         // send per-post data
-        CharString_define(20, dataToSend);
         //CommandProcessor_createStatusMessage(&dataToSend);
+        CharString_copyP(PSTR("I"), &dataToSend);
+        StringUtils_appendDecimal(EEPROMStorage_unitID(), 1, 0, &dataToSend);
+        CharString_appendC('N', &dataToSend);
         SystemTime_t curTime;
         SystemTime_getCurrentTime(&curTime);
-        const int16_t secondsToConnect = SystemTime_diffSec(&curTime, &time);
-        CharString_copyP(PSTR("C"), &dataToSend);
-        StringUtils_appendDecimal(secondsToConnect, 1, 0, &dataToSend);
+        StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, &dataToSend);
+        StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, &dataToSend);
+        StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, &dataToSend);
         CharString_appendC('B', &dataToSend);
         StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
         CharString_appendC('R', &dataToSend);
         StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
         CharString_appendC('Q', &dataToSend);
         StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
-        CellularTCPIP_writeDataCS(&dataToSend);
-        ++dataSenderSampleIndex;
     } else {
         // send sample data
         const SampleHistory_Sample* sample =
             SampleHistory_getAt(dataSenderSampleIndex, &sampleHistory);
-        CharString_define(20, dataToSend);
-        CharString_copyP(PSTR(";S"), &dataToSend);
-        StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
+        CharString_copyP(PSTR(";"), &dataToSend);
+        if (sample->relSampleTime != 0) {
+            CharString_appendC('S', &dataToSend);
+            StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
+        }
         CharString_appendC('W', &dataToSend);
         StringUtils_appendDecimal(sample->waterDistance, 1, 0, &dataToSend);
         CharString_appendC('T', &dataToSend);
         StringUtils_appendDecimal(sample->temperature, 1, 0, &dataToSend);
-
-        ++dataSenderSampleIndex;
-        if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
-            CharString_appendC('Z', &dataToSend);
-            sendComplete = true;
-        }
-        CellularTCPIP_writeDataCS(&dataToSend);
     }
+
+    ++dataSenderSampleIndex;
+    if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
+        SystemTime_t curTime;
+        SystemTime_getCurrentTime(&curTime);
+        const int32_t secondsSinceLastSample =
+            SystemTime_diffSec(&curTime, &lastSampleTime);
+        if (secondsSinceLastSample != 0) {
+            CharString_appendP(PSTR(";S"), &dataToSend);
+            StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
+        }
+        CharString_appendC('Z', &dataToSend);
+        sendComplete = true;
+    }
+    CellularTCPIP_writeDataCS(&dataToSend);
 
     return sendComplete;
 }
@@ -134,13 +152,18 @@ void WaterLevelMonitor_task (void)
             if (BatteryMonitor_haveValidSample() &&
                 InternalTemperatureMonitor_haveValidSample() &&
                 UltrasonicSensorMonitor_haveValidSample()) {
-                CharString_define(10, usMsg);
-                CharString_appendP(PSTR("U:"), &usMsg);
-                StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, &usMsg);
-                Console_printCS(&usMsg);
                 // log sensor data
                 SampleHistory_Sample sample;
-                sample.relSampleTime = 0;
+                SystemTime_t curTime;
+                SystemTime_getCurrentTime(&curTime);
+                if (SampleHistory_empty(&sampleHistory)) {
+                    sample.relSampleTime = 0;
+                } else {
+                    const int32_t secondsSinceLastSample =
+                        SystemTime_diffSec(&curTime, &lastSampleTime);
+                    sample.relSampleTime = secondsSinceLastSample;
+                }
+                lastSampleTime = curTime;
                 sample.temperature =
                     (uint8_t)InternalTemperatureMonitor_currentTemperature();
                 sample.waterDistance = UltrasonicSensorMonitor_currentDistance();
