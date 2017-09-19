@@ -188,3 +188,10 @@ void SoftwareSerialTx_sendChar (
     }
 }
 
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+void SoftwareSerialTx_reportHighwater (void)
+{
+    ByteQueue_reportHighwater(PSTR("SSTX0"), channels[0].txQueue);
+    ByteQueue_reportHighwater(PSTR("SSTX1"), channels[1].txQueue);
+}
+#endif

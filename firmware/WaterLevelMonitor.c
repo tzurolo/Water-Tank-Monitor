@@ -23,6 +23,17 @@
 #include "CommandProcessor.h"
 #include "SampleHistory.h"
 
+// water level has to change by this percentage or more
+// to get back to inRange after going out of range
+#define waterLevelDeadband 5
+
+// water level state
+typedef enum WaterLevel_enum {
+    wl_inRange = 'I',
+    wl_low = 'L',
+    wl_high = 'H'
+} WaterLevelState;
+
 // Send data subtask states
 typedef enum SendDataStatus_enum {
     sds_sending,
@@ -40,12 +51,8 @@ static bool gotDataFromHost;
 static SystemTime_t lastSampleTime;
 static SampleHistory_define(30, sampleHistory);
 static int16_t dataSenderSampleIndex;
-
-static void appendTimeAbbreviated (
-    const SystemTime_t* time,
-    CharString_t* str)
-{
-}
+static WaterLevelState currentWaterLevelState;
+static uint8_t currentWaterLevelPercent;
 
 static bool dataSender (void)
 {
@@ -63,6 +70,8 @@ static bool dataSender (void)
         StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, &dataToSend);
         StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, &dataToSend);
         StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, &dataToSend);
+        CharString_appendC('L', &dataToSend);
+        StringUtils_appendDecimal(currentWaterLevelPercent, 1, 0, &dataToSend);
         CharString_appendC('B', &dataToSend);
         StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
         CharString_appendC('R', &dataToSend);
@@ -110,11 +119,70 @@ static void TCPIPSendCompletionCallaback (
         : sds_completedFailed;   
 }
 
-void IPDataCallback (
+static void IPDataCallback (
     const CharString_t *ipData)
 {
     gotDataFromHost = true;
     CommandProcessor_processCommand(CharString_cstr(ipData), "", "");
+}
+
+static void enableTCPIP (void)
+{
+    gotDataFromHost = false;
+    CellularComm_Enable();
+    TCPIPConsole_setDataReceiver(IPDataCallback);
+    TCPIPConsole_enable(false);
+}
+
+// returns true if the water level just went out of the normal range
+static bool updateWaterLevelState (
+    const uint16_t waterDistance) // in CM
+{
+    bool wentOutOfRange = false;
+
+    // compute percentage full
+    const uint16_t emptyDistance = EEPROMStorage_waterTankEmptyDistance();
+    const uint16_t fullDistance = EEPROMStorage_waterTankFullDistance();
+    if (waterDistance >= emptyDistance) {
+        currentWaterLevelPercent = 0;
+    } else if (waterDistance <= fullDistance) {
+        currentWaterLevelPercent = 100;
+    } else {
+        // pressure is between empty and full
+        const uint16_t distanceRange = emptyDistance - fullDistance;
+        uint32_t relativeDistance = emptyDistance - waterDistance;
+        currentWaterLevelPercent = (relativeDistance * 100) / distanceRange;
+    }
+
+    switch (currentWaterLevelState) {
+	case wl_inRange :
+	    if (currentWaterLevelPercent >= EEPROMStorage_waterHighNotificationLevel()) {
+		Console_printP(PSTR(">>> high level notification <<<"));
+		currentWaterLevelState = wl_high;
+                wentOutOfRange = true;
+	    } else if (currentWaterLevelPercent <= EEPROMStorage_waterLowNotificationLevel()) {
+		Console_printP(PSTR(">>> low level notification <<<"));
+		currentWaterLevelState = wl_low;
+                wentOutOfRange = true;
+	    }
+	    break;
+	case wl_low :
+	    // apply hysteresis
+	    if (currentWaterLevelPercent > (EEPROMStorage_waterLowNotificationLevel() + waterLevelDeadband)) {
+		Console_printP(PSTR(">>> back in range from low <<<"));
+		currentWaterLevelState = wl_inRange;
+	    }
+	    break;
+	case wl_high :
+	    // apply hysteresis
+	    if (currentWaterLevelPercent < (EEPROMStorage_waterHighNotificationLevel() - waterLevelDeadband)) {
+		Console_printP(PSTR(">>> back in range from high <<<"));
+		currentWaterLevelState = wl_inRange;
+	    }
+	    break;
+    }
+    
+    return wentOutOfRange;
 }
 
 void WaterLevelMonitor_Initialize (void)
@@ -122,6 +190,8 @@ void WaterLevelMonitor_Initialize (void)
     wlmState = wlms_initial;
     // wlmState = wlms_done;
     SampleHistory_clear(&sampleHistory);
+    dataSenderSampleIndex = -1;
+    currentWaterLevelState = wl_inRange;
 }
 
 void WaterLevelMonitor_task (void)
@@ -141,10 +211,7 @@ void WaterLevelMonitor_task (void)
             SystemTime_getCurrentTime(&time);
             if (((time.seconds + (sampleInterval / 2)) % logInterval) < sampleInterval) {
                 // time to log to server
-                gotDataFromHost = false;
-                CellularComm_Enable();
-                TCPIPConsole_setDataReceiver(IPDataCallback);
-                TCPIPConsole_enable(false);
+                enableTCPIP();
             }
             wlmState = wlms_waitingForSensorData;
             break;
@@ -169,12 +236,20 @@ void WaterLevelMonitor_task (void)
                 sample.waterDistance = UltrasonicSensorMonitor_currentDistance();
                 SampleHistory_insertSample(&sample, &sampleHistory);
 
+                const bool wentOutOfRange = 
+                    updateWaterLevelState(sample.waterDistance / 10);   // cvt mm to cm
+    
                 if (TCPIPConsole_isEnabled()) {
                     wlmState = wlms_waitingForConnection;
                 } else {
-                    // just a sample interval
-                    SystemTime_futureTime(50, &time);
-                    wlmState = wlms_poweringDown;
+                    if (wentOutOfRange) {
+                        enableTCPIP();
+                        wlmState = wlms_waitingForConnection;
+                    } else {
+                        // just a sample interval
+                        SystemTime_futureTime(50, &time);
+                        wlmState = wlms_poweringDown;
+                    }
                 }
             }
             break;

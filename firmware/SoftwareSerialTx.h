@@ -15,6 +15,7 @@
 #include <avr/pgmspace.h>
 #include "CharString.h"
 #include "IOPortBitfield.h"
+#include "ByteQueue.h"
 
 extern void SoftwareSerialTx_Initialize (
     const uint8_t channelIndex,
@@ -47,6 +48,10 @@ extern bool SoftwareSerialTx_sendP (
 extern void SoftwareSerialTx_sendChar (
     const uint8_t channelIndex,
     const char ch);
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+extern void SoftwareSerialTx_reportHighwater (void);
+#endif
 
 #endif  /* SOFTWARESERIALTX_H */
 

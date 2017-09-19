@@ -4,6 +4,11 @@
 
 #include "ByteQueue.h"
 
+// these are needed only for reporting highwater mark
+#include "CharString.h"
+#include "Console.h"
+#include "StringUtils.h"
+
 void ByteQueue_clear (
     ByteQueue_t *q)
     {
@@ -41,6 +46,11 @@ bool ByteQueue_push (
 
         // increment length
         ++q->length;
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+        if (q->length > q->highwater) {
+            q->highwater = q->length;
+        }
+#endif
 
         push_successful = true;
         }
@@ -77,3 +87,18 @@ ByteQueueElement ByteQueue_pop (
 
     return byte;
 }
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+extern void ByteQueue_reportHighwater (
+   PGM_P queueName,
+   ByteQueue_t *q)
+{
+    CharString_define(20, msg);
+    CharString_copyP(queueName, &msg);
+    CharString_appendC(':', &msg);
+    StringUtils_appendDecimal(q->highwater, 1, 0, &msg);
+    CharString_appendC('/', &msg);
+    StringUtils_appendDecimal(q->capacity, 1, 0, &msg);
+    Console_printCS(&msg);
+}
+#endif

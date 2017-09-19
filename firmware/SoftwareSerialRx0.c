@@ -150,3 +150,10 @@ ISR(TIMER0_COMPA_vect, ISR_BLOCK)
             break;
     }
 }
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+void SoftwareSerialRx0_reportHighwater (void)
+{
+    ByteQueue_reportHighwater(PSTR("SSRX0"), &rxQueue);
+}
+#endif

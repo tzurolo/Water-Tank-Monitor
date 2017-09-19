@@ -4,6 +4,10 @@
 //  Platform:
 //     AtMega328P
 //
+//  Pin usage:
+//      PD0 - Rx
+//      PD1 - Tx
+//
 //  How it works:
 //     Two static queues are used, one for transmit and one for receive.
 //
@@ -37,11 +41,16 @@ static void start_transmitting (void)
     UCSR0B |= (1<<UDRIE0);
 }
 
-void UART_init ()
-    {
+void UART_init (
+    const bool pullupRx)
+{
     // initialize transmit and receive queues
     ByteQueue_clear(&tx_queue);
     ByteQueue_clear(&rx_queue);
+
+    if (pullupRx) {
+        PORTD |= (1 << PD0);
+    }
 
     // set default baud rate
     UART_set_baud_rate(9600);
@@ -199,6 +208,14 @@ bool UART_read_string (
 
    return string_is_complete;
    }
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+void UART_reportHighwater (void)
+{
+    ByteQueue_reportHighwater(PSTR("URX"), &rx_queue);
+    ByteQueue_reportHighwater(PSTR("UTX"), &tx_queue);
+}
+#endif
 
 ISR(USART_RX_vect, ISR_BLOCK)
 {

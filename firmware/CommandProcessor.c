@@ -13,6 +13,7 @@
 #include "ADCManager.h"
 #include "SoftwareSerialRx0.h"
 #include "SoftwareSerialRx2.h"
+#include "SoftwareSerialTx.h"
 #include "CellularComm_SIM800.h"
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
@@ -26,6 +27,7 @@
 #include "EEPROM_Util.h"
 #include "EEPROMStorage.h"
 #include "StringUtils.h"
+#include "UART_async.h"
 
 #define CMD_TOKEN_BUFFER_LEN 80
 
@@ -386,6 +388,14 @@ void CommandProcessor_processCommand (
             CellularComm_Initialize();
             CellularTCPIP_Initialize();
             TCPIPConsole_Initialize();
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+        } else if (strcasecmp_P(cmdToken, PSTR("bqhw")) == 0) {
+            // byte queue report highwater
+            SoftwareSerialRx0_reportHighwater();
+            SoftwareSerialRx2_reportHighwater();
+            SoftwareSerialTx_reportHighwater();
+            UART_reportHighwater();
+#endif
         } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
             // reboot
             SystemTime_commenceShutdown();

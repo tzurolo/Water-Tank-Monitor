@@ -21,8 +21,11 @@
 
 #include <stdbool.h>
 #include "inttypes.h"
-
+#include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+
+// enable/disable watermarking length of byte queues
+#define BYTEQUEUE_HIGHWATERMARK_ENABLED 1
 
 typedef uint8_t ByteQueueElement;
 
@@ -31,12 +34,21 @@ typedef struct {
     uint16_t tail;
     uint16_t length;
     uint16_t capacity;
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+    uint16_t highwater;
+#endif
     ByteQueueElement *bytes;
     } ByteQueue_t;
 
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+#define ByteQueue_define(capacity, queueName, storage) \
+    storage ByteQueueElement queueName##_buf[capacity] = {0}; \
+    storage ByteQueue_t queueName = {0, 0, 0, capacity, 0, queueName##_buf};
+#else
 #define ByteQueue_define(capacity, queueName, storage) \
     storage ByteQueueElement queueName##_buf[capacity] = {0}; \
     storage ByteQueue_t queueName = {0, 0, 0, capacity, queueName##_buf};
+#endif
 
 extern void ByteQueue_clear (
     ByteQueue_t *q);
@@ -125,5 +137,26 @@ extern bool ByteQueue_push (
 // pops a byte from the head of the queue, expects it's not empty
 extern ByteQueueElement ByteQueue_pop (
    ByteQueue_t *q);
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+// returns the high watermark of the queue
+inline uint16_t ByteQueue_highwater (
+    const ByteQueue_t *q)
+{
+    char SREGSave;
+    SREGSave = SREG;
+    cli();
+
+    const uint16_t len = q->highwater;
+
+    SREG = SREGSave;
+
+    return len;
+}
+
+extern void ByteQueue_reportHighwater (
+   PGM_P queueName,
+   ByteQueue_t *q);
+#endif
 
 #endif   // BYTEQUEUE_LOADED

@@ -14,7 +14,7 @@
 //
 //  Hardware resources used:
 //    Serial data in - PA5
-//    AtMega32u4 16-bit Timer 1
+//    AtMega328P 16-bit Timer 2
 //
 #ifndef SOFTWARESERIALRX2_H
 #define SOFTWARESERIALRX2_H
@@ -32,6 +32,10 @@ extern void SoftwareSerialRx2_enable (void);
 extern void SoftwareSerialRx2_disable (void);
 
 extern ByteQueue_t* SoftwareSerial_rx2Queue (void);
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+extern void SoftwareSerialRx2_reportHighwater (void);
+#endif
 
 #endif  /* SOFTWARESERIALRX2_H */
 

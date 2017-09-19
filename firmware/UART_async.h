@@ -29,7 +29,8 @@
 
 // uart initialization. must be called once before calling any of the other
 // functions
-extern void UART_init (void);
+extern void UART_init (
+    const bool pullupRx);
 
 extern void UART_set_baud_rate (
    const uint16_t new_baud_rate);
@@ -68,6 +69,10 @@ extern bool UART_write_bytes (
 // returns true if the newline character was received
 extern bool UART_read_string (
    CharString_t *str_buf);
+
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+extern void UART_reportHighwater (void);
+#endif
 
 
 #endif   // UART_ASYNC_LOADED

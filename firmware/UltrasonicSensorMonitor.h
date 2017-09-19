@@ -13,7 +13,7 @@ extern void UltrasonicSensorMonitor_Initialize (void);
 
 extern bool UltrasonicSensorMonitor_haveValidSample (void);
 
-// distance in units of CM
+// distance in units of MM
 extern int16_t UltrasonicSensorMonitor_currentDistance (void);
 
 extern void UltrasonicSensorMonitor_task (void);
