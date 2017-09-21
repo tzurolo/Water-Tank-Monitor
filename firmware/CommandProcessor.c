@@ -61,22 +61,6 @@ static void postReply (
     }
 }
 
-static bool dataSender (void)
-{
-    CellularTCPIP_writeDataP(PSTR("data sent to host"));
-    return true;
-}
-
-static void sendCompletionCallaback (
-    const bool success)
-{
-    if (success) {
-        Console_printP(PSTR("-----> send successful"));
-    } else {
-        Console_printP(PSTR("-----> SEND FAILED"));
-    }
-}
-
 void CommandProcessor_createStatusMessage (
     CharString_t *msg)
 {
@@ -152,10 +136,6 @@ void CommandProcessor_processCommand (
                     SystemTime_setTimeAdjustment(&serverTime);
                 }
             }
-        } else if (strcasecmp_P(cmdToken, PSTR("apply")) == 0) {
-            SystemTime_applyTimeAdjustment();
-        } else if (strcasecmp_P(cmdToken, PSTR("resume")) == 0) {
-            WaterLevelMonitor_resume();
         } else if (strcasecmp_P(cmdToken, PSTR("set")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
@@ -290,8 +270,10 @@ void CommandProcessor_processCommand (
                     EEPROMStorage_setNotification(false);
                 } else if (strcasecmp_P(cmdToken, PSTR("low")) == 0) {
                     cmdToken = strtok(NULL, tokenDelimiters);
-                    const uint8_t level = atoi(cmdToken);
-                    EEPROMStorage_setWaterLowNotificationLevel(level);
+                    if (cmdToken != NULL) {
+                        const uint8_t level = atoi(cmdToken);
+                        EEPROMStorage_setWaterLowNotificationLevel(level);
+                    }
                 } else if (strcasecmp_P(cmdToken, PSTR("high")) == 0) {
                     cmdToken = strtok(NULL, tokenDelimiters);
                     if (cmdToken != NULL) {
@@ -344,19 +326,6 @@ void CommandProcessor_processCommand (
                     TCPIPConsole_enable(true);
                 } else if (strcasecmp_P(cmdToken, PSTR("disable")) == 0) {
                     TCPIPConsole_disable(true);
-                }
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("send")) == 0) {
-            CellularTCPIP_sendData(dataSender, sendCompletionCallaback);
-        } else if (strcasecmp_P(cmdToken, PSTR("pp")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("on")) == 0) {
-                    DDRC |= (1 << PC5);
-                    PORTC |= (1 << PC5);
-                } else if (strcasecmp_P(cmdToken, PSTR("off")) == 0) {
-                    DDRC |= (1 << PC5);
-                    PORTC &= ~(1 << PC5);
                 }
             }
         } else if (strcasecmp_P(cmdToken, PSTR("sleep")) == 0) {

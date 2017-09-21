@@ -24,7 +24,6 @@
 static volatile uint16_t tickCounter = 0;
 static volatile SystemTime_t currentTime;
 static int32_t timeAdjustment;
-static uint16_t timeAsleep;
 static bool shuttingDown = false;
 static SystemTime_TickNotification notificationFunction;
 
@@ -34,7 +33,6 @@ void SystemTime_Initialize (void)
     currentTime.seconds = 0;
     currentTime.hundredths = 0;
     timeAdjustment = 0;
-    timeAsleep = 0;
     notificationFunction = 0;
 
     // set up timer3 to fire interrupt once per second
@@ -141,22 +139,20 @@ void SystemTime_sleepFor (
             wdtTimeout = WDTO_1S;
             secondsThisLoop = 1;
         }
-            secondsRemaining -= secondsThisLoop;
-            wdt_enable(wdtTimeout);
-            WDTCSR |= (1 << WDIE);
-             set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-              cli();
-              currentTime.seconds += secondsThisLoop;
-                sleep_enable();
-                sleep_bod_disable();
+        secondsRemaining -= secondsThisLoop;
+        wdt_enable(wdtTimeout);
+        WDTCSR |= (1 << WDIE);
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        cli();
+        currentTime.seconds += secondsThisLoop;
+        sleep_enable();
+        sleep_bod_disable();
 
-              sei();
-                sleep_cpu();
-                sleep_disable();
-              sei();
-
+        sei();
+        sleep_cpu();
+        sleep_disable();
+        sei();
     }
-    timeAsleep += seconds;
 }
 
 void SystemTime_commenceShutdown (void)

@@ -28,11 +28,12 @@
 #include "WaterLevelMonitor.h"
 #include "RAMSentinel.h"
 
-/** Configures the board hardware and chip peripherals for the demo's functionality. */
+#define WATCHDOG_TIMEOUT WDTO_500MS
+
 static void Initialize (void)
 {
     // enable watchdog timer
-    wdt_enable(WDTO_500MS);
+    wdt_enable(WATCHDOG_TIMEOUT);
 
     SystemTime_Initialize();
     EEPROMStorage_Initialize();
@@ -108,9 +109,12 @@ int main (void)
                     ? 0
                     : ((uint16_t)sec32);
 
+            // sleep
             SystemTime_sleepFor(sleepTime);
 
+            // re-initialize the system
             power_all_enable();
+            wdt_enable(WATCHDOG_TIMEOUT);
             ADCManager_Initialize();
             BatteryMonitor_Initialize();
             InternalTemperatureMonitor_Initialize();

@@ -54,59 +54,67 @@ static int16_t dataSenderSampleIndex;
 static WaterLevelState currentWaterLevelState;
 static uint8_t currentWaterLevelPercent;
 
+#define DATA_SENDER_BUFFER_LEN 30
+
 static bool dataSender (void)
 {
     bool sendComplete = false;
 
-    CharString_define(25, dataToSend);
-    if (dataSenderSampleIndex == -1) {
-        // send per-post data
-        //CommandProcessor_createStatusMessage(&dataToSend);
-        CharString_copyP(PSTR("I"), &dataToSend);
-        StringUtils_appendDecimal(EEPROMStorage_unitID(), 1, 0, &dataToSend);
-        CharString_appendC('N', &dataToSend);
-        SystemTime_t curTime;
-        SystemTime_getCurrentTime(&curTime);
-        StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, &dataToSend);
-        StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, &dataToSend);
-        StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, &dataToSend);
-        CharString_appendC('L', &dataToSend);
-        StringUtils_appendDecimal(currentWaterLevelPercent, 1, 0, &dataToSend);
-        CharString_appendC('B', &dataToSend);
-        StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
-        CharString_appendC('R', &dataToSend);
-        StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
-        CharString_appendC('Q', &dataToSend);
-        StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
-    } else {
-        // send sample data
-        const SampleHistory_Sample* sample =
-            SampleHistory_getAt(dataSenderSampleIndex, &sampleHistory);
-        CharString_copyP(PSTR(";"), &dataToSend);
-        if (sample->relSampleTime != 0) {
-            CharString_appendC('S', &dataToSend);
-            StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
+    // check to see if there is enough room in the output queue for our data. If
+    // not, we check again next time we're called.
+    if (CellularTCPIP_availableSpaceForWriteData() >= DATA_SENDER_BUFFER_LEN) {
+        // there is room in the output queue for our data
+        CharString_define(DATA_SENDER_BUFFER_LEN, dataToSend);
+        if (dataSenderSampleIndex == -1) {
+            // send per-post data
+            CharString_copyP(PSTR("I"), &dataToSend);
+            StringUtils_appendDecimal(EEPROMStorage_unitID(), 1, 0, &dataToSend);
+            CharString_appendC('N', &dataToSend);
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, &dataToSend);
+            StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, &dataToSend);
+            StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, &dataToSend);
+            CharString_appendC('L', &dataToSend);
+            StringUtils_appendDecimal(currentWaterLevelPercent, 1, 0, &dataToSend);
+            CharString_appendC('B', &dataToSend);
+            StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
+            CharString_appendC('R', &dataToSend);
+            StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
+            CharString_appendC('Q', &dataToSend);
+            StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
+        } else {
+            // send next sample
+            const SampleHistory_Sample* sample =
+                SampleHistory_getAt(dataSenderSampleIndex, &sampleHistory);
+            CharString_copyP(PSTR(";"), &dataToSend);
+            if (sample->relSampleTime != 0) {
+                CharString_appendC('S', &dataToSend);
+                StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
+            }
+            CharString_appendC('W', &dataToSend);
+            StringUtils_appendDecimal(sample->waterDistance, 1, 0, &dataToSend);
+            CharString_appendC('T', &dataToSend);
+            StringUtils_appendDecimal(sample->temperature, 1, 0, &dataToSend);
         }
-        CharString_appendC('W', &dataToSend);
-        StringUtils_appendDecimal(sample->waterDistance, 1, 0, &dataToSend);
-        CharString_appendC('T', &dataToSend);
-        StringUtils_appendDecimal(sample->temperature, 1, 0, &dataToSend);
-    }
 
-    ++dataSenderSampleIndex;
-    if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
-        SystemTime_t curTime;
-        SystemTime_getCurrentTime(&curTime);
-        const int32_t secondsSinceLastSample =
-            SystemTime_diffSec(&curTime, &lastSampleTime);
-        if (secondsSinceLastSample != 0) {
-            CharString_appendP(PSTR(";S"), &dataToSend);
-            StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
+        ++dataSenderSampleIndex;
+        // if this is the last sample append the delta time between the last sample and
+        // now, and append the terminator (Z)
+        if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            const int32_t secondsSinceLastSample =
+                SystemTime_diffSec(&curTime, &lastSampleTime);
+            if (secondsSinceLastSample != 0) {
+                CharString_appendP(PSTR(";S"), &dataToSend);
+                StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
+            }
+            CharString_appendC('Z', &dataToSend);
+            sendComplete = true;
         }
-        CharString_appendC('Z', &dataToSend);
-        sendComplete = true;
+        CellularTCPIP_writeDataCS(&dataToSend);
     }
-    CellularTCPIP_writeDataCS(&dataToSend);
 
     return sendComplete;
 }
