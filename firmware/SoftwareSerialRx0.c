@@ -4,7 +4,7 @@
 //   Uses AtMega328P 8-bit Timer 0
 //
 //  Pin usage:
-//      PC2 - serial data in
+//      PB4 - serial data in
 //
 //  How it works:
 //    Upon initializaation it sets a pin change interrupt on the serial
@@ -19,13 +19,13 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
-#define SERIAL_RX_DDR      DDRC
-#define SERIAL_RX_PORT     PORTC
-#define SERIAL_RX_INPORT   PINC
-#define SERIAL_RX_PIN      PC2
-#define SERIAL_RX_PCMSK    PCMSK1
-#define SERIAL_RX_PCINT    PCINT10
-#define SERIAL_RX_PCIE     PCIE1
+#define SERIAL_RX_DDR      DDRB
+#define SERIAL_RX_PORT     PORTB
+#define SERIAL_RX_INPORT   PINB
+#define SERIAL_RX_PIN      PB4
+#define SERIAL_RX_PCMSK    PCMSK0
+#define SERIAL_RX_PCINT    PCINT4
+#define SERIAL_RX_PCIE     PCIE0
 
 // with 8 prescale this 1/4800 second
 #define BIT_CLOCK_TIME ((F_CPU / 8) / 4800)

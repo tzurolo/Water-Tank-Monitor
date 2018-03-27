@@ -224,11 +224,6 @@ static void readCBC (
             }
         }
     }
-
-typedef void (*SIM800_CBCCallback)(
-    const uint8_t chargeStatus,
-    const uint8_t percent,
-    const uint16_t millivolts);
 }
 
 static void readCCLK (

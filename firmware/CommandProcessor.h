@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
-#include "CharString.h"
+#include "CharStringRange.h"
 
 extern void CommandProcessor_processCommand (
     const char* command,
