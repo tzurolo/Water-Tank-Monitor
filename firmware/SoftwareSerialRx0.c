@@ -93,7 +93,7 @@ ByteQueue_t* SoftwareSerial_rx0Queue (void)
     return &rxQueue;
 }
 
-ISR(PCINT1_vect, ISR_BLOCK)
+ISR(PCINT0_vect, ISR_BLOCK)
 {
     if (!rxBit()) {
         TIFR0 |= (1 << OCF0A);  // "clear" the timer compare flag
