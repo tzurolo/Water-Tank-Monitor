@@ -109,7 +109,6 @@ static bool gotCMGRMessage;
 
 // variables for outgoing SMS messages
 CharString_define(16, outgoingSMSMessagePhoneNumber)
-CharString_define(60, CellularComm_outgoingSMSMessageText)
 
 // variables for cell registration, network time, etc
 static SystemTime_t nextCheckForNetworkTimeAndCSQTime;
@@ -167,8 +166,8 @@ static void responseCallback (
 static void printQueueingMessage (
     const int16_t msgID)
 {
-    CharString_define(40, msg);
-    CharString_copyP(PSTR("queueing message "), &msg);
+    CharString_define(20, msg);
+    CharString_copyP(PSTR("queueing msg "), &msg);
     StringUtils_appendDecimal(msgID, 1, 0, &msg);
     Console_printCS(&msg);
 }
@@ -391,7 +390,7 @@ void CellularComm_Initialize (void)
 
     // set up for outgoing SMS messages
     CharString_clear(&outgoingSMSMessagePhoneNumber);
-    CharString_clear(&CellularComm_outgoingSMSMessageText);
+    CharString_clear(&CommandProcessor_commandReply);
 
     ccEnabled = false;
     gotFunctionlevel = false;
@@ -654,7 +653,7 @@ void CellularComm_task (void)
                     if ((incomingSMSMessageStatus == sms_recUnread) ||
                         (incomingSMSMessageStatus == sms_recRead)) {
                         // process the message we got
-                        CommandProcessor_processCommand(
+                        CommandProcessor_executeCommand(
                             CharString_cstr(&incomingSMSMessageText),
                             CharString_cstr(&incomingSMSMessagePhoneNumber),
                             CharString_cstr(&incomingSMSMessageTimestamp));
@@ -666,8 +665,8 @@ void CellularComm_task (void)
             case ccs_waitingForCMGSPrompt : {
                 if (gotSIM800Prompt) {
                     Console_printP(PSTR("sending message text & Ctrl-Z"));
-                    SIM800_sendStringCS(&CellularComm_outgoingSMSMessageText);
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
+                    SIM800_sendStringCS(&CommandProcessor_commandReply);
+                    CharString_clear(&CommandProcessor_commandReply);
                     SIM800_sendCtrlZ();
                     ccState = ccs_waitingForCMGSResponse;
                 }

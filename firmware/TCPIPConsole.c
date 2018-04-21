@@ -51,7 +51,7 @@ static void statusCallback (
 static void dataReceivedCallback (
     const CharString_t *ipData)
 {
-    CommandProcessor_processCommand(CharString_cstr(ipData), "", "");
+    CommandProcessor_executeCommand(CharString_cstr(ipData), "", "");
 }
 
 

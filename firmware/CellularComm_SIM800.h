@@ -11,9 +11,6 @@
 #include "CharString.h"
 #include "SIM800.h"
 
-// outgoing SMS text message
-extern CharString_t CellularComm_outgoingSMSMessageText;
-
 extern void CellularComm_Initialize (void);
 
 // called by cell enable/disable commands

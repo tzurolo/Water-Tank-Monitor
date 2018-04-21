@@ -15,8 +15,10 @@ typedef enum WaterLevelMonitorState_enum {
     wlms_resuming,
     wlms_waitingForSensorData,
     wlms_waitingForConnection,
-    wlms_sendingData,
-    wlms_waitingForHostData,
+    wlms_sendingSampleData,
+    wlms_waitingForHostCommand,
+    wlms_waitingForReadyToSendReply,
+    wlms_sendingReplyData,
     wlms_waitingForCellularCommDisable,
     wlms_poweringDown,
     wlms_done

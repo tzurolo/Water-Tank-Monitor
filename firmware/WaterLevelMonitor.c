@@ -41,13 +41,20 @@ typedef enum SendDataStatus_enum {
     sds_completedFailed
 } SendDataStatus;
 
+typedef enum CommandProcessingMode_enum {
+    cpm_singleCommand,
+    cpm_commandBlock
+} CommandProcessingMode;
+
+
 // state variables
 static const char tokenDelimiters[] = " \n\r";
 static WaterLevelMonitorState wlmState;
+static CommandProcessingMode commandMode = cpm_singleCommand;
 static SendDataStatus sendDataStatus;
 static SystemTime_t time;   // used to measure how long it took to get a connection,
                             // and for the powerdown delay future time
-static bool gotDataFromHost;
+static bool gotCommandFromHost;
 static SystemTime_t lastSampleTime;
 static SampleHistory_define(30, sampleHistory);
 static int16_t dataSenderSampleIndex;
@@ -56,7 +63,7 @@ static uint8_t currentWaterLevelPercent;
 
 #define DATA_SENDER_BUFFER_LEN 30
 
-static bool dataSender (void)
+static bool sampleDataSender (void)
 {
     bool sendComplete = false;
 
@@ -119,6 +126,22 @@ static bool dataSender (void)
     return sendComplete;
 }
 
+static bool replyDataSender (void)
+{
+    bool sendComplete = false;
+
+    // check to see if there is enough room in the output queue for a chunk of our data. If
+    // not, we check again next time we're called.
+    if (CellularTCPIP_availableSpaceForWriteData() >= DATA_SENDER_BUFFER_LEN) {
+        // there is room in the output queue for a chunk of our data
+        // TODO: slice up reply into buffer len chunks
+        sendComplete = true;
+        CellularTCPIP_writeDataCS(&CommandProcessor_commandReply);
+    }
+
+    return sendComplete;
+}
+
 static void TCPIPSendCompletionCallaback (
     const bool success)
 {
@@ -130,13 +153,37 @@ static void TCPIPSendCompletionCallaback (
 static void IPDataCallback (
     const CharString_t *ipData)
 {
-    gotDataFromHost = true;
-    CommandProcessor_processCommand(CharString_cstr(ipData), "", "");
+    for (int i = 0; i < CharString_length(ipData); ++i) {
+        const char c = CharString_at(ipData, i);
+        if ((c == '\r') || (c == '\n')) {
+            // got command terminator
+            if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
+                gotCommandFromHost = true;
+                if (CharString_length(&CommandProcessor_incomingCommand) == 1) {
+                    // check for mode command characters
+                    switch (CharString_at(&CommandProcessor_incomingCommand, 0)) {
+                        case '[' :
+                            commandMode = cpm_commandBlock;
+                            CharString_clear(&CommandProcessor_incomingCommand);
+                            break;
+                        case ']' :
+                            commandMode = cpm_singleCommand;
+                            CharString_clear(&CommandProcessor_incomingCommand);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+            gotCommandFromHost = false;
+            CharString_appendC(c, &CommandProcessor_incomingCommand);
+        }
+    }
 }
 
 static void enableTCPIP (void)
 {
-    gotDataFromHost = false;
     CellularComm_Enable();
     TCPIPConsole_setDataReceiver(IPDataCallback);
     TCPIPConsole_enable(false);
@@ -193,10 +240,30 @@ static bool updateWaterLevelState (
     return wentOutOfRange;
 }
 
+void transitionToWaitingForCommand(void)
+{
+    CharString_clear(&CommandProcessor_incomingCommand);
+    gotCommandFromHost = false;
+    wlmState = wlms_waitingForHostCommand;
+}
+
+void transitionPerCommandMode(void)
+{
+    if (commandMode == cpm_commandBlock) {
+        // more commands coming. wait for next command
+        transitionToWaitingForCommand();
+    } else {
+        // no more commands coming. initiate powerdown sequence
+        TCPIPConsole_disable(false);
+        CellularComm_Disable();
+        wlmState = wlms_waitingForCellularCommDisable;
+    }
+}
+
 void WaterLevelMonitor_Initialize (void)
 {
     wlmState = wlms_initial;
-    // wlmState = wlms_done;
+    commandMode = cpm_singleCommand;
     SampleHistory_clear(&sampleHistory);
     dataSenderSampleIndex = -1;
     currentWaterLevelState = wl_inRange;
@@ -265,28 +332,64 @@ void WaterLevelMonitor_task (void)
             if (TCPIPConsole_readyToSend()) {
                 sendDataStatus = sds_sending;
                 dataSenderSampleIndex = -1; // start with per-post data
-                TCPIPConsole_sendData(dataSender, TCPIPSendCompletionCallaback);
-                wlmState = wlms_sendingData;
+                TCPIPConsole_sendData(sampleDataSender, TCPIPSendCompletionCallaback);
+                wlmState = wlms_sendingSampleData;
             }
             break;
-        case wlms_sendingData :
+        case wlms_sendingSampleData :
             switch (sendDataStatus) {
                 case sds_sending :
                     break;
                 case sds_completedSuccessfully :
                     SampleHistory_clear(&sampleHistory);
-                    wlmState = wlms_waitingForHostData;
+                    commandMode = cpm_singleCommand;
+                    transitionToWaitingForCommand();
                     break;
                 case sds_completedFailed :
-                    wlmState = wlms_waitingForHostData;
+                    commandMode = cpm_singleCommand;
+                    transitionToWaitingForCommand();
                     break;
             }
             break;
-        case wlms_waitingForHostData :
-            if (gotDataFromHost) {
-                TCPIPConsole_disable(false);
-                CellularComm_Disable();
-                wlmState = wlms_waitingForCellularCommDisable;
+        case wlms_waitingForHostCommand:
+            if (gotCommandFromHost) {
+                CharString_clear(&CommandProcessor_commandReply);
+                if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
+                    CommandProcessor_executeCommand(
+                        CharString_cstr(&CommandProcessor_incomingCommand), "", "");
+                    CharString_clear(&CommandProcessor_incomingCommand);
+                    if (CharString_isEmpty(&CommandProcessor_commandReply)) {
+                        if (commandMode == cpm_commandBlock) {
+                            // this will prompt the host for the next command
+                            CharString_copyP(PSTR("OK\n"), &CommandProcessor_commandReply);
+                        }
+                    } else {
+                        CharString_appendC('\n', &CommandProcessor_commandReply);
+                    }
+                }
+                if (CharString_isEmpty(&CommandProcessor_commandReply)) {
+                    transitionPerCommandMode();
+                } else {
+                    // prepare to send reply
+                    wlmState = wlms_waitingForReadyToSendReply;
+                }
+            }
+            break;
+        case wlms_waitingForReadyToSendReply :
+            if (TCPIPConsole_readyToSend()) {
+                sendDataStatus = sds_sending;
+                TCPIPConsole_sendData(replyDataSender, TCPIPSendCompletionCallaback);
+                wlmState = wlms_sendingReplyData;
+            }
+            break;
+        case wlms_sendingReplyData :
+            switch (sendDataStatus) {
+                case sds_sending :
+                    break;
+                case sds_completedSuccessfully :
+                case sds_completedFailed :
+                    transitionPerCommandMode();
+                    break;
             }
             break;
         case wlms_waitingForCellularCommDisable :

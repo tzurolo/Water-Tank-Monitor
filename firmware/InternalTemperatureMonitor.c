@@ -9,13 +9,11 @@
 #include "ADCManager.h"
 #include "SystemTime.h"
 #include "DataHistory.h"
+#include "EEPROMStorage.h"
 
 #define SENSOR_ADC_CHANNEL ADC_SINGLE_ENDED_INPUT_TEMP
 
 #define REFERENCE_VOLTAGE 1.1
-
-// at 22 deg C we got 349 counts from the AtMega328P
-#define ESTIMATED_ZERO_C_COUNTS 327
 
 #define RESOLUTION 1000
 #define NUMERATOR ((1 / 0.94) * (1100 / 1024) * RESOLUTION)
@@ -64,7 +62,8 @@ int16_t InternalTemperatureMonitor_currentTemperature (void)
 
         int32_t temp = avgTemperature;
         // counts to degrees C
-        curTempC = ((int16_t)(((temp - ESTIMATED_ZERO_C_COUNTS) * NUMERATOR) / RESOLUTION));
+        const int16_t tempCalOffset = EEPROMStorage_tempCalOffset();
+        curTempC = ((int16_t)(((temp - tempCalOffset) * NUMERATOR) / RESOLUTION));
     }
 
     return curTempC;

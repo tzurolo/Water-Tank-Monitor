@@ -32,6 +32,9 @@
 #define CMD_TOKEN_BUFFER_LEN 80
 
 static const char tokenDelimiters[] = " \n\r";
+CharString_define(40, CommandProcessor_incomingCommand)
+CharString_define(100, CommandProcessor_commandReply)
+
 
 // appends n.nnV to outgoing message text
 static void appendVoltageToString (
@@ -57,7 +60,7 @@ static void postReply (
     if (phoneNumber[0] != 0) {
         CellularComm_postOutgoingMessage(phoneNumber);
     } else {
-        Console_printCS(&CellularComm_outgoingSMSMessageText);
+        Console_printCS(&CommandProcessor_commandReply);
     }
 }
 
@@ -93,7 +96,7 @@ void CommandProcessor_createStatusMessage (
     CharString_appendP(PSTR("  "), msg);
 }
 
-void CommandProcessor_processCommand (
+void CommandProcessor_executeCommand (
     const char* command,
     const char* phoneNumber,
     const char* timestamp)
@@ -126,7 +129,7 @@ void CommandProcessor_processCommand (
             }
 	    // return status info
 	    CommandProcessor_createStatusMessage(
-                &CellularComm_outgoingSMSMessageText);
+                &CommandProcessor_commandReply);
             postReply(statusToNumber);
         } else if (strcasecmp_P(cmdToken, PSTR("tset")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
@@ -195,69 +198,69 @@ void CommandProcessor_processCommand (
                 if (strcasecmp_P(cmdToken, PSTR("PIN")) == 0) {
                     char pinBuffer[16];
                     EEPROMStorage_getPIN(pinBuffer);
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
+                    CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendP(PSTR("PIN: "),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_append(pinBuffer,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
                     CharString_copyP(PSTR(" offset: "),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(EEPROMStorage_tempCalOffset(), 1, 0,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
                     char apnBuffer[64];
                     EEPROMStorage_getAPN(apnBuffer);
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
+                    CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendP(PSTR("APN:'"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_append(apnBuffer,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_appendP(PSTR("'"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
                     CharString_copyP(PSTR("Sample Interval:"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(
                         EEPROMStorage_sampleInterval(), 1, 0,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
+                    CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendP(PSTR("Logging Interval:"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(
                         EEPROMStorage_LoggingUpdateInterval(), 1, 0,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("thingspeak")) == 0) {
                     char buffer[64];
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
+                    CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendP(PSTR("ThingSpeak Enabled:"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(
                         EEPROMStorage_thingspeakEnabled() ? 1 : 0, 1, 0,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_appendP(PSTR(", addr:'"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     EEPROMStorage_getThingspeakHostAddress(buffer);
                     CharString_append(buffer,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_appendP(PSTR("', port:"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(
                         EEPROMStorage_thingspeakHostPort(), 1, 0,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_appendP(PSTR(", writekey:'"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     EEPROMStorage_getThingspeakWriteKey(buffer);
                     CharString_append(buffer,
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     CharString_appendP(PSTR("'"),
-                        &CellularComm_outgoingSMSMessageText);
+                        &CommandProcessor_commandReply);
                     postReply(phoneNumber);
                 }
             }
@@ -298,8 +301,8 @@ void CommandProcessor_processCommand (
                 StringUtils_scanQuotedString(msgStart, &message);
                 if (CharString_length(&message) > 0) {
                     // got the message
-                    CharString_clear(&CellularComm_outgoingSMSMessageText);
-                    CharString_appendCS(&message, &CellularComm_outgoingSMSMessageText);
+                    CharString_clear(&CommandProcessor_commandReply);
+                    CharString_appendCS(&message, &CommandProcessor_commandReply);
                     postReply(recipientNumber);
 #if 0
             char printbuf[80];
@@ -373,13 +376,13 @@ void CommandProcessor_processCommand (
             if (cmdToken != NULL) {
                 const unsigned int uiAddress = atoi(cmdToken);
                 const uint8_t eeromData = EEPROM_read((uint8_t*)uiAddress);
-                CharString_clear(&CellularComm_outgoingSMSMessageText);
+                CharString_clear(&CommandProcessor_commandReply);
                 StringUtils_appendDecimal(uiAddress, 1, 0,
-                    &CellularComm_outgoingSMSMessageText);
+                    &CommandProcessor_commandReply);
                 CharString_appendP(PSTR(":"),
-                    &CellularComm_outgoingSMSMessageText);
+                    &CommandProcessor_commandReply);
                 StringUtils_appendDecimal(eeromData, 1, 0,
-                    &CellularComm_outgoingSMSMessageText);
+                    &CommandProcessor_commandReply);
                 postReply(phoneNumber);
             }
         } else if (strcasecmp_P(cmdToken, PSTR("eewrite")) == 0) {

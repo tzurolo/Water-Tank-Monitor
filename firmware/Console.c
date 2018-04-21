@@ -28,7 +28,6 @@ const prog_char crP[] = {13,0};
 const prog_char crlfP[] = {13,10,0};
 
 // state variables
-CharString_define(40, commandBuffer)
 static SystemTime_t nextStatusPrintTime;
 static uint8_t currentPrintLine = 5;
 
@@ -55,24 +54,24 @@ void Console_task (void)
             case '\r' : {
                 // command complete. execute it
                 SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
-                CommandProcessor_processCommand(CharString_cstr(&commandBuffer), "", "");
-                CharString_clear(&commandBuffer);
+                CommandProcessor_executeCommand(CharString_cstr(&CommandProcessor_incomingCommand), "", "");
+                CharString_clear(&CommandProcessor_incomingCommand);
                 }
                 break;
             case 0x7f : {
-                CharString_truncate(CharString_length(&commandBuffer) - 1,
-                    &commandBuffer);
+                CharString_truncate(CharString_length(&CommandProcessor_incomingCommand) - 1,
+                    &CommandProcessor_incomingCommand);
                 }
                 break;
             default : {
                 // command not complete yet. append to command buffer
-                CharString_appendC(cmdByte, &commandBuffer);
+                CharString_appendC(cmdByte, &CommandProcessor_incomingCommand);
                 }
                 break;
         }
         // echo current command
         SoftwareSerialTx_sendP(TX_CHAN_INDEX, crP);
-        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
+        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &CommandProcessor_incomingCommand);
         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
     }
 
@@ -85,9 +84,9 @@ void Console_task (void)
         SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &statusMsg);
         SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 
-        if (!CharString_isEmpty(&commandBuffer)) {
+        if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
             // echo current command
-            SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &commandBuffer);
+            SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &CommandProcessor_incomingCommand);
             SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_ERASE_LINE);
         }
 
