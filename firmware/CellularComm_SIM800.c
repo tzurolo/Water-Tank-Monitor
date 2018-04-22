@@ -653,10 +653,20 @@ void CellularComm_task (void)
                     if ((incomingSMSMessageStatus == sms_recUnread) ||
                         (incomingSMSMessageStatus == sms_recRead)) {
                         // process the message we got
-                        CommandProcessor_executeCommand(
-                            CharString_cstr(&incomingSMSMessageText),
-                            CharString_cstr(&incomingSMSMessagePhoneNumber),
-                            CharString_cstr(&incomingSMSMessageTimestamp));
+                        CharString_clear(&CommandProcessor_commandReply);
+                        CharString_clear(&outgoingSMSMessagePhoneNumber);
+                        if (CommandProcessor_executeCommand(&incomingSMSMessageText)) {
+                            // valid command
+                            if (!CharString_isEmpty(&CommandProcessor_commandReply)) {
+                                // a reply was generated from the command
+                                if (CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
+                                    // the command did not set the outgoing phone number
+                                    // use the incoming phone number
+                                    CharString_copyCS(&incomingSMSMessagePhoneNumber,
+                                                      &outgoingSMSMessagePhoneNumber);
+                                }
+                            }
+                        }
                     }
                     ccState = ccs_idle;
                 }
@@ -783,7 +793,7 @@ uint16_t CellularComm_batteryMillivolts (void)
     return batteryMillivolts;
 }
 
-void CellularComm_postOutgoingMessage (
+void CellularComm_setOutgoingSMSMessageNumber (
     const char* phoneNumber)
 {
     CharString_copy(phoneNumber, &outgoingSMSMessagePhoneNumber);

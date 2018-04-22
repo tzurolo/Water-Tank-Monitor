@@ -36,7 +36,7 @@ extern uint16_t CellularComm_batteryMillivolts (void);
 
 // posts the current contents of the outgoing message text
 // to the given phone number
-extern void CellularComm_postOutgoingMessage (
+extern void CellularComm_setOutgoingSMSMessageNumber (
     const char* phoneNumber);
 
 #endif  // CELLULARCOMM_H

@@ -54,16 +54,6 @@ static void appendTemperatureToString (
     CharString_appendP(PSTR("C"), str);
 }
 
-static void postReply (
-    const char* phoneNumber)
-{
-    if (phoneNumber[0] != 0) {
-        CellularComm_postOutgoingMessage(phoneNumber);
-    } else {
-        Console_printCS(&CommandProcessor_commandReply);
-    }
-}
-
 void CommandProcessor_createStatusMessage (
     CharString_t *msg)
 {
@@ -96,11 +86,10 @@ void CommandProcessor_createStatusMessage (
     CharString_appendP(PSTR("  "), msg);
 }
 
-void CommandProcessor_executeCommand (
-    const char* command,
-    const char* phoneNumber,
-    const char* timestamp)
+bool CommandProcessor_executeCommand (
+    const CharString_t* command)
 {
+    bool validCommand = true;
 #if 0
 	char msgbuf[80];
     sprintf(msgbuf, "cmd: '%s'", command);
@@ -112,12 +101,12 @@ void CommandProcessor_executeCommand (
 #endif
 
     char cmdTokenBuf[CMD_TOKEN_BUFFER_LEN];
-    strncpy(cmdTokenBuf, command, CMD_TOKEN_BUFFER_LEN-1);
+    strncpy(cmdTokenBuf, CharString_cstr(command), CMD_TOKEN_BUFFER_LEN-1);
     cmdTokenBuf[CMD_TOKEN_BUFFER_LEN-1] = 0;
     const char* cmdToken = strtok(cmdTokenBuf, tokenDelimiters);
     if (cmdToken != NULL) {
         if (strcasecmp_P(cmdToken, PSTR("status")) == 0) {
-            const char* statusToNumber = phoneNumber;
+            const char* statusToNumber = NULL;
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
                 if (strcasecmp_P(cmdToken, PSTR("to")) == 0) {
@@ -130,7 +119,9 @@ void CommandProcessor_executeCommand (
 	    // return status info
 	    CommandProcessor_createStatusMessage(
                 &CommandProcessor_commandReply);
-            postReply(statusToNumber);
+            if (statusToNumber != NULL) {
+                CellularComm_setOutgoingSMSMessageNumber(statusToNumber);
+            }
         } else if (strcasecmp_P(cmdToken, PSTR("tset")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
             if (cmdToken != NULL) {
@@ -138,6 +129,8 @@ void CommandProcessor_executeCommand (
                 if (serverTime != 0) {
                     SystemTime_setTimeAdjustment(&serverTime);
                 }
+            } else {
+                validCommand = false;
             }
         } else if (strcasecmp_P(cmdToken, PSTR("set")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
@@ -188,8 +181,12 @@ void CommandProcessor_executeCommand (
                             if (cmdToken != NULL) {
                                 EEPROMStorage_setThingspeakWriteKey(cmdToken);
                             }
+                        } else {
+                            validCommand = false;
                         }
                     }
+                } else {
+                    validCommand = false;
                 }
             }
         } else if (strcasecmp_P(cmdToken, PSTR("get")) == 0) {
@@ -203,13 +200,11 @@ void CommandProcessor_executeCommand (
                         &CommandProcessor_commandReply);
                     CharString_append(pinBuffer,
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
                     CharString_copyP(PSTR(" offset: "),
                         &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(EEPROMStorage_tempCalOffset(), 1, 0,
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
                     char apnBuffer[64];
                     EEPROMStorage_getAPN(apnBuffer);
@@ -220,14 +215,12 @@ void CommandProcessor_executeCommand (
                         &CommandProcessor_commandReply);
                     CharString_appendP(PSTR("'"),
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
                     CharString_copyP(PSTR("Sample Interval:"),
                         &CommandProcessor_commandReply);
                     StringUtils_appendDecimal(
                         EEPROMStorage_sampleInterval(), 1, 0,
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
                     CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendP(PSTR("Logging Interval:"),
@@ -235,7 +228,6 @@ void CommandProcessor_executeCommand (
                     StringUtils_appendDecimal(
                         EEPROMStorage_LoggingUpdateInterval(), 1, 0,
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
                 } else if (strcasecmp_P(cmdToken, PSTR("thingspeak")) == 0) {
                     char buffer[64];
                     CharString_clear(&CommandProcessor_commandReply);
@@ -261,7 +253,8 @@ void CommandProcessor_executeCommand (
                         &CommandProcessor_commandReply);
                     CharString_appendP(PSTR("'"),
                         &CommandProcessor_commandReply);
-                    postReply(phoneNumber);
+                } else {
+                    validCommand = false;
                 }
             }
 	} else if (strcasecmp_P(cmdToken, PSTR("notify")) == 0) {
@@ -283,6 +276,8 @@ void CommandProcessor_executeCommand (
                         const uint8_t level = atoi(cmdToken);
                         EEPROMStorage_setWaterHighNotificationLevel(level);
                     }
+                } else {
+                    validCommand = false;
                 }
             }
         } else if (strcasecmp_P(cmdToken, PSTR("sms")) == 0) {
@@ -296,22 +291,24 @@ void CommandProcessor_executeCommand (
                 // get the message to send. it should be a quoted string
                 const char* msgStart = cmdToken + strlen(cmdToken);
                 const ptrdiff_t msgOffset = msgStart - cmdTokenBuf;
-                msgStart = command + msgOffset;
+                msgStart = CharString_cstr(command) + msgOffset;
                 CharString_define(50, message);
                 StringUtils_scanQuotedString(msgStart, &message);
                 if (CharString_length(&message) > 0) {
                     // got the message
                     CharString_clear(&CommandProcessor_commandReply);
                     CharString_appendCS(&message, &CommandProcessor_commandReply);
-                    postReply(recipientNumber);
+                    CellularComm_setOutgoingSMSMessageNumber(recipientNumber);
 #if 0
-            char printbuf[80];
-            sprintf(printbuf, "phone#: '%s'", recipientNumber);
-            Console_print(printbuf);
-            sprintf(printbuf, "message: '%s'", message);
-            Console_print(printbuf);
+                    char printbuf[80];
+                    sprintf(printbuf, "phone#: '%s'", recipientNumber);
+                    Console_print(printbuf);
+                    sprintf(printbuf, "message: '%s'", message);
+                    Console_print(printbuf);
 #endif
                 }
+            } else {
+                validCommand = false;
             }
         } else if (strcasecmp_P(cmdToken, PSTR("cell")) == 0) {
             cmdToken = strtok(NULL, tokenDelimiters);
@@ -320,6 +317,8 @@ void CommandProcessor_executeCommand (
                     CellularComm_Enable();
                 } else if (strcasecmp_P(cmdToken, PSTR("disable")) == 0) {
                     CellularComm_Disable();
+                } else {
+                    validCommand = false;
                 }
             }
         } else if (strcasecmp_P(cmdToken, PSTR("ipconsole")) == 0) {
@@ -329,8 +328,56 @@ void CommandProcessor_executeCommand (
                     TCPIPConsole_enable(true);
                 } else if (strcasecmp_P(cmdToken, PSTR("disable")) == 0) {
                     TCPIPConsole_disable(true);
+                } else {
+                    validCommand = false;
                 }
             }
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+        } else if (strcasecmp_P(cmdToken, PSTR("bqhw")) == 0) {
+            // byte queue report highwater
+            SoftwareSerialRx0_reportHighwater();
+            SoftwareSerialRx2_reportHighwater();
+            SoftwareSerialTx_reportHighwater();
+            UART_reportHighwater();
+#endif
+        } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
+            // reboot
+            SystemTime_commenceShutdown();
+	} else if (strcasecmp_P(cmdToken, PSTR("eeread")) == 0) {
+            cmdToken = strtok(NULL, tokenDelimiters);
+            if (cmdToken != NULL) {
+                const unsigned int uiAddress = atoi(cmdToken);
+                const uint8_t eeromData = EEPROM_read((uint8_t*)uiAddress);
+                CharString_clear(&CommandProcessor_commandReply);
+                StringUtils_appendDecimal(uiAddress, 1, 0,
+                    &CommandProcessor_commandReply);
+                CharString_appendP(PSTR(":"),
+                    &CommandProcessor_commandReply);
+                StringUtils_appendDecimal(eeromData, 1, 0,
+                    &CommandProcessor_commandReply);
+            }
+        } else if (strcasecmp_P(cmdToken, PSTR("eewrite")) == 0) {
+            cmdToken = strtok(NULL, tokenDelimiters);
+            if (cmdToken != NULL) {
+                const unsigned int uiAddress = atoi(cmdToken);
+                cmdToken = strtok(NULL, tokenDelimiters);
+                if (cmdToken != NULL) {
+                    const uint8_t value = atoi(cmdToken);
+                    EEPROM_write((uint8_t*)uiAddress, value);
+                }
+            }
+        } else {
+            validCommand = false;
+            Console_printP(PSTR("unrecognized command"));
+        }
+    }
+
+    return validCommand;
+}
+//                uint32_t i1 = 30463UL;
+//                uint32_t i2 = 30582UL;
+#if 0
+// sleep code
         } else if (strcasecmp_P(cmdToken, PSTR("sleep")) == 0) {
             //clock_prescale_set(clock_div_256);
             uint16_t sleepTime = 8;
@@ -360,45 +407,4 @@ void CommandProcessor_executeCommand (
             CellularComm_Initialize();
             CellularTCPIP_Initialize();
             TCPIPConsole_Initialize();
-#if BYTEQUEUE_HIGHWATERMARK_ENABLED
-        } else if (strcasecmp_P(cmdToken, PSTR("bqhw")) == 0) {
-            // byte queue report highwater
-            SoftwareSerialRx0_reportHighwater();
-            SoftwareSerialRx2_reportHighwater();
-            SoftwareSerialTx_reportHighwater();
-            UART_reportHighwater();
 #endif
-        } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
-            // reboot
-            SystemTime_commenceShutdown();
-	} else if (strcasecmp_P(cmdToken, PSTR("eeread")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                const unsigned int uiAddress = atoi(cmdToken);
-                const uint8_t eeromData = EEPROM_read((uint8_t*)uiAddress);
-                CharString_clear(&CommandProcessor_commandReply);
-                StringUtils_appendDecimal(uiAddress, 1, 0,
-                    &CommandProcessor_commandReply);
-                CharString_appendP(PSTR(":"),
-                    &CommandProcessor_commandReply);
-                StringUtils_appendDecimal(eeromData, 1, 0,
-                    &CommandProcessor_commandReply);
-                postReply(phoneNumber);
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("eewrite")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                const unsigned int uiAddress = atoi(cmdToken);
-                cmdToken = strtok(NULL, tokenDelimiters);
-                if (cmdToken != NULL) {
-                    const uint8_t value = atoi(cmdToken);
-                    EEPROM_write((uint8_t*)uiAddress, value);
-                }
-            }
-        } else {
-            Console_printP(PSTR("unrecognized command"));
-        }
-    }
-}
-//                uint32_t i1 = 30463UL;
-//                uint32_t i2 = 30582UL;

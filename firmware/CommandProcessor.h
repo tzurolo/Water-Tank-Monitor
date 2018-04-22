@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
-#include "CharStringRange.h"
+#include "CharStringSpan.h"
 
 // buffer that clients can use to accumulate command characters
 extern CharString_t CommandProcessor_incomingCommand;
@@ -23,10 +23,10 @@ extern CharString_t CommandProcessor_commandReply;
 extern void CommandProcessor_createStatusMessage (
     CharString_t *msg);
 
-extern void CommandProcessor_executeCommand (
-    const char* command,
-    const char* phoneNumber,
-    const char* timestamp);
+// writes response, if any, to CommandProcessor_commandReply
+// returns true if given command is valid
+extern bool CommandProcessor_executeCommand (
+    const CharString_t* command);
 
 
 #endif  // COMMANDPROCESSOR_H

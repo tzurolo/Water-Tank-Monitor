@@ -7,77 +7,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern const char* StringUtils_scanDelimitedString (
+void StringUtils_scanDelimitedString (
     const char startDelimiter,
     const char endDelimiter,
-    const char* sourcePtr,
-    CharString_t* delimitedString)
+    CharStringSpan_t* source,
+    CharStringSpan_t* delimitedSpan)
 {
-    CharString_clear(delimitedString);
-    bool isValid = false;
-    const char* startingSourcePtr = sourcePtr;
+    CharStringSpan_clear(delimitedSpan);
+    CharStringSpan_Iter iter = CharStringSpan_begin(source);
+    CharStringSpan_Iter end = CharStringSpan_end(source);
 
     // advance to the next startDelimiter
-    while ((*sourcePtr != 0) && (*sourcePtr != startDelimiter)) {
-        ++sourcePtr;
+    while ((iter != end) && (*iter != startDelimiter)) {
+        ++iter;
     }
-    if (*sourcePtr == startDelimiter) {
+    if (*iter == startDelimiter) {
         // step over start delimiter
-        ++sourcePtr;
+        ++iter;
+        CharStringSpan_Iter delimitedStartIter = iter;
         // read characters between delimiters
-        while ((*sourcePtr != 0) && (*sourcePtr != endDelimiter)) {
-            CharString_appendC(*sourcePtr, delimitedString);
-            ++sourcePtr;
+        while ((iter != end) && (*iter != endDelimiter)) {
+            ++iter;
         }
 
-        if (*sourcePtr == endDelimiter) {
+        if (*iter == endDelimiter) {
+            // we have a valid delimited string
+            CharStringSpan_set(delimitedStartIter, iter, delimitedSpan);
             // step over closing delimiter
-            ++sourcePtr;
-            isValid = true;
+            ++iter;
+            CharStringSpan_setBegin(iter, source);
         }
     }
-
-    if (!isValid) {
-        CharString_clear(delimitedString);
-        sourcePtr = startingSourcePtr;
-    }
-
-    return sourcePtr;
 }
 
-const char* StringUtils_scanQuotedString (
-    const char* sourcePtr,
-    CharString_t* quotedString)
+void StringUtils_scanQuotedString (
+    CharStringSpan_t* source,
+    CharStringSpan_t* quotedSpan)
 {
-    return StringUtils_scanDelimitedString('"', '"', sourcePtr, quotedString);
+    StringUtils_scanDelimitedString('"', '"', source, quotedSpan);
 }
 
-const char* StringUtils_skipWhitespace (
-    const char* sourcePtr)
+void StringUtils_skipWhitespace (
+    CharStringSpan_t* source)
 {
+    CharStringSpan_Iter iter = CharStringSpan_begin(source);
+    CharStringSpan_Iter end = CharStringSpan_end(source);
     char ch;
-    while ((ch = *sourcePtr) && ((ch == ' ') || (ch == '\t') || (ch == '\n'))) {
-        ++sourcePtr;
+    while ((iter != end) && (ch = *iter) && ((ch == ' ') || (ch == '\t') || (ch == '\n'))) {
+        ++iter;
     }
-
-    return sourcePtr;
+    CharStringSpan_setBegin(iter, source);
 }
 
-const char* StringUtils_scanInteger (
-    const char* str,
+void StringUtils_scanInteger (
+    CharStringSpan_t* source,
     bool *isValid,
     int16_t *value)
 {
     *isValid = false;
 
     int16_t workingValue = 0;
-    const char* cp = str;
+    CharStringSpan_Iter iter = CharStringSpan_begin(source);
+    CharStringSpan_Iter end = CharStringSpan_end(source);
 
     char ch;
     bool gotDigit = false;
-    while ((ch = *cp) && (ch >= '0') && (ch <= '9')) {
+    while ((iter != end) && (ch = *iter) && (ch >= '0') && (ch <= '9')) {
         workingValue = (workingValue * 10) + (ch - '0');
-        ++cp;
+        ++iter;
         gotDigit = true;
     }
 
@@ -85,25 +82,25 @@ const char* StringUtils_scanInteger (
         *isValid = true;
         *value = workingValue;
     }
-
-    return cp;
+    CharStringSpan_setBegin(iter, source);
 }
 
-const char* StringUtils_scanIntegerU32 (
-    const char* str,
+void StringUtils_scanIntegerU32 (
+    CharStringSpan_t* source,
     bool *isValid,
     uint32_t *value)
 {
     *isValid = false;
 
     uint32_t workingValue = 0;
-    const char* cp = str;
+    CharStringSpan_Iter iter = CharStringSpan_begin(source);
+    CharStringSpan_Iter end = CharStringSpan_end(source);
 
     char ch;
     bool gotDigit = false;
-    while ((ch = *cp) && (ch >= '0') && (ch <= '9')) {
+    while ((iter != end) && (ch = *iter) && (ch >= '0') && (ch <= '9')) {
         workingValue = (workingValue * 10) + (ch - '0');
-        ++cp;
+        ++iter;
         gotDigit = true;
     }
 
@@ -111,12 +108,11 @@ const char* StringUtils_scanIntegerU32 (
         *isValid = true;
         *value = workingValue;
     }
-
-    return cp;
+    CharStringSpan_setBegin(iter, source);
 }
 
 void StringUtils_scanDecimal (
-    const char* str,
+    CharStringSpan_t* source,
     bool *isValid,
     int16_t *value,
     uint8_t *numFractionalDigits)
@@ -126,17 +122,18 @@ void StringUtils_scanDecimal (
     int16_t workingValue = 0;
     uint8_t fractionalDigits = 0;
     bool gotDecimalPoint = false;
-    const char* cp = str;
+    CharStringSpan_Iter iter = CharStringSpan_begin(source);
+    CharStringSpan_Iter end = CharStringSpan_end(source);
 
     // read minus sign
     bool isNegative = false;
-    if (*cp == '-') {
+    if (*iter == '-') {
         isNegative = true;
-        ++cp;
+        ++iter;
     }
 
     char ch;
-    while ((ch = *cp++) && *isValid) {
+    while ((iter != end) && (ch = *iter++) && *isValid) {
         if ((ch >= '0') && (ch <= '9')) {
             workingValue = (workingValue * 10) + (ch - '0');
             if (gotDecimalPoint) {
@@ -228,7 +225,7 @@ void StringUtils_appendDecimal32 (
 }
 
 int StringUtils_lookupString (
-    const CharString_t *str,
+    const CharStringSpan_t *str,
     PGM_P table[],
     const int tableSize)
 {
@@ -239,7 +236,7 @@ int StringUtils_lookupString (
     while (first <= last) {
         middle = (first + last) / 2;
         PGM_P tableEntry = (PGM_P)pgm_read_word(&(table[middle]));
-        const int comparison = CharString_compareP(str, tableEntry);
+        const int comparison = CharStringSpan_compareP(str, tableEntry);
         if (comparison == 0) {
             // found at index middle;
             break;

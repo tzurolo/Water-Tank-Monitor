@@ -117,7 +117,7 @@ static bool sampleDataSender (void)
                 CharString_appendP(PSTR(";S"), &dataToSend);
                 StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
             }
-            CharString_appendC('Z', &dataToSend);
+            CharString_appendP(PSTR("Z\n"), &dataToSend);
             sendComplete = true;
         }
         CellularTCPIP_writeDataCS(&dataToSend);
@@ -355,13 +355,17 @@ void WaterLevelMonitor_task (void)
             if (gotCommandFromHost) {
                 CharString_clear(&CommandProcessor_commandReply);
                 if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
-                    CommandProcessor_executeCommand(
-                        CharString_cstr(&CommandProcessor_incomingCommand), "", "");
+                    const bool successful = 
+                        CommandProcessor_executeCommand(&CommandProcessor_incomingCommand);
                     CharString_clear(&CommandProcessor_incomingCommand);
                     if (CharString_isEmpty(&CommandProcessor_commandReply)) {
                         if (commandMode == cpm_commandBlock) {
                             // this will prompt the host for the next command
-                            CharString_copyP(PSTR("OK\n"), &CommandProcessor_commandReply);
+                            CharString_copyP(
+                                successful
+                                ? PSTR("OK\n")
+                                : PSTR("ERROR\n"),
+                                &CommandProcessor_commandReply);
                         }
                     } else {
                         CharString_appendC('\n', &CommandProcessor_commandReply);

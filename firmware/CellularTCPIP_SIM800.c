@@ -71,6 +71,9 @@ void responseMessageCallback (
     const SIM800_ResponseMessage msg)
 {
     SIM800ResponseMsg = msg;
+    if (SIM800ResponseMsg == rm_CLOSED) {
+        CellularTCPIP_notifyConnectionClosed();
+    }
 }
 
 static void sendSIM800CommandP (
@@ -545,13 +548,15 @@ void CellularTCPIP_Subtask (void)
         case cts_waitingForCIPACKResponse :
             if (SIM800ResponseMsg == rm_OK) {
                 sendCIPSEND();
-            } else if (SIM800ResponseMsg == rm_ERROR) {
+            } else if ((SIM800ResponseMsg == rm_ERROR) ||
+                       (SIM800ResponseMsg == rm_CLOSED)) {
                 endSubtask(cs_disconnected);
             }
             break;
         case cts_waitingForCIPCLOSEResponse :
             if ((SIM800ResponseMsg == rm_CLOSE_OK) ||
-                (SIM800ResponseMsg == rm_ERROR)) {
+                (SIM800ResponseMsg == rm_ERROR) ||
+                (SIM800ResponseMsg == rm_CLOSED)) {
                 endSubtask(cs_disconnected);
             }
             break;
@@ -561,6 +566,7 @@ void CellularTCPIP_Subtask (void)
                     requestIPState();
                     break;
                 case rm_ERROR :
+                case rm_CLOSED :
                     endSubtask(cs_disconnected);
                     break;
                 default:
@@ -571,7 +577,8 @@ void CellularTCPIP_Subtask (void)
             if (curIPState != ips_unknown) {
                 // we got a state
                 advanceStateForCommand();
-            } else if (SIM800ResponseMsg == rm_ERROR) {
+            } else if ((SIM800ResponseMsg == rm_ERROR)  ||
+                       (SIM800ResponseMsg == rm_CLOSED)) {
                 endSubtask(cs_disconnected);
             }
             // may want to have a time out here

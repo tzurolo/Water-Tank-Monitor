@@ -54,7 +54,7 @@ void Console_task (void)
             case '\r' : {
                 // command complete. execute it
                 SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
-                CommandProcessor_executeCommand(CharString_cstr(&CommandProcessor_incomingCommand), "", "");
+                CommandProcessor_executeCommand(&CommandProcessor_incomingCommand);
                 CharString_clear(&CommandProcessor_incomingCommand);
                 }
                 break;

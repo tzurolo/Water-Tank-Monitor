@@ -11,40 +11,41 @@
 #include <string.h>
 #include <stddef.h>
 #include <avr/pgmspace.h>
-#include "CharString.h"
+#include "CharStringSpan.h"
 
 // scans for startDelimiter and then puts everything up to endDelimiter in
 // delimitedString. returns the updated source ptr. returns empty string
-// in delimitedString if delimiters not found
-extern const char* StringUtils_scanDelimitedString (
+// in delimitedString if delimiters not found. Updates source to beyond
+// the end of the delimited string
+extern void StringUtils_scanDelimitedString (
     const char startDelimiter,
     const char endDelimiter,
-    const char* sourcePtr,
-    CharString_t* delimitedString);
+    CharStringSpan_t* source,
+    CharStringSpan_t* delimitedSpan);
 
 // scans for " and then puts everything up to the next " in
 // quotedString. returns the updated source ptr
-extern const char* StringUtils_scanQuotedString (
-    const char* sourcePtr,
-    CharString_t* quotedString);
+extern void StringUtils_scanQuotedString (
+    CharStringSpan_t* source,
+    CharStringSpan_t* quotedSpan);
 
-extern const char* StringUtils_skipWhitespace (
-    const char* sourcePtr);
+extern void StringUtils_skipWhitespace (
+    CharStringSpan_t* source);
 
 // scans for digits, if any, and returns the integer value in 'value'.
 // returns the updated source ptr
-extern const char* StringUtils_scanInteger (
-    const char* str,
+extern void StringUtils_scanInteger (
+    CharStringSpan_t* source,
     bool *isValid,
     int16_t *value);
-extern const char* StringUtils_scanIntegerU32 (
-    const char* str,
+extern void StringUtils_scanIntegerU32 (
+    CharStringSpan_t* source,
     bool *isValid,
     uint32_t *value);
 
 // value returned is in units of 1/10^numFractionalDigits
 extern void StringUtils_scanDecimal (
-    const char* str,
+    CharStringSpan_t* source,
     bool *isValid,
     int16_t *value,
     uint8_t *numFractionalDigits);
@@ -63,7 +64,7 @@ extern void StringUtils_appendDecimal32 (
 
 // returns index of match (0..tableSize-1), or tableSize if not found
 extern int StringUtils_lookupString (
-    const CharString_t *str,
+    const CharStringSpan_t *str,
     PGM_P table[],
     const int tableSize);
 

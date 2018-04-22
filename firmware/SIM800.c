@@ -23,7 +23,7 @@
 #include "StringUtils.h"
 
 #define USE_POWER_STATE 0
-#define DEBUG_TRACE 0
+#define DEBUG_TRACE 1
 
 #define TX_CHAN_INDEX 0
 
@@ -205,20 +205,20 @@ static SIM800_CBCCallback CBCCallback;
 static SIM800_promptCallback promptCallback;
 
 static void readCBC (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     int16_t status;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanInteger(cp, &isValid, &status);
-    if (isValid && (*cp == ',')) {
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &status);
+    if (isValid && (CharStringSpan_front(str) == ',')) {
         int16_t percent;
-        ++cp;   // step over ','
-        cp = StringUtils_scanInteger(cp, &isValid, &percent);
-        if (isValid && (*cp == ',')) {
+        CharStringSpan_incrBegin(str);   // step over ','
+        StringUtils_scanInteger(str, &isValid, &percent);
+        if (isValid && (CharStringSpan_front(str) == ',')) {
             int16_t millivolts;
-            ++cp;   // step over ','
-            StringUtils_scanInteger(cp, &isValid, &millivolts);
+            CharStringSpan_incrBegin(str);   // step over ','
+            StringUtils_scanInteger(str, &isValid, &millivolts);
             if (isValid && (CBCCallback != 0)) {
                 CBCCallback(status, percent, millivolts);
             }
@@ -227,11 +227,11 @@ static void readCBC (
 }
 
 static void readCCLK (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     // scan time string
-    CharString_define(24, timeString);
-    StringUtils_scanQuotedString(cp, &timeString);
+    CharStringSpan_t timeString;
+    StringUtils_scanQuotedString(str, &timeString);
 
     // parse time string to produce NetworkTime
     // format is “yy/mm/mm,hh:mm:ss+tz”
@@ -249,12 +249,12 @@ static void readCCLK (
 }
 
 static void readCFUN (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     int16_t funclevel;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanInteger(cp, &isValid, &funclevel);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &funclevel);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -271,12 +271,12 @@ static void readCFUN (
 }
 
 static void readCGATT (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     int16_t value;
-    cp = StringUtils_skipWhitespace(cp);
-    StringUtils_scanInteger(cp, &isValid, &value);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &value);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -293,31 +293,31 @@ static void readCGATT (
 }
 
 static void readCIPACK (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     SIM800_CIPACKData cipackData;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanIntegerU32(cp, &isValid, &cipackData.dataSent);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataSent);
     if (isValid) {
-        if (*cp == ',') {
-            ++cp;
+        if (CharStringSpan_front(str) == ',') {
+            CharStringSpan_incrBegin(str);
         } else {
             isValid = false;
         }
     }
     if (isValid) {
-        cp = StringUtils_scanIntegerU32(cp, &isValid, &cipackData.dataConfirmed);
+        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataConfirmed);
     }
     if (isValid) {
-        if (*cp == ',') {
-            ++cp;
+        if (CharStringSpan_front(str) == ',') {
+            CharStringSpan_incrBegin(str);
         } else {
             isValid = false;
         }
     }
     if (isValid) {
-        cp = StringUtils_scanIntegerU32(cp, &isValid, &cipackData.dataNotConfirmed);
+        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataNotConfirmed);
     }
     if (isValid) {
 #if DEBUG_TRACE
@@ -338,37 +338,37 @@ static void readCIPACK (
 }
 
 static void readCMGR (
-    const char* cp)
+    CharStringSpan_t *str)
 {
-    cp = StringUtils_scanQuotedString(cp, &smsMsgStatus);
-    cp = StringUtils_scanQuotedString(cp, &smsPhoneNumber);
+    StringUtils_scanQuotedString(str, &smsMsgStatus);
+    StringUtils_scanQuotedString(str, &smsPhoneNumber);
     rpState = rps_raw;
 }
 
 static void readCMGL (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanInteger(cp, &isValid, &smsMsgID);
-    readCMGR(cp);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &smsMsgID);
+    readCMGR(str);
 }
 
 static void readCMGS (
-    const char* cp)
+    CharStringSpan_t *str)
 {
 }
 
 static void readCMTI (
-    const char* cp)
+    CharStringSpan_t *str)
 {
-    CharString_define(10, typeStr);
-    cp = StringUtils_scanQuotedString(cp, &typeStr);
-    if (*cp == ',') {
+    CharStringSpan_t typeStr;
+    StringUtils_scanQuotedString(str, &typeStr);
+    if (CharStringSpan_front(str) == ',') {
         bool isValid;
         int16_t msgid;
-        ++cp;
-        StringUtils_scanInteger(cp, &isValid, &msgid);
+        CharStringSpan_incrBegin(str);
+        StringUtils_scanInteger(str, &isValid, &msgid);
         if (isValid) {
 
 #if DEBUG_TRACE
@@ -386,10 +386,10 @@ static void readCMTI (
 }
 
 static void readCPIN (
-    const char* cp)
+    CharStringSpan_t *str)
 {
-    CharString_define(10, statusStr);
-    StringUtils_scanQuotedString(cp, &statusStr);
+    CharStringSpan_t statusStr;
+    StringUtils_scanQuotedString(str, &statusStr);
 
     if (CPINCallback != 0) {
         CPINCallback(&statusStr);
@@ -397,15 +397,15 @@ static void readCPIN (
 }
 
 static void readCREG (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     int16_t reg;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanInteger(cp, &isValid, &reg);
-    if (isValid && (*cp == ',')) {
-        ++cp;   // step over ','
-        cp = StringUtils_scanInteger(cp, &isValid, &reg);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &reg);
+    if (isValid && (CharStringSpan_front(str) == ',')) {
+        CharStringSpan_incrBegin(str);   // step over ','
+        StringUtils_scanInteger(str, &isValid, &reg);
         if (isValid) {
 
 #if DEBUG_TRACE
@@ -423,12 +423,12 @@ static void readCREG (
 }
 
 static void readCSQ (
-    const char* cp)
+    CharStringSpan_t *str)
 {
     bool isValid;
     int16_t sigStrength;
-    cp = StringUtils_skipWhitespace(cp);
-    cp = StringUtils_scanInteger(cp, &isValid, &sigStrength);
+    StringUtils_skipWhitespace(str);
+    StringUtils_scanInteger(str, &isValid, &sigStrength);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -445,10 +445,10 @@ static void readCSQ (
 }
 
 static void readPDP (
-    const char* cp)
+    CharStringSpan_t *str)
 {
-    cp = StringUtils_skipWhitespace(cp);
-    if (strcasecmp_P(cp, PSTR("DEACT")) == 0) {
+    StringUtils_skipWhitespace(str);
+    if (CharStringSpan_equalsP(str, PSTR("DEACT"))) {
         if (pdpDeactCallback != 0) {
             pdpDeactCallback();
         }
@@ -456,39 +456,38 @@ static void readPDP (
 }
 
 static void processPlusMessage (
-    const CharString_t *plusMsg)
+    CharStringSpan_t *plusMsg)
 {
     // scan message identifier
-    CharString_define(10, msg);
-    const char* cp = StringUtils_scanDelimitedString('+', ':',
-        CharString_cstr(plusMsg), &msg);
+    CharStringSpan_t msg;
+    StringUtils_scanDelimitedString('+', ':', plusMsg, &msg);
     const int msgIndex = StringUtils_lookupString(
         &msg, plusMessageTable, plusMessageTableSize);
     latestPlusMessage = ((PlusMessage)msgIndex);
     switch (latestPlusMessage) {
-        case pm_CBC     : readCBC(cp);      break;
-        case pm_CCLK    : readCCLK(cp);     break;
-        case pm_CFUN    : readCFUN(cp);     break;
-        case pm_CGATT   : readCGATT(cp);    break;
-        case pm_CIPACK  : readCIPACK(cp);   break;
-        case pm_CMGL    : readCMGL(cp);     break;
+        case pm_CBC     : readCBC(plusMsg);     break;
+        case pm_CCLK    : readCCLK(plusMsg);    break;
+        case pm_CFUN    : readCFUN(plusMsg);    break;
+        case pm_CGATT   : readCGATT(plusMsg);   break;
+        case pm_CIPACK  : readCIPACK(plusMsg);  break;
+        case pm_CMGL    : readCMGL(plusMsg);    break;
         case pm_CMGR    : smsMsgID = 0;
-                          readCMGR(cp);     break;
-        case pm_CMGS    : readCMGS(cp);     break;
-        case pm_CMTI    : readCMTI(cp);     break;
-        case pm_CPIN    : readCPIN(cp);     break;
-        case pm_CREG    : readCREG(cp);     break;
-        case pm_CSQ     : readCSQ(cp);      break;
-        case pm_PDP     : readPDP(cp);      break;
+                          readCMGR(plusMsg);    break;
+        case pm_CMGS    : readCMGS(plusMsg);    break;
+        case pm_CMTI    : readCMTI(plusMsg);    break;
+        case pm_CPIN    : readCPIN(plusMsg);    break;
+        case pm_CREG    : readCREG(plusMsg);    break;
+        case pm_CSQ     : readCSQ(plusMsg);     break;
+        case pm_PDP     : readPDP(plusMsg);     break;
         case pm_unrecognized :
             Console_printP(PSTR("unrec:"));
-            Console_printCS(plusMsg);
+            Console_printCSS(plusMsg);
             break;
     }
 }
 
 static void processIPState (
-    const CharString_t *stateStr)
+    const CharStringSpan_t *stateStr)
 {
     const int msgIndex = StringUtils_lookupString(
         stateStr, ipStateTable, ipStateTableSize);
@@ -499,7 +498,7 @@ static void processIPState (
 }
 
 static void processResponseMessage (
-    const CharString_t *responseMsgStr)
+    const CharStringSpan_t *responseMsgStr)
 {
     const int msgIndex = StringUtils_lookupString(
         responseMsgStr, SIM800_ResponseMessageTable, SIM800_ResponseMessageTableSize);
@@ -538,7 +537,7 @@ static void processResponseMessage (
             break;
         case rm_unrecognized        :
             Console_printP(PSTR("unrec:"));
-            Console_printCS(responseMsgStr);
+            Console_printCSS(responseMsgStr);
             break;
         case rm_noResponseYet       :
             break;
@@ -555,7 +554,9 @@ static void interpretResponse (
         // look at first char
         const char firstChar = CharString_at(response, 0);
         if (firstChar == '+') {
-            processPlusMessage(response);
+            CharStringSpan_t responseSpan;
+            CharStringSpan_init(response, &responseSpan);
+            processPlusMessage(&responseSpan);
         } else if ((firstChar >= '0') && (firstChar <= '9')) {
             // TCP/IP address
 #if DEBUG_TRACE
@@ -567,8 +568,8 @@ static void interpretResponse (
             }
         } else if ((firstChar == 'S') && 
                    CharString_startsWithP(response, PSTR("STATE: "))) {
-            CharString_define(20, ipStateStr);
-            CharString_copy(CharString_right(response, 7), &ipStateStr);
+            CharStringSpan_t ipStateStr;
+            CharStringSpan_initRight(response, 7, &ipStateStr);
             processIPState(&ipStateStr);
         } else if ((firstChar == 'D') && 
                    CharString_startsWithP(response, PSTR("DATA ACCEPT:"))) {
@@ -576,7 +577,9 @@ static void interpretResponse (
                 dataAcceptCallback(0);  // TODO: need to read number
             }
         } else {
-            processResponseMessage(response);
+            CharStringSpan_t responseSpan;
+            CharStringSpan_init(response, &responseSpan);
+            processResponseMessage(&responseSpan);
         }
     }
 }
