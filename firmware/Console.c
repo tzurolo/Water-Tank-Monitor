@@ -54,7 +54,9 @@ void Console_task (void)
             case '\r' : {
                 // command complete. execute it
                 SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
-                CommandProcessor_executeCommand(&CommandProcessor_incomingCommand);
+                CharStringSpan_t command;
+                CharStringSpan_init(&CommandProcessor_incomingCommand, &command);
+                CommandProcessor_executeCommand(&command);
                 CharString_clear(&CommandProcessor_incomingCommand);
                 }
                 break;
@@ -166,6 +168,14 @@ void Console_printP (
 void Console_printCS (
     const CharString_t *text)
 {
+    CharStringSpan_t textSpan;
+    CharStringSpan_init(text, &textSpan);
+    Console_printCSS(&textSpan);
+}
+
+void Console_printCSS (
+    const CharStringSpan_t *text)
+{
     if (consoleIsConnected()) {
 #if SINGLE_SCREEN
 #if 0
@@ -178,7 +188,7 @@ void Console_printCS (
         // print text on the current line
         sendCursorTo(currentPrintLine, 1);
 #endif
-        SoftwareSerialTx_sendCS(TX_CHAN_INDEX, text);
+        SoftwareSerialTx_sendCSS(TX_CHAN_INDEX, text);
         SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 #if SINGLE_SCREEN
         SoftwareSerialTx_send(TX_CHAN_INDEX, ESC_CURSOR_POS_RESTORE);

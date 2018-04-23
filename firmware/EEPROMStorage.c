@@ -37,13 +37,13 @@ uint8_t EEMEM lowNotification = 50;
 uint8_t EEMEM highNotification = 90;
 
 // internet
-//char EEMEM apn[32] = "mobiledata";    // T-Mobile
-char EEMEM apn[32]  = "hologram";        // hologram.io
+//char EEMEM apn[40] = "mobiledata";    // T-Mobile
+char EEMEM apn[40]  = "hologram";        // hologram.io
 char apnP[] PROGMEM = "hologram";
 
 // thingspeak
 uint8_t EEMEM thingspeakEnabled = 0;
-char EEMEM thingspeakHostAddress[32]  = "api.thingspeak.com";
+char EEMEM thingspeakHostAddress[40]  = "api.thingspeak.com";
 char thingspeakHostAddressP[] PROGMEM = "api.thingspeak.com";
 uint16_t EEMEM thingspeakHostPort = 80;
 char EEMEM thingspeakWriteKey[20] = "";
@@ -54,6 +54,15 @@ char EEMEM ipConsoleServerAddress[32] = "tonyz.dyndns.org";
 char tzHostAddressP[]         PROGMEM = "tonyz.dyndns.org";
 uint16_t EEMEM ipConsoleServerPort = 3000;
 
+static void getCharStringSpanFromP (
+    PGM_P pStr,
+    CharString_t *stringBuffer,
+    CharStringSpan_t *span)
+{
+    CharString_copyP(pStr, stringBuffer);
+    CharStringSpan_init(stringBuffer, span);
+}
+
 void EEPROMStorage_Initialize (void)
 {
     // check if EE has been initialized
@@ -63,11 +72,12 @@ void EEPROMStorage_Initialize (void)
     if (initLevel < 1) {
         // EE has not been initialized. Initialize now.
         CharString_define(40, stringBuffer);
+        CharStringSpan_t stringBufferSpan;
 
         EEPROMStorage_setUnitID(0);
 
-        CharString_copyP(tzPinP, &stringBuffer);
-        EEPROMStorage_setPIN(CharString_cstr(&stringBuffer));
+        getCharStringSpanFromP(tzPinP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setPIN(&stringBufferSpan);
 
         EEPROMStorage_setTempCalOffset(327);
 
@@ -79,24 +89,25 @@ void EEPROMStorage_Initialize (void)
 
 	EEPROMStorage_setNotification(false);
 
-        CharString_copyP(apnP, &stringBuffer);
-        EEPROMStorage_setAPN(CharString_cstr(&stringBuffer));
+        getCharStringSpanFromP(apnP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setAPN(&stringBufferSpan);
 
         EEPROMStorage_setSampleInterval(600);
         EEPROMStorage_setLoggingUpdateInterval(1800);
         EEPROMStorage_setThingspeak(false);
-        CharString_copyP(thingspeakHostAddressP, &stringBuffer);
-        EEPROMStorage_setThingspeakHostAddress(CharString_cstr(&stringBuffer));
+        getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setThingspeakHostAddress(&stringBufferSpan);
         EEPROMStorage_setThingspeakHostPort(80);
-        EEPROMStorage_setThingspeakWriteKey("");
+        CharStringSpan_clear(&stringBufferSpan);
+        EEPROMStorage_setThingspeakWriteKey(&stringBufferSpan);
 
         EEPROMStorage_setFilterSampleTime(1);   // once per second
         EEPROMStorage_setFilterSamples(180);    // 3 minutes of data at once per second
         EEPROMStorage_setFilterVariance(16383); // effectively unlimited variance
 
         EEPROMStorage_setIPConsoleEnabled(false);
-        CharString_copyP(tzHostAddressP, &stringBuffer);
-        EEPROMStorage_setIPConsoleServerAddress(CharString_cstr(&stringBuffer));
+        getCharStringSpanFromP(tzHostAddressP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setIPConsoleServerAddress(&stringBufferSpan);
         EEPROMStorage_setIPConsoleServerPort(3000);
 
         // indicate EE has been initialized
@@ -116,15 +127,15 @@ uint16_t EEPROMStorage_unitID (void)
 }
 
 void EEPROMStorage_setPIN (
-	const char* PIN)
+    const CharStringSpan_t *PIN)
 {
     EEPROM_writeString(cellPIN, sizeof(cellPIN), PIN);
 }
 
 void EEPROMStorage_getPIN (
-    char* PIN)
+    CharString_t *PIN)
 {
-    EEPROM_readString(cellPIN, sizeof(cellPIN), PIN);
+    EEPROM_readString(cellPIN, PIN);
 }
 
 void EEPROMStorage_setTempCalOffset (
@@ -161,7 +172,7 @@ uint16_t EEPROMStorage_waterTankFullDistance (void)
 }
 
 void EEPROMStorage_setWaterLowNotificationLevel (
-	const uint8_t level)
+    const uint8_t level)
 {
     EEPROM_write(&lowNotification, level);
 }
@@ -205,15 +216,15 @@ uint8_t EEPROMStorage_timeoutState (void)
 }
 
 void EEPROMStorage_setAPN (
-    const char* APN)
+    const CharStringSpan_t *APN)
 {
     EEPROM_writeString(apn, sizeof(apn), APN);
 }
 
 void EEPROMStorage_getAPN (
-    char* APN)
+    CharString_t *APN)
 {
-    EEPROM_readString(apn, sizeof(apn), APN);
+    EEPROM_readString(apn, APN);
 }
 
 void EEPROMStorage_setSampleInterval (
@@ -250,17 +261,15 @@ bool EEPROMStorage_thingspeakEnabled (void)
 }
 
 void EEPROMStorage_setThingspeakHostAddress (
-    const char* address)
+    const CharStringSpan_t *address)
 {
-    EEPROM_writeString(thingspeakHostAddress, sizeof(thingspeakHostAddress),
-        address);
+    EEPROM_writeString(thingspeakHostAddress, sizeof(thingspeakHostAddress), address);
 }
 
 void EEPROMStorage_getThingspeakHostAddress (
-    char* address)
+    CharString_t *address)
 {
-    EEPROM_readString(thingspeakHostAddress, sizeof(thingspeakHostAddress),
-        address);
+    EEPROM_readString(thingspeakHostAddress, address);
 }
 
 void EEPROMStorage_setThingspeakHostPort (
@@ -275,17 +284,15 @@ uint16_t EEPROMStorage_thingspeakHostPort (void)
 }
 
 void EEPROMStorage_setThingspeakWriteKey (
-    const char* writekey)
+    const CharStringSpan_t *writekey)
 {
-    EEPROM_writeString(thingspeakWriteKey, sizeof(thingspeakWriteKey),
-        writekey);
+    EEPROM_writeString(thingspeakWriteKey, sizeof(thingspeakWriteKey), writekey);
 }
 
 void EEPROMStorage_getThingspeakWriteKey (
-    char* writekey)
+    CharString_t *writekey)
 {
-    EEPROM_readString(thingspeakWriteKey, sizeof(thingspeakWriteKey),
-        writekey);
+    EEPROM_readString(thingspeakWriteKey, writekey);
 }
 
 void EEPROMStorage_setFilterSampleTime (
@@ -333,15 +340,15 @@ bool EEPROMStorage_ipConsoleEnabled (void)
 }
 
 void EEPROMStorage_setIPConsoleServerAddress (
-    const char* server)
+    const CharStringSpan_t *server)
 {
     EEPROM_writeString(ipConsoleServerAddress, sizeof(ipConsoleServerAddress), server);
 }
 
 void EEPROMStorage_getIPConsoleServerAddress (
-    char* server)
+    CharString_t *server)
 {
-    EEPROM_readString(ipConsoleServerAddress, sizeof(ipConsoleServerAddress), server);
+    EEPROM_readString(ipConsoleServerAddress, server);
 }
 
 void EEPROMStorage_setIPConsoleServerPort (

@@ -6,7 +6,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include "CharString.h"
+#include "CharStringSpan.h"
 
 // sets up control pins. called once at power-up
 extern void Console_Initialize (void);
@@ -24,5 +24,8 @@ extern void Console_printP (
 
 extern void Console_printCS (
     const CharString_t *text);
+
+extern void Console_printCSS (
+    const CharStringSpan_t *text);
 
 #endif  // Console_H

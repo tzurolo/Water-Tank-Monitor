@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <avr/eeprom.h>
+#include "CharStringSpan.h"
 
 extern void EEPROM_write (
     uint8_t* uiAddress,
@@ -20,12 +21,11 @@ extern uint8_t EEPROM_read (
 extern void EEPROM_writeString (
     char* uiAddress,
     const int maxLength,
-    const char* string);
+    const CharStringSpan_t *string);
 
 extern void EEPROM_readString (
     const char* uiAddress,
-    const int maxLength,
-    char* string);
+    CharString_t *string);
 
 extern void EEPROM_writeWord (
     uint16_t* uiAddress,

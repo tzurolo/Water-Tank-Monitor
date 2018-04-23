@@ -58,11 +58,12 @@ void UltrasonicSensorMonitor_task (void)
             // end of string. Interpret
             if ((CharString_length(&sensorDataStr) == 5) &&
                 (CharString_at(&sensorDataStr, 0) == 'R')) {
+                CharStringSpan_t decimalStr;
+                CharStringSpan_initRight(&sensorDataStr, 1, &decimalStr);
                 bool isValid = false;
                 int16_t dist = 0;
                 uint8_t numFracDigits = 0;
-                StringUtils_scanDecimal(CharString_cstr(&sensorDataStr) + 1,
-                    &isValid, &dist, &numFracDigits);
+                StringUtils_scanDecimal(&decimalStr, &isValid, &dist, &numFracDigits, NULL);
                 if (isValid) {
                     if (numReadingsToIgnore > 0) {
                         // ignoring first readings, which are not filtered

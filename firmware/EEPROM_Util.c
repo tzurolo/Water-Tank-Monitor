@@ -39,34 +39,36 @@ uint8_t EEPROM_read (
 void EEPROM_writeString (
     char* uiAddress,
     const int maxLength,
-    const char* string)
+    const CharStringSpan_t *string)
 {
-    int lengthWritten = 0;
+    int lengthWritten = 1;  // account for null terminator
     char strChar;
     uint8_t* charAddr = (uint8_t*)uiAddress;
-    const char* cp = string;
-    do {
+    CharString_Iter cp = CharStringSpan_begin(string);
+    CharString_Iter end = CharStringSpan_end(string);
+    while ((lengthWritten < maxLength) && (cp != end)) {
         strChar = *cp++;
         EEPROM_write(charAddr++, strChar);
         ++lengthWritten;
-    } while ((lengthWritten < maxLength) && (strChar != 0));
+    }
+    EEPROM_write(charAddr, 0);    // null-terminate
 }
 
 void EEPROM_readString (
     const char* uiAddress,
-    const int maxLength,
-    char* string)
+    CharString_t *string)
 {
     int lengthRead = 0;
     char strChar;
     uint8_t* charAddr = (uint8_t*)uiAddress;
-    char* cp = string;
+    CharString_clear(string);
     do {
         strChar = EEPROM_read(charAddr++);
-        *cp++ = strChar;
-        ++lengthRead;
-    } while ((lengthRead < maxLength) && (strChar != 0));
-    *cp = 0;
+        if (strChar != 0) {
+            CharString_appendC(strChar, string);
+            ++lengthRead;
+        }
+    } while (strChar != 0);
 }
 
 void EEPROM_writeWord (

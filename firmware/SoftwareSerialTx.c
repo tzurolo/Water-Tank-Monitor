@@ -145,7 +145,25 @@ void SoftwareSerialTx_sendCS (
     const uint8_t channelIndex,
     const CharString_t* text)
 {
-    SoftwareSerialTx_send(channelIndex, CharString_cstr(text));
+    CharStringSpan_t textSpan;
+    CharStringSpan_init(text, &textSpan);
+    SoftwareSerialTx_sendCSS(channelIndex, &textSpan);
+}
+
+void SoftwareSerialTx_sendCSS (
+    const uint8_t channelIndex,
+    const CharStringSpan_t* text)
+{
+    TxDescriptor *channel = &channels[channelIndex];
+    if (channel->isEnabled) {
+        ByteQueue_t *txQueue = channel->txQueue;
+        CharString_Iter iter = CharStringSpan_begin(text);
+        CharString_Iter end = CharStringSpan_end(text);
+        while (iter != end) {
+            const char ch = *iter++;
+            ByteQueue_push((ByteQueueElement)ch, txQueue);
+        }
+    }
 }
 
 bool SoftwareSerialTx_sendP (

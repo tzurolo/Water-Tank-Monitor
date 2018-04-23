@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
+#include "CharStringSpan.h"
 
 #define EEPROMStorage_maxNotificationNumbers 4
 
@@ -21,9 +22,9 @@ extern void EEPROMStorage_setUnitID (
 extern uint16_t EEPROMStorage_unitID (void);
 
 extern void EEPROMStorage_setPIN (
-    const char* PIN);
+    const CharStringSpan_t *PIN);
 extern void EEPROMStorage_getPIN (
-	char* PIN);
+    CharString_t *PIN);
 
 // internal temperature sensor calibration offset
 extern void EEPROMStorage_setTempCalOffset (
@@ -61,9 +62,9 @@ extern uint8_t EEPROMStorage_timeoutState (void);
 // Storage for ThingSpeak support
 //
 extern void EEPROMStorage_setAPN (
-    const char* APN);
+    const CharStringSpan_t *APN);
 extern void EEPROMStorage_getAPN (
-    char* APN);
+    CharString_t *APN);
 extern void EEPROMStorage_setSampleInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_sampleInterval (void);
@@ -74,17 +75,17 @@ extern void EEPROMStorage_setThingspeak (
     const bool enabled);
 extern bool EEPROMStorage_thingspeakEnabled (void);
 extern void EEPROMStorage_setThingspeakHostAddress (
-    const char* address);
+    const CharStringSpan_t *address);
 extern void EEPROMStorage_getThingspeakHostAddress (
-    char* address);
+    CharString_t *address);
 extern void EEPROMStorage_setThingspeakHostPort (
     const uint16_t port);
 extern uint16_t EEPROMStorage_thingspeakHostPort (void); 
 // writekey should be < 20 chars
 extern void EEPROMStorage_setThingspeakWriteKey (
-    const char* writekey);
+    const CharStringSpan_t *writekey);
 extern void EEPROMStorage_getThingspeakWriteKey (
-    char* writekey);
+    CharString_t *writekey);
 
 // sample time in seconds
 extern void EEPROMStorage_setFilterSampleTime (
@@ -103,9 +104,9 @@ extern void EEPROMStorage_setIPConsoleEnabled (
     const bool enabled);
 extern bool EEPROMStorage_ipConsoleEnabled (void);
 extern void EEPROMStorage_setIPConsoleServerAddress (
-    const char* server);
+    const CharStringSpan_t* server);
 extern void EEPROMStorage_getIPConsoleServerAddress (
-    char* server);
+    CharString_t *server);
 extern void EEPROMStorage_setIPConsoleServerPort (
     const uint16_t port);
 extern uint16_t EEPROMStorage_ipConsoleServerPort (void); 

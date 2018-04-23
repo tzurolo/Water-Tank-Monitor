@@ -31,28 +31,8 @@
 
 #define CMD_TOKEN_BUFFER_LEN 80
 
-static const char tokenDelimiters[] = " \n\r";
-CharString_define(40, CommandProcessor_incomingCommand)
+CharString_define(60, CommandProcessor_incomingCommand)
 CharString_define(100, CommandProcessor_commandReply)
-
-
-// appends n.nnV to outgoing message text
-static void appendVoltageToString (
-    const int16_t voltage,
-    CharString_t *str)
-{
-    StringUtils_appendDecimal(voltage, 1, 2, str);
-    CharString_appendP(PSTR("V"), str);
-}
-
-// appends n.nC to outgoing message text
-static void appendTemperatureToString (
-    const int16_t temp,
-    CharString_t *str)
-{
-    StringUtils_appendDecimal(temp, 1, 1, str);
-    CharString_appendP(PSTR("C"), str);
-}
 
 void CommandProcessor_createStatusMessage (
     CharString_t *msg)
@@ -86,290 +66,269 @@ void CommandProcessor_createStatusMessage (
     CharString_appendP(PSTR("  "), msg);
 }
 
+static int16_t scanIntegerToken (
+    CharStringSpan_t *str,
+    bool *isValid)
+{
+    StringUtils_skipWhitespace(str);
+    int16_t value = 0;
+    StringUtils_scanInteger(str, isValid, &value, str);
+    return value;
+}
+
+static uint32_t scanIntegerU32Token (
+    CharStringSpan_t *str,
+    bool *isValid)
+{
+    StringUtils_skipWhitespace(str);
+    uint32_t value = 0;
+    StringUtils_scanIntegerU32(str, isValid, &value, str);
+    return value;
+}
+
+static void beginJSON (
+    CharString_t *str)
+{
+    CharString_copyP(PSTR("{"), str);
+}
+
+static void continueJSON (
+    CharString_t *str)
+{
+    CharString_appendC(',', str);
+}
+
+static void endJSON (
+    CharString_t *str)
+{
+    CharString_appendC('}', str);
+}
+
+static void appendJSONStrValue (
+    PGM_P name,
+    const CharString_t* value,
+    CharString_t *str)
+{
+    CharString_appendC('\"', str);
+    CharString_appendP(name, str);
+    CharString_appendP(PSTR("\":\""), str);
+    CharString_appendCS(value, str);
+    CharString_appendC('\"', str);
+}
+
+static void appendJSONIntValue (
+    PGM_P name,
+    const int16_t value,
+    CharString_t *str)
+{
+    CharString_appendC('\"', str);
+    CharString_appendP(name, str);
+    CharString_appendP(PSTR("\":"), str);
+    StringUtils_appendDecimal(value, 1, 0, str);
+}
+
+static void makeJSONStrValue (
+    PGM_P name,
+    const CharString_t* value,
+    CharString_t *str)
+{
+    beginJSON(str);
+    appendJSONStrValue(name, value, str);
+    endJSON(str);
+}
+
+static void makeJSONIntValue (
+    PGM_P name,
+    const int16_t value,
+    CharString_t *str)
+{
+    beginJSON(str);
+    appendJSONIntValue(name, value, str);
+    endJSON(str);
+}
+
 bool CommandProcessor_executeCommand (
-    const CharString_t* command)
+    const CharStringSpan_t* command)
 {
     bool validCommand = true;
-#if 0
-	char msgbuf[80];
-    sprintf(msgbuf, "cmd: '%s'", command);
-    Console_print(msgbuf);
-    sprintf(msgbuf, "phone#: '%s'", phoneNumber);
-    Console_print(msgbuf);
-    sprintf(msgbuf, "time: '%s'", timestamp);
-    Console_print(msgbuf);
-#endif
 
-    char cmdTokenBuf[CMD_TOKEN_BUFFER_LEN];
-    strncpy(cmdTokenBuf, CharString_cstr(command), CMD_TOKEN_BUFFER_LEN-1);
-    cmdTokenBuf[CMD_TOKEN_BUFFER_LEN-1] = 0;
-    const char* cmdToken = strtok(cmdTokenBuf, tokenDelimiters);
-    if (cmdToken != NULL) {
-        if (strcasecmp_P(cmdToken, PSTR("status")) == 0) {
-            const char* statusToNumber = NULL;
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("to")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        statusToNumber = cmdToken;
-                    }
+    CharStringSpan_t cmd = *command;
+    CharStringSpan_t cmdToken;
+    StringUtils_scanToken(&cmd, &cmdToken);
+    if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("status"))) {
+        CharStringSpan_t statusToNumber;
+        CharStringSpan_clear(&statusToNumber);
+        StringUtils_scanToken(&cmd, &cmdToken);
+        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("to"))) {
+            StringUtils_scanToken(&cmd, &statusToNumber);
+        }
+	// return status info
+	CommandProcessor_createStatusMessage(&CommandProcessor_commandReply);
+        if (!CharStringSpan_isEmpty(&statusToNumber)) {
+            CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
+        }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tset"))) {
+        const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
+        if (validCommand && (serverTime != 0)) {
+            SystemTime_setTimeAdjustment(&serverTime);
+        }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("set"))) {
+        StringUtils_scanToken(&cmd, &cmdToken);
+        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
+            const int16_t tempCalOffset = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setTempCalOffset(tempCalOffset);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
+            StringUtils_scanToken(&cmd, &cmdToken);
+            if (!CharStringSpan_isEmpty(&cmdToken)) {
+                EEPROMStorage_setAPN(&cmdToken);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sampleinterval"))) {
+            const uint16_t sampleInterval = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setSampleInterval(sampleInterval);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("loginterval"))) {
+            const uint16_t loggingInterval = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setSampleInterval(loggingInterval);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("thingspeak"))) {
+            StringUtils_scanToken(&cmd, &cmdToken);
+            if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("on"))) {
+                EEPROMStorage_setThingspeak(true);
+            } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("off"))) {
+                EEPROMStorage_setThingspeak(false);
+            } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("address"))) {
+                StringUtils_scanToken(&cmd, &cmdToken);
+                if (!CharStringSpan_isEmpty(&cmdToken)) {
+                    EEPROMStorage_setThingspeakHostAddress(&cmdToken);
                 }
-            }
-	    // return status info
-	    CommandProcessor_createStatusMessage(
-                &CommandProcessor_commandReply);
-            if (statusToNumber != NULL) {
-                CellularComm_setOutgoingSMSMessageNumber(statusToNumber);
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("tset")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                const uint32_t serverTime = atol(cmdToken);
-                if (serverTime != 0) {
-                    SystemTime_setTimeAdjustment(&serverTime);
+            } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("port"))) {
+                const uint16_t port = scanIntegerToken(&cmd, &validCommand);
+                if (validCommand) {
+                    EEPROMStorage_setThingspeakHostPort(port);
                 }
-            } else {
-                validCommand = false;
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("set")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        const int16_t tempCalOffset = atoi(cmdToken);
-                        EEPROMStorage_setTempCalOffset(tempCalOffset);
-                    }
-                } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        EEPROMStorage_setAPN(cmdToken);
-                    }
-                } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        const uint16_t sampleInterval = atoi(cmdToken);
-                        EEPROMStorage_setSampleInterval(sampleInterval);
-                    }
-                } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        const uint16_t loggingInterval = atoi(cmdToken);
-                        EEPROMStorage_setLoggingUpdateInterval(loggingInterval);
-                    }
-                } else if (strcasecmp_P(cmdToken, PSTR("thingspeak")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        if (strcasecmp_P(cmdToken, PSTR("on")) == 0) {
-                            EEPROMStorage_setThingspeak(true);
-                        } else if (strcasecmp_P(cmdToken, PSTR("off")) == 0) {
-                            EEPROMStorage_setThingspeak(false);
-                        } else if (strcasecmp_P(cmdToken, PSTR("address")) == 0) {
-                            cmdToken = strtok(NULL, tokenDelimiters);
-                            if (cmdToken != NULL) {
-                                EEPROMStorage_setThingspeakHostAddress(cmdToken);
-                            }
-                        } else if (strcasecmp_P(cmdToken, PSTR("port")) == 0) {
-                            cmdToken = strtok(NULL, tokenDelimiters);
-                            if (cmdToken != NULL) {
-	                        const uint16_t port = atoi(cmdToken);
-                                EEPROMStorage_setThingspeakHostPort(port);
-                            }
-                        } else if (strcasecmp_P(cmdToken, PSTR("writekey")) == 0) {
-                            cmdToken = strtok(NULL, tokenDelimiters);
-                            if (cmdToken != NULL) {
-                                EEPROMStorage_setThingspeakWriteKey(cmdToken);
-                            }
-                        } else {
-                            validCommand = false;
-                        }
-                    }
-                } else {
-                    validCommand = false;
-                }
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("get")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("PIN")) == 0) {
-                    char pinBuffer[16];
-                    EEPROMStorage_getPIN(pinBuffer);
-                    CharString_clear(&CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("PIN: "),
-                        &CommandProcessor_commandReply);
-                    CharString_append(pinBuffer,
-                        &CommandProcessor_commandReply);
-                } else if (strcasecmp_P(cmdToken, PSTR("tCalOffset")) == 0) {
-                    CharString_copyP(PSTR(" offset: "),
-                        &CommandProcessor_commandReply);
-                    StringUtils_appendDecimal(EEPROMStorage_tempCalOffset(), 1, 0,
-                        &CommandProcessor_commandReply);
-                } else if (strcasecmp_P(cmdToken, PSTR("apn")) == 0) {
-                    char apnBuffer[64];
-                    EEPROMStorage_getAPN(apnBuffer);
-                    CharString_clear(&CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("APN:'"),
-                        &CommandProcessor_commandReply);
-                    CharString_append(apnBuffer,
-                        &CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("'"),
-                        &CommandProcessor_commandReply);
-                } else if (strcasecmp_P(cmdToken, PSTR("sampleinterval")) == 0) {
-                    CharString_copyP(PSTR("Sample Interval:"),
-                        &CommandProcessor_commandReply);
-                    StringUtils_appendDecimal(
-                        EEPROMStorage_sampleInterval(), 1, 0,
-                        &CommandProcessor_commandReply);
-                } else if (strcasecmp_P(cmdToken, PSTR("loginterval")) == 0) {
-                    CharString_clear(&CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("Logging Interval:"),
-                        &CommandProcessor_commandReply);
-                    StringUtils_appendDecimal(
-                        EEPROMStorage_LoggingUpdateInterval(), 1, 0,
-                        &CommandProcessor_commandReply);
-                } else if (strcasecmp_P(cmdToken, PSTR("thingspeak")) == 0) {
-                    char buffer[64];
-                    CharString_clear(&CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("ThingSpeak Enabled:"),
-                        &CommandProcessor_commandReply);
-                    StringUtils_appendDecimal(
-                        EEPROMStorage_thingspeakEnabled() ? 1 : 0, 1, 0,
-                        &CommandProcessor_commandReply);
-                    CharString_appendP(PSTR(", addr:'"),
-                        &CommandProcessor_commandReply);
-                    EEPROMStorage_getThingspeakHostAddress(buffer);
-                    CharString_append(buffer,
-                        &CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("', port:"),
-                        &CommandProcessor_commandReply);
-                    StringUtils_appendDecimal(
-                        EEPROMStorage_thingspeakHostPort(), 1, 0,
-                        &CommandProcessor_commandReply);
-                    CharString_appendP(PSTR(", writekey:'"),
-                        &CommandProcessor_commandReply);
-                    EEPROMStorage_getThingspeakWriteKey(buffer);
-                    CharString_append(buffer,
-                        &CommandProcessor_commandReply);
-                    CharString_appendP(PSTR("'"),
-                        &CommandProcessor_commandReply);
-                } else {
-                    validCommand = false;
-                }
-            }
-	} else if (strcasecmp_P(cmdToken, PSTR("notify")) == 0) {
-	    cmdToken = strtok(NULL, tokenDelimiters);
-	    if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("on")) == 0) {
-                    EEPROMStorage_setNotification(true);
-                } else if (strcasecmp_P(cmdToken, PSTR("off")) == 0) {
-                    EEPROMStorage_setNotification(false);
-                } else if (strcasecmp_P(cmdToken, PSTR("low")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        const uint8_t level = atoi(cmdToken);
-                        EEPROMStorage_setWaterLowNotificationLevel(level);
-                    }
-                } else if (strcasecmp_P(cmdToken, PSTR("high")) == 0) {
-                    cmdToken = strtok(NULL, tokenDelimiters);
-                    if (cmdToken != NULL) {
-                        const uint8_t level = atoi(cmdToken);
-                        EEPROMStorage_setWaterHighNotificationLevel(level);
-                    }
-                } else {
-                    validCommand = false;
-                }
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("sms")) == 0) {
-            // get number to send to
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if ((cmdToken != NULL) && (cmdToken[0] == '+') && (strlen(cmdToken) > 5)) {
-                // got a phone number - copy it into a buffer
-                char recipientNumber[20];
-                strncpy(recipientNumber, cmdToken, 19);
-                recipientNumber[19] = 0;    // safety null terminate
-                // get the message to send. it should be a quoted string
-                const char* msgStart = cmdToken + strlen(cmdToken);
-                const ptrdiff_t msgOffset = msgStart - cmdTokenBuf;
-                msgStart = CharString_cstr(command) + msgOffset;
-                CharString_define(50, message);
-                StringUtils_scanQuotedString(msgStart, &message);
-                if (CharString_length(&message) > 0) {
-                    // got the message
-                    CharString_clear(&CommandProcessor_commandReply);
-                    CharString_appendCS(&message, &CommandProcessor_commandReply);
-                    CellularComm_setOutgoingSMSMessageNumber(recipientNumber);
-#if 0
-                    char printbuf[80];
-                    sprintf(printbuf, "phone#: '%s'", recipientNumber);
-                    Console_print(printbuf);
-                    sprintf(printbuf, "message: '%s'", message);
-                    Console_print(printbuf);
-#endif
+            } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("writekey"))) {
+                StringUtils_scanToken(&cmd, &cmdToken);
+                if (!CharStringSpan_isEmpty(&cmdToken)) {
+                    EEPROMStorage_setThingspeakWriteKey(&cmdToken);
                 }
             } else {
                 validCommand = false;
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("cell")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("enable")) == 0) {
-                    CellularComm_Enable();
-                } else if (strcasecmp_P(cmdToken, PSTR("disable")) == 0) {
-                    CellularComm_Disable();
-                } else {
-                    validCommand = false;
-                }
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("ipconsole")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                if (strcasecmp_P(cmdToken, PSTR("enable")) == 0) {
-                    TCPIPConsole_enable(true);
-                } else if (strcasecmp_P(cmdToken, PSTR("disable")) == 0) {
-                    TCPIPConsole_disable(true);
-                } else {
-                    validCommand = false;
-                }
-            }
-#if BYTEQUEUE_HIGHWATERMARK_ENABLED
-        } else if (strcasecmp_P(cmdToken, PSTR("bqhw")) == 0) {
-            // byte queue report highwater
-            SoftwareSerialRx0_reportHighwater();
-            SoftwareSerialRx2_reportHighwater();
-            SoftwareSerialTx_reportHighwater();
-            UART_reportHighwater();
-#endif
-        } else if (strcasecmp_P(cmdToken, PSTR("reboot")) == 0) {
-            // reboot
-            SystemTime_commenceShutdown();
-	} else if (strcasecmp_P(cmdToken, PSTR("eeread")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                const unsigned int uiAddress = atoi(cmdToken);
-                const uint8_t eeromData = EEPROM_read((uint8_t*)uiAddress);
-                CharString_clear(&CommandProcessor_commandReply);
-                StringUtils_appendDecimal(uiAddress, 1, 0,
-                    &CommandProcessor_commandReply);
-                CharString_appendP(PSTR(":"),
-                    &CommandProcessor_commandReply);
-                StringUtils_appendDecimal(eeromData, 1, 0,
-                    &CommandProcessor_commandReply);
-            }
-        } else if (strcasecmp_P(cmdToken, PSTR("eewrite")) == 0) {
-            cmdToken = strtok(NULL, tokenDelimiters);
-            if (cmdToken != NULL) {
-                const unsigned int uiAddress = atoi(cmdToken);
-                cmdToken = strtok(NULL, tokenDelimiters);
-                if (cmdToken != NULL) {
-                    const uint8_t value = atoi(cmdToken);
-                    EEPROM_write((uint8_t*)uiAddress, value);
-                }
             }
         } else {
             validCommand = false;
-            Console_printP(PSTR("unrecognized command"));
         }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("get"))) {
+        StringUtils_scanToken(&cmd, &cmdToken);
+        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("PIN"))) {
+            CharString_define(16, pinBuffer);
+            EEPROMStorage_getPIN(&pinBuffer);
+            makeJSONStrValue(PSTR("PIN"), &pinBuffer, &CommandProcessor_commandReply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
+            makeJSONIntValue(PSTR("tcal"), EEPROMStorage_tempCalOffset(), &CommandProcessor_commandReply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
+            CharString_define(40, apnBuffer); 
+            EEPROMStorage_getAPN(&apnBuffer);
+            makeJSONStrValue(PSTR("APN'"), &apnBuffer, &CommandProcessor_commandReply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sampleinterval"))) {
+            makeJSONIntValue(PSTR("sampleInterval"), EEPROMStorage_sampleInterval(),
+                &CommandProcessor_commandReply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("loginterval"))) {
+            makeJSONIntValue(PSTR("logInterval"), EEPROMStorage_LoggingUpdateInterval(),
+                &CommandProcessor_commandReply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("thingspeak"))) {
+            CharString_define(40, buffer);
+            beginJSON(&CommandProcessor_commandReply);
+            appendJSONIntValue(PSTR("TS_En"), EEPROMStorage_thingspeakEnabled() ? 1 : 0,
+                &CommandProcessor_commandReply);
+            continueJSON(&CommandProcessor_commandReply);
+            EEPROMStorage_getThingspeakHostAddress(&buffer);
+            appendJSONStrValue(PSTR("TS_Addr"), &buffer, &CommandProcessor_commandReply);
+            continueJSON(&CommandProcessor_commandReply);
+            appendJSONIntValue(PSTR("TS_Port"), EEPROMStorage_thingspeakHostPort(),
+                &CommandProcessor_commandReply);
+            continueJSON(&CommandProcessor_commandReply);
+            EEPROMStorage_getThingspeakWriteKey(&buffer);
+            appendJSONStrValue(PSTR("TS_WK"), &buffer, &CommandProcessor_commandReply);
+            endJSON(&CommandProcessor_commandReply);
+        } else {
+            validCommand = false;
+        }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("notify"))) {
+        StringUtils_scanToken(&cmd, &cmdToken);
+        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("on"))) {
+            EEPROMStorage_setNotification(true);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("off"))) {
+            EEPROMStorage_setNotification(false);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("low"))) {
+            const uint16_t level = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setWaterLowNotificationLevel(level);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("high"))) {
+            const uint16_t level = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setWaterHighNotificationLevel(level);
+            }
+        } else {
+            validCommand = false;
+        }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sms"))) {
+        // get number to send to
+        CharStringSpan_t recipientNumber;
+        StringUtils_scanToken(&cmd, &recipientNumber);
+        if ((CharStringSpan_length(&recipientNumber) > 5) &&
+            (CharStringSpan_front(&recipientNumber) == '+')) {
+            // got a phone number
+            // get the message to send. it should be a quoted string
+            CharStringSpan_t message;
+            StringUtils_scanQuotedString(&cmd, &message, NULL);
+            if (!CharStringSpan_isEmpty(&message)) {
+                // got the message
+                CharString_copyIters(
+                    CharStringSpan_begin(&message),
+                    CharStringSpan_end(&message),
+                    &CommandProcessor_commandReply);
+                CellularComm_setOutgoingSMSMessageNumber(&recipientNumber);
+            }
+        } else {
+            validCommand = false;
+        }
+#if BYTEQUEUE_HIGHWATERMARK_ENABLED
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("bqhw"))) {
+        // byte queue report highwater
+        SoftwareSerialRx0_reportHighwater();
+        SoftwareSerialRx2_reportHighwater();
+        SoftwareSerialTx_reportHighwater();
+        UART_reportHighwater();
+#endif
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("reboot"))) {
+        // reboot
+        SystemTime_commenceShutdown();
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("eeread"))) {
+        const uint16_t eeAddr = scanIntegerToken(&cmd, &validCommand);
+        if (validCommand) {
+            beginJSON(&CommandProcessor_commandReply);
+            appendJSONIntValue(PSTR("EEAddr"), eeAddr, &CommandProcessor_commandReply);
+            continueJSON(&CommandProcessor_commandReply);
+            appendJSONIntValue(PSTR("EEVal"), EEPROM_read((uint8_t*)eeAddr),
+                &CommandProcessor_commandReply);
+            endJSON(&CommandProcessor_commandReply);
+        }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("eewrite"))) {
+        const uint16_t eeAddr = scanIntegerToken(&cmd, &validCommand);
+        if (validCommand) {
+            const uint16_t eeValue = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROM_write((uint8_t*)eeAddr, eeValue);
+            }
+        }
+    } else {
+        validCommand = false;
+        Console_printP(PSTR("unrecognized command"));
     }
 
     return validCommand;
@@ -378,7 +337,7 @@ bool CommandProcessor_executeCommand (
 //                uint32_t i2 = 30582UL;
 #if 0
 // sleep code
-        } else if (strcasecmp_P(cmdToken, PSTR("sleep")) == 0) {
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sleep"))) {
             //clock_prescale_set(clock_div_256);
             uint16_t sleepTime = 8;
             cmdToken = strtok(NULL, tokenDelimiters);

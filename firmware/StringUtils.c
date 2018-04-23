@@ -1,5 +1,5 @@
 //
-//  String
+//  String Utilities
 //
 
 #include "StringUtils.h"
@@ -7,15 +7,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+inline bool isWhitespace (
+    const char ch)
+{
+    return ((ch == ' ') || (ch == '\t') || (ch == '\n') || (ch == '\r'));
+}
+
 void StringUtils_scanDelimitedString (
     const char startDelimiter,
     const char endDelimiter,
-    CharStringSpan_t* source,
-    CharStringSpan_t* delimitedSpan)
+    const CharStringSpan_t* source,
+    CharStringSpan_t* delimitedSpan,
+    CharStringSpan_t* updatedSource)
 {
     CharStringSpan_clear(delimitedSpan);
-    CharStringSpan_Iter iter = CharStringSpan_begin(source);
-    CharStringSpan_Iter end = CharStringSpan_end(source);
+    if (updatedSource != NULL) {
+        *updatedSource = *source;
+    }
+
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter end = CharStringSpan_end(source);
 
     // advance to the next startDelimiter
     while ((iter != end) && (*iter != startDelimiter)) {
@@ -24,7 +35,7 @@ void StringUtils_scanDelimitedString (
     if (*iter == startDelimiter) {
         // step over start delimiter
         ++iter;
-        CharStringSpan_Iter delimitedStartIter = iter;
+        CharString_Iter delimitedStartIter = iter;
         // read characters between delimiters
         while ((iter != end) && (*iter != endDelimiter)) {
             ++iter;
@@ -34,41 +45,61 @@ void StringUtils_scanDelimitedString (
             // we have a valid delimited string
             CharStringSpan_set(delimitedStartIter, iter, delimitedSpan);
             // step over closing delimiter
-            ++iter;
-            CharStringSpan_setBegin(iter, source);
+            if (updatedSource != NULL) {
+                ++iter;
+                CharStringSpan_set(iter, end, updatedSource);
+            }
         }
     }
 }
 
 void StringUtils_scanQuotedString (
-    CharStringSpan_t* source,
-    CharStringSpan_t* quotedSpan)
+    const CharStringSpan_t* source,
+    CharStringSpan_t* quotedSpan,
+    CharStringSpan_t* updatedSource)
 {
-    StringUtils_scanDelimitedString('"', '"', source, quotedSpan);
+    StringUtils_scanDelimitedString('"', '"', source, quotedSpan, updatedSource);
+}
+
+void StringUtils_scanToken (
+    CharStringSpan_t* source,
+    CharStringSpan_t* token)
+{
+    StringUtils_skipWhitespace(source);
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter tokenBeginIter = iter;
+    CharString_Iter end = CharStringSpan_end(source);
+    char ch;
+    while ((iter != end) && (ch = *iter) && !isWhitespace(ch)) {
+        ++iter;
+    }
+    CharStringSpan_set(tokenBeginIter, iter, token);
+    CharStringSpan_setBegin(iter, source);
 }
 
 void StringUtils_skipWhitespace (
     CharStringSpan_t* source)
 {
-    CharStringSpan_Iter iter = CharStringSpan_begin(source);
-    CharStringSpan_Iter end = CharStringSpan_end(source);
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter end = CharStringSpan_end(source);
     char ch;
-    while ((iter != end) && (ch = *iter) && ((ch == ' ') || (ch == '\t') || (ch == '\n'))) {
+    while ((iter != end) && (ch = *iter) && isWhitespace(ch)) {
         ++iter;
     }
     CharStringSpan_setBegin(iter, source);
 }
 
 void StringUtils_scanInteger (
-    CharStringSpan_t* source,
+    const CharStringSpan_t* source,
     bool *isValid,
-    int16_t *value)
+    int16_t *value,
+    CharStringSpan_t* updatedSource)
 {
     *isValid = false;
 
     int16_t workingValue = 0;
-    CharStringSpan_Iter iter = CharStringSpan_begin(source);
-    CharStringSpan_Iter end = CharStringSpan_end(source);
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter end = CharStringSpan_end(source);
 
     char ch;
     bool gotDigit = false;
@@ -81,20 +112,27 @@ void StringUtils_scanInteger (
     if (gotDigit) {
         *isValid = true;
         *value = workingValue;
+        if (updatedSource != NULL) {
+            CharStringSpan_set(iter, end, updatedSource);
+        }
+    } else {
+        if (updatedSource != NULL) {
+            *updatedSource = *source;
+        }
     }
-    CharStringSpan_setBegin(iter, source);
 }
 
 void StringUtils_scanIntegerU32 (
-    CharStringSpan_t* source,
+    const CharStringSpan_t* source,
     bool *isValid,
-    uint32_t *value)
+    uint32_t *value,
+    CharStringSpan_t* updatedSource)
 {
     *isValid = false;
 
     uint32_t workingValue = 0;
-    CharStringSpan_Iter iter = CharStringSpan_begin(source);
-    CharStringSpan_Iter end = CharStringSpan_end(source);
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter end = CharStringSpan_end(source);
 
     char ch;
     bool gotDigit = false;
@@ -107,23 +145,30 @@ void StringUtils_scanIntegerU32 (
     if (gotDigit) {
         *isValid = true;
         *value = workingValue;
+        if (updatedSource != NULL) {
+            CharStringSpan_set(iter, end, updatedSource);
+        }
+    } else {
+        if (updatedSource != NULL) {
+            *updatedSource = *source;
+        }
     }
-    CharStringSpan_setBegin(iter, source);
 }
 
 void StringUtils_scanDecimal (
-    CharStringSpan_t* source,
+    const CharStringSpan_t* source,
     bool *isValid,
     int16_t *value,
-    uint8_t *numFractionalDigits)
+    uint8_t *numFractionalDigits,
+    CharStringSpan_t* updatedSource)
 {
     *isValid = true;
 
     int16_t workingValue = 0;
     uint8_t fractionalDigits = 0;
     bool gotDecimalPoint = false;
-    CharStringSpan_Iter iter = CharStringSpan_begin(source);
-    CharStringSpan_Iter end = CharStringSpan_end(source);
+    CharString_Iter iter = CharStringSpan_begin(source);
+    CharString_Iter end = CharStringSpan_end(source);
 
     // read minus sign
     bool isNegative = false;
@@ -153,6 +198,13 @@ void StringUtils_scanDecimal (
     if (*isValid) {
         *value = (isNegative) ? -workingValue : workingValue;
         *numFractionalDigits = fractionalDigits;
+        if (updatedSource != NULL) {
+            CharStringSpan_set(iter, end, updatedSource);
+        }
+    } else {
+        if (updatedSource != NULL) {
+            *updatedSource = *source;
+        }
     }
 }
 

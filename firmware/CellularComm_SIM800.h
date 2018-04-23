@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/pgmspace.h>
-#include "CharString.h"
+#include "CharStringSpan.h"
 #include "SIM800.h"
 
 extern void CellularComm_Initialize (void);
@@ -37,6 +37,6 @@ extern uint16_t CellularComm_batteryMillivolts (void);
 // posts the current contents of the outgoing message text
 // to the given phone number
 extern void CellularComm_setOutgoingSMSMessageNumber (
-    const char* phoneNumber);
+    const CharStringSpan_t* phoneNumber);
 
 #endif  // CELLULARCOMM_H

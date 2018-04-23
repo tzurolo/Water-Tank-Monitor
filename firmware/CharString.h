@@ -28,6 +28,8 @@ typedef struct CharString_struct {
     char* body;
 } CharString_t;
 
+typedef const char* CharString_Iter;
+
 #define CharString_define(strCapacity, strName) \
     char strName##_buf[strCapacity+1] = {0}; \
     CharString_t strName = {strCapacity, 0, strName##_buf};
@@ -44,17 +46,23 @@ inline uint8_t CharString_length (
     return str->length;
 }
 
+inline CharString_Iter CharString_begin (
+    const CharString_t *str)
+{
+    return &str->body[0];
+}
+
+inline CharString_Iter CharString_end (
+    const CharString_t *str)
+{
+    return &str->body[0] + str->length;
+}
+
 inline void CharString_clear (
     CharString_t* str)
 {
     str->length = 0;
     str->body[0] = 0;
-}
-
-inline const char* CharString_cstr (
-    const CharString_t* str)
-{
-    return str->body;
 }
 
 //
@@ -98,6 +106,11 @@ inline void CharString_copyCS (
     CharString_clear(destStr);
     CharString_appendCS(srcStr, destStr);
 }
+
+extern void CharString_copyIters (
+    CharString_Iter begin,
+    CharString_Iter end,
+    CharString_t* destStr);
 
 extern void CharString_appendNewline (
     CharString_t* destStr);

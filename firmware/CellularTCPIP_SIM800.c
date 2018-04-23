@@ -184,9 +184,9 @@ static void sendCSTT (void)
 {
     CharString_define(60, csttCmd);
     CharString_copyP(PSTR("AT+CSTT=\""), &csttCmd);
-    char apn[40];
-    EEPROMStorage_getAPN(apn);
-    CharString_append(apn, &csttCmd);
+    CharString_define(40, apn);
+    EEPROMStorage_getAPN(&apn);
+    CharString_appendCS(&apn, &csttCmd);
     CharString_appendC('"', &csttCmd);
     sendSIM800CommandCS(&csttCmd, cts_waitingForCSTTResponse);
 }
@@ -357,12 +357,12 @@ CellularTCPIPConnectionStatus CellularTCPIP_connectionStatus (void)
 }
 
 void CellularTCPIP_connect (
-    const char* hostAddress,
+    const CharString_t *hostAddress,
     const uint16_t hostPort,
     SIM800_IPDataCallback receiver,
     CellularTCPIP_ConnectionStateChangeCallback stateChangeCallback)
 {
-    CharString_copy(hostAddress, &ctHostAddress);
+    CharString_copyCS(hostAddress, &ctHostAddress);
     ctHostPort = hostPort;
     SIM800_setIPDataCallback(receiver);
     connStateChangeCallback = stateChangeCallback;

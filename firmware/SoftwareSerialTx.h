@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <avr/pgmspace.h>
-#include "CharString.h"
+#include "CharStringSpan.h"
 #include "IOPortBitfield.h"
 #include "ByteQueue.h"
 
@@ -40,6 +40,10 @@ extern void SoftwareSerialTx_send (
 extern void SoftwareSerialTx_sendCS (
     const uint8_t channelIndex,
     const CharString_t* text);
+
+extern void SoftwareSerialTx_sendCSS (
+    const uint8_t channelIndex,
+    const CharStringSpan_t* text);
 
 extern bool SoftwareSerialTx_sendP (
     const uint8_t channelIndex,

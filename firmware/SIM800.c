@@ -23,7 +23,7 @@
 #include "StringUtils.h"
 
 #define USE_POWER_STATE 0
-#define DEBUG_TRACE 1
+#define DEBUG_TRACE 0
 
 #define TX_CHAN_INDEX 0
 
@@ -210,15 +210,15 @@ static void readCBC (
     bool isValid;
     int16_t status;
     StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &status);
+    StringUtils_scanInteger(str, &isValid, &status, str);
     if (isValid && (CharStringSpan_front(str) == ',')) {
         int16_t percent;
         CharStringSpan_incrBegin(str);   // step over ','
-        StringUtils_scanInteger(str, &isValid, &percent);
+        StringUtils_scanInteger(str, &isValid, &percent, str);
         if (isValid && (CharStringSpan_front(str) == ',')) {
             int16_t millivolts;
             CharStringSpan_incrBegin(str);   // step over ','
-            StringUtils_scanInteger(str, &isValid, &millivolts);
+            StringUtils_scanInteger(str, &isValid, &millivolts, NULL);
             if (isValid && (CBCCallback != 0)) {
                 CBCCallback(status, percent, millivolts);
             }
@@ -226,22 +226,37 @@ static void readCBC (
     }
 }
 
+static void scanCCLKField (
+    CharStringSpan_t *str,
+    uint8_t *fieldValue)
+{
+    bool isValid;
+    int16_t scannedValue;
+    StringUtils_scanInteger(str, &isValid, &scannedValue, str);
+    if (isValid) {
+        *fieldValue = scannedValue;
+        CharStringSpan_incrBegin(str);  // skip delimiter
+    } else {
+        *fieldValue = 0;
+    }
+}
+
 static void readCCLK (
-    CharStringSpan_t *str)
+    const CharStringSpan_t *str)
 {
     // scan time string
     CharStringSpan_t timeString;
-    StringUtils_scanQuotedString(str, &timeString);
+    StringUtils_scanQuotedString(str, &timeString, NULL);
 
     // parse time string to produce NetworkTime
     // format is “yy/mm/mm,hh:mm:ss+tz”
     SIM800_NetworkTime currentNetworkTime;
-    currentNetworkTime.year    = atoi(CharString_right(&timeString, 0));
-    currentNetworkTime.month   = atoi(CharString_right(&timeString, 3));
-    currentNetworkTime.day     = atoi(CharString_right(&timeString, 6));
-    currentNetworkTime.hour    = atoi(CharString_right(&timeString, 9));
-    currentNetworkTime.minutes = atoi(CharString_right(&timeString, 12));
-    currentNetworkTime.seconds = atoi(CharString_right(&timeString, 15));
+    scanCCLKField(&timeString, &currentNetworkTime.year);
+    scanCCLKField(&timeString, &currentNetworkTime.month);
+    scanCCLKField(&timeString, &currentNetworkTime.day);
+    scanCCLKField(&timeString, &currentNetworkTime.hour);
+    scanCCLKField(&timeString, &currentNetworkTime.minutes);
+    scanCCLKField(&timeString, &currentNetworkTime.seconds);
 
     if (CCLKCallback != 0) {
         CCLKCallback(&currentNetworkTime);
@@ -251,10 +266,10 @@ static void readCCLK (
 static void readCFUN (
     CharStringSpan_t *str)
 {
+    StringUtils_skipWhitespace(str);
     bool isValid;
     int16_t funclevel;
-    StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &funclevel);
+    StringUtils_scanInteger(str, &isValid, &funclevel, NULL);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -273,10 +288,10 @@ static void readCFUN (
 static void readCGATT (
     CharStringSpan_t *str)
 {
+    StringUtils_skipWhitespace(str);
     bool isValid;
     int16_t value;
-    StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &value);
+    StringUtils_scanInteger(str, &isValid, &value, NULL);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -298,7 +313,7 @@ static void readCIPACK (
     bool isValid;
     SIM800_CIPACKData cipackData;
     StringUtils_skipWhitespace(str);
-    StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataSent);
+    StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataSent, str);
     if (isValid) {
         if (CharStringSpan_front(str) == ',') {
             CharStringSpan_incrBegin(str);
@@ -307,7 +322,7 @@ static void readCIPACK (
         }
     }
     if (isValid) {
-        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataConfirmed);
+        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataConfirmed, str);
     }
     if (isValid) {
         if (CharStringSpan_front(str) == ',') {
@@ -317,7 +332,7 @@ static void readCIPACK (
         }
     }
     if (isValid) {
-        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataNotConfirmed);
+        StringUtils_scanIntegerU32(str, &isValid, &cipackData.dataNotConfirmed, NULL);
     }
     if (isValid) {
 #if DEBUG_TRACE
@@ -340,8 +355,13 @@ static void readCIPACK (
 static void readCMGR (
     CharStringSpan_t *str)
 {
-    StringUtils_scanQuotedString(str, &smsMsgStatus);
-    StringUtils_scanQuotedString(str, &smsPhoneNumber);
+    CharStringSpan_t smsSpan;
+    StringUtils_scanQuotedString(str, &smsSpan, str);
+    CharString_copyIters(
+        CharStringSpan_begin(&smsSpan), CharStringSpan_end(&smsSpan), &smsMsgStatus);
+    StringUtils_scanQuotedString(str, &smsSpan, str);
+    CharString_copyIters(
+        CharStringSpan_begin(&smsSpan), CharStringSpan_end(&smsSpan), &smsPhoneNumber);
     rpState = rps_raw;
 }
 
@@ -350,7 +370,7 @@ static void readCMGL (
 {
     bool isValid;
     StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &smsMsgID);
+    StringUtils_scanInteger(str, &isValid, &smsMsgID, str);
     readCMGR(str);
 }
 
@@ -363,12 +383,12 @@ static void readCMTI (
     CharStringSpan_t *str)
 {
     CharStringSpan_t typeStr;
-    StringUtils_scanQuotedString(str, &typeStr);
+    StringUtils_scanQuotedString(str, &typeStr, str);
     if (CharStringSpan_front(str) == ',') {
         bool isValid;
         int16_t msgid;
         CharStringSpan_incrBegin(str);
-        StringUtils_scanInteger(str, &isValid, &msgid);
+        StringUtils_scanInteger(str, &isValid, &msgid, NULL);
         if (isValid) {
 
 #if DEBUG_TRACE
@@ -389,7 +409,7 @@ static void readCPIN (
     CharStringSpan_t *str)
 {
     CharStringSpan_t statusStr;
-    StringUtils_scanQuotedString(str, &statusStr);
+    StringUtils_scanQuotedString(str, &statusStr, NULL);
 
     if (CPINCallback != 0) {
         CPINCallback(&statusStr);
@@ -402,10 +422,10 @@ static void readCREG (
     bool isValid;
     int16_t reg;
     StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &reg);
+    StringUtils_scanInteger(str, &isValid, &reg, str);
     if (isValid && (CharStringSpan_front(str) == ',')) {
         CharStringSpan_incrBegin(str);   // step over ','
-        StringUtils_scanInteger(str, &isValid, &reg);
+        StringUtils_scanInteger(str, &isValid, &reg, NULL);
         if (isValid) {
 
 #if DEBUG_TRACE
@@ -428,7 +448,7 @@ static void readCSQ (
     bool isValid;
     int16_t sigStrength;
     StringUtils_skipWhitespace(str);
-    StringUtils_scanInteger(str, &isValid, &sigStrength);
+    StringUtils_scanInteger(str, &isValid, &sigStrength, NULL);
     if (isValid) {
 
 #if DEBUG_TRACE
@@ -460,7 +480,7 @@ static void processPlusMessage (
 {
     // scan message identifier
     CharStringSpan_t msg;
-    StringUtils_scanDelimitedString('+', ':', plusMsg, &msg);
+    StringUtils_scanDelimitedString('+', ':', plusMsg, &msg, plusMsg);
     const int msgIndex = StringUtils_lookupString(
         &msg, plusMessageTable, plusMessageTableSize);
     latestPlusMessage = ((PlusMessage)msgIndex);
@@ -595,9 +615,8 @@ static bool interpretNonterminatedResponse (
 
     const int responseLength = CharString_length(response);
     if (responseLength >= 2) {
-        const char* cp = CharString_cstr(response);
-        const char firstChar = cp[0];
-        const char secondChar = cp[1];
+        const char firstChar = CharString_at(response, 0);
+        const char secondChar = CharString_at(response, 1);
         if ((firstChar == '>') && (secondChar == ' ')) {
             // got prompt
 #if DEBUG_TRACE
@@ -612,10 +631,12 @@ static bool interpretNonterminatedResponse (
                    (CharString_at(response, responseLength-1) == ':') &&
                    (CharString_startsWithP(response, PSTR("+IPD,")))) {
             // could be IP data
+            CharStringSpan_t ipdStr;
+            CharStringSpan_initRight(response, 5, &ipdStr);
             bool isValidLength = false;
             int16_t dataLength = 0;
-            cp = StringUtils_scanInteger(cp + 5, &isValidLength, &dataLength);
-            if (isValidLength && (*cp == ':')) {
+            StringUtils_scanInteger(&ipdStr, &isValidLength, &dataLength, &ipdStr);
+            if (isValidLength && (CharStringSpan_front(&ipdStr) == ':')) {
                 // getting TCP/IP data
                 ipDataLength = dataLength;
                 rpState = rps_readIPData;
@@ -1008,14 +1029,7 @@ void SIM800_sendStringP (
 void SIM800_sendStringCS (
     const CharString_t* str)
 {
-    SIM800_sendString(CharString_cstr(str));
-}
-
-void SIM800_sendLine (
-    const char* str)
-{
-    SIM800_sendString(str);
-    SoftwareSerialTx_sendChar(TX_CHAN_INDEX, 13);
+    SoftwareSerialTx_sendCS(TX_CHAN_INDEX, str);
 }
 
 void SIM800_sendLineP (
@@ -1028,7 +1042,8 @@ void SIM800_sendLineP (
 void SIM800_sendLineCS (
     const CharString_t* str)
 {
-    SIM800_sendLine(CharString_cstr(str));
+    SoftwareSerialTx_sendCS(TX_CHAN_INDEX, str);
+    SoftwareSerialTx_sendChar(TX_CHAN_INDEX, 13);
 }
 
 void SIM800_sendHex (

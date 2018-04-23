@@ -6,7 +6,7 @@
 
 #include "ByteQueue.h"
 #include <avr/pgmspace.h>
-#include "CharString.h"
+#include "CharStringSpan.h"
 #include <stdint.h>
 
 typedef enum SIM800_moduleStatusEnum {
@@ -99,7 +99,7 @@ typedef void (*SIM800_CREGCallback)(
 typedef void (*SIM800_CMTICallback)(
     const int16_t msgID);
 typedef void (*SIM800_CPINCallback)(
-    const CharString_t *cpinStatus);
+    const CharStringSpan_t *cpinStatus);
 typedef void (*SIM800_CCLKCallback)(
     const SIM800_NetworkTime *time);
 typedef void (*SIM800_CBCCallback)(
@@ -162,8 +162,6 @@ extern void SIM800_sendStringCS (
     const CharString_t* str);
 
 // sends the given string and a CR
-extern void SIM800_sendLine (
-    const char* str);
 extern void SIM800_sendLineP (
     PGM_P str);
 extern void SIM800_sendLineCS (

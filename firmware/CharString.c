@@ -4,20 +4,27 @@
 
 #include "CharString.h"
 
-void CharString_append (
-    const char* srcStr,
+static void appendHelper (
+    CharString_Iter srcStrBegin,
+    const uint8_t srcStrLen,
     CharString_t* destStr)
 {
     const uint8_t capacity = destStr->capacity;
-    const uint8_t srcStrLen = strlen(srcStr);
     const uint8_t remainingCapacity = capacity - destStr->length;
     const uint8_t charsToAppend =
         (remainingCapacity < srcStrLen)
         ? remainingCapacity
         : srcStrLen;
-    strncpy(destStr->body + destStr->length, srcStr, charsToAppend);
+    strncpy(destStr->body + destStr->length, srcStrBegin, charsToAppend);
     destStr->length += charsToAppend;
     destStr->body[destStr->length] = 0;
+}
+
+void CharString_append (
+    const char* srcStr,
+    CharString_t* destStr)
+{
+    appendHelper(srcStr, strlen(srcStr), destStr);
 }
 
 void CharString_appendP (
@@ -40,7 +47,7 @@ void CharString_appendCS (
     const CharString_t* srcStr,
     CharString_t* destStr)
 {
-    CharString_append(CharString_cstr(srcStr), destStr);
+    appendHelper(srcStr->body, srcStr->length, destStr);
 }
 
 void CharString_appendC (
@@ -53,6 +60,15 @@ void CharString_appendC (
         *cp = 0;
         ++destStr->length;
     }
+}
+
+void CharString_copyIters (
+    CharString_Iter begin,
+    CharString_Iter end,
+    CharString_t* destStr)
+{
+    CharString_clear(destStr);
+    appendHelper(begin, end - begin, destStr);
 }
 
 void CharString_appendNewline (

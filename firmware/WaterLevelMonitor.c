@@ -355,8 +355,9 @@ void WaterLevelMonitor_task (void)
             if (gotCommandFromHost) {
                 CharString_clear(&CommandProcessor_commandReply);
                 if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
-                    const bool successful = 
-                        CommandProcessor_executeCommand(&CommandProcessor_incomingCommand);
+                    CharStringSpan_t cmd;
+                    CharStringSpan_init(&CommandProcessor_incomingCommand, &cmd);
+                    const bool successful = CommandProcessor_executeCommand(&cmd);
                     CharString_clear(&CommandProcessor_incomingCommand);
                     if (CharString_isEmpty(&CommandProcessor_commandReply)) {
                         if (commandMode == cpm_commandBlock) {

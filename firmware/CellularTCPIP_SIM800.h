@@ -35,7 +35,7 @@ extern void CellularTCPIP_Initialize (void);
 extern CellularTCPIPConnectionStatus CellularTCPIP_connectionStatus (void);
 
 extern void CellularTCPIP_connect (
-    const char* hostAddress,
+    const CharString_t *hostAddress,
     const uint16_t hostPort,
     SIM800_IPDataCallback receiver,    // will be called when data from host arrives 
     CellularTCPIP_ConnectionStateChangeCallback stateChangeCallback);

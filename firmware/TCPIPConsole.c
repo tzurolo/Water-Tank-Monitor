@@ -48,17 +48,10 @@ static void statusCallback (
     }
 }
 
-static void dataReceivedCallback (
-    const CharString_t *ipData)
-{
-    CommandProcessor_executeCommand(ipData);
-}
-
-
 void TCPIPConsole_Initialize (void)
 {
     TCPIPConsole_restoreEnablement();
-    dataReceiver = dataReceivedCallback;
+    dataReceiver = 0;
     sendDataProvider = 0;
     sendCompletionCallback = 0;
     sState = ss_idle;
@@ -85,11 +78,10 @@ void TCPIPConsole_task (void)
                     break;
                 case cs_disconnected :
                     if (isEnabled && SystemTime_timeHasArrived(&nextConnectAttemptTime)) {
-                        char server[33];
-                        uint16_t port;
-                        EEPROMStorage_getIPConsoleServerAddress(server);
-                        port = EEPROMStorage_ipConsoleServerPort();
-                        CellularTCPIP_connect(server, port, dataReceiver, statusCallback);
+                        CharString_define(40, server);
+                        EEPROMStorage_getIPConsoleServerAddress(&server);
+                        const uint16_t port = EEPROMStorage_ipConsoleServerPort();
+                        CellularTCPIP_connect(&server, port, dataReceiver, statusCallback);
                         sState = ss_waitingForTCPIPConnecting;
                     }
                     break;

@@ -137,12 +137,14 @@ PGM_P imageOfMessageStatus (
 }
 
 SMSMessageStatus messageStatusFromString (
-    const char* statusString)
+    const CharString_t *statusString)
 {
+    CharStringSpan_t statusStringSpan;
+    CharStringSpan_init(statusString, &statusStringSpan);
     SMSMessageStatus msgStatus;
     for (msgStatus = sms_all; msgStatus > sms_unknown;
             msgStatus = (SMSMessageStatus)(((int)msgStatus) - 1)) {
-        if (strcasecmp_P(statusString, imageOfMessageStatus(msgStatus)) == 0) {
+        if (CharStringSpan_equalsNocaseP(&statusStringSpan, imageOfMessageStatus(msgStatus)) == 0) {
             break;
         }
     }
@@ -192,7 +194,7 @@ static void SMSCMGRCallback (
     const CharString_t *message)
 {
     gotCMGRMessage = true;
-    incomingSMSMessageStatus = messageStatusFromString(CharString_cstr(messageStatus));
+    incomingSMSMessageStatus = messageStatusFromString(messageStatus);
     CharString_copyCS(phoneNumber, &incomingSMSMessagePhoneNumber);
     CharString_copyCS(message, &incomingSMSMessageText);
 }
@@ -229,10 +231,13 @@ static void CMTICallback (
 
 
 static void CPINCallback (
-    const CharString_t *status)
+    const CharStringSpan_t *status)
 {
     gotCPIN = true;
-    CharString_copyCS(status, &cpinStatus);
+    CharString_copyIters(
+        CharStringSpan_begin(status),
+        CharStringSpan_end(status),
+        &cpinStatus);
 }
 
 static void CCLKCallback (
@@ -655,7 +660,9 @@ void CellularComm_task (void)
                         // process the message we got
                         CharString_clear(&CommandProcessor_commandReply);
                         CharString_clear(&outgoingSMSMessagePhoneNumber);
-                        if (CommandProcessor_executeCommand(&incomingSMSMessageText)) {
+                        CharStringSpan_t cmd;
+                        CharStringSpan_init(&incomingSMSMessageText, &cmd);
+                        if (CommandProcessor_executeCommand(&cmd)) {
                             // valid command
                             if (!CharString_isEmpty(&CommandProcessor_commandReply)) {
                                 // a reply was generated from the command
@@ -794,8 +801,11 @@ uint16_t CellularComm_batteryMillivolts (void)
 }
 
 void CellularComm_setOutgoingSMSMessageNumber (
-    const char* phoneNumber)
+    const CharStringSpan_t* phoneNumber)
 {
-    CharString_copy(phoneNumber, &outgoingSMSMessagePhoneNumber);
+    CharString_copyIters(
+        CharStringSpan_begin(phoneNumber),
+        CharStringSpan_end(phoneNumber),
+        &outgoingSMSMessagePhoneNumber);
 }
 
