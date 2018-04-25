@@ -154,12 +154,12 @@ extern void SIM800_setPromptCallback (
 
 extern uint16_t SIM800_availableSpaceForSend (void);
 
-extern void SIM800_sendString (
-    const char* str);
 extern void SIM800_sendStringP (
     PGM_P str);
 extern void SIM800_sendStringCS (
     const CharString_t* str);
+extern void SIM800_sendStringCSS (
+    const CharStringSpan_t* str);
 
 // sends the given string and a CR
 extern void SIM800_sendLineP (

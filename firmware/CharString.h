@@ -46,24 +46,14 @@ inline uint8_t CharString_length (
     return str->length;
 }
 
-inline CharString_Iter CharString_begin (
-    const CharString_t *str)
-{
-    return &str->body[0];
-}
+extern CharString_Iter CharString_begin (
+    const CharString_t *str);
 
-inline CharString_Iter CharString_end (
-    const CharString_t *str)
-{
-    return &str->body[0] + str->length;
-}
+extern CharString_Iter CharString_end (
+    const CharString_t *str);
 
-inline void CharString_clear (
-    CharString_t* str)
-{
-    str->length = 0;
-    str->body[0] = 0;
-}
+extern void CharString_clear (
+    CharString_t* str);
 
 //
 // These append functions safely append string (protects

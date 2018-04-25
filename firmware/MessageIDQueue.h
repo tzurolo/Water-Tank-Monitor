@@ -21,50 +21,20 @@ typedef struct {
     MessageIDQueue_ValueType buffer[MessageIDQueue_Capacity];
 } MessageIDQueue_type;
 
-static inline void MessageIDQueue_init (
-    MessageIDQueue_type* queue)
-{
-    queue->head = 0;
-    queue->tail = 0;
-    queue->length = 0;
-}
+extern void MessageIDQueue_init (
+    MessageIDQueue_type* queue);
 
-static inline bool MessageIDQueue_isEmpty (
-    MessageIDQueue_type* queue)
-{
-    return (queue->length == 0);
-}
+extern bool MessageIDQueue_isEmpty (
+    MessageIDQueue_type* queue);
 
-static inline bool MessageIDQueue_isFull (
-    MessageIDQueue_type* queue)
-{
-    return (queue->length == MessageIDQueue_Capacity);
-}
+extern bool MessageIDQueue_isFull (
+    MessageIDQueue_type* queue);
 
-static inline void MessageIDQueue_insert (
+extern void MessageIDQueue_insert (
     const MessageIDQueue_ValueType value,
-    MessageIDQueue_type* queue)
-{
-    queue->buffer[queue->tail++] = value;
-    ++queue->length;
-    if (queue->tail == MessageIDQueue_Capacity) {
-        // wrap around
-        queue->tail = 0;
-    }
-}
+    MessageIDQueue_type* queue);
 
-static inline MessageIDQueue_ValueType MessageIDQueue_remove (
-    MessageIDQueue_type* queue)
-{
-    const MessageIDQueue_ValueType value =
-        queue->buffer[queue->head++];
-    --queue->length;
-    if (queue->head == MessageIDQueue_Capacity) {
-        // wrap around
-        queue->head = 0;
-    }
-
-    return value;
-}
+extern MessageIDQueue_ValueType MessageIDQueue_remove (
+    MessageIDQueue_type* queue);
 
 #endif  // MessageIDQueue_H

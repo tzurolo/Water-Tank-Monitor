@@ -4,6 +4,25 @@
 
 #include "CharString.h"
 
+CharString_Iter CharString_begin (
+    const CharString_t *str)
+{
+    return &str->body[0];
+}
+
+CharString_Iter CharString_end (
+    const CharString_t *str)
+{
+    return &str->body[0] + str->length;
+}
+
+void CharString_clear (
+    CharString_t* str)
+{
+    str->length = 0;
+    str->body[0] = 0;
+}
+
 static void appendHelper (
     CharString_Iter srcStrBegin,
     const uint8_t srcStrLen,

@@ -22,6 +22,7 @@
 #include "TCPIPConsole.h"
 #include "CommandProcessor.h"
 #include "SampleHistory.h"
+#include "RAMSentinel.h"
 
 // water level has to change by this percentage or more
 // to get back to inRange after going out of range
@@ -58,6 +59,7 @@ static bool gotCommandFromHost;
 static SystemTime_t lastSampleTime;
 static SampleHistory_define(30, sampleHistory);
 static int16_t dataSenderSampleIndex;
+static CharStringSpan_t remainingReplyDataToSend;
 static WaterLevelState currentWaterLevelState;
 static uint8_t currentWaterLevelPercent;
 
@@ -72,6 +74,7 @@ static bool sampleDataSender (void)
     if (CellularTCPIP_availableSpaceForWriteData() >= DATA_SENDER_BUFFER_LEN) {
         // there is room in the output queue for our data
         CharString_define(DATA_SENDER_BUFFER_LEN, dataToSend);
+        // RAMSentinel_printStackPtr();
         if (dataSenderSampleIndex == -1) {
             // send per-post data
             CharString_copyP(PSTR("I"), &dataToSend);
@@ -128,18 +131,19 @@ static bool sampleDataSender (void)
 
 static bool replyDataSender (void)
 {
-    bool sendComplete = false;
+    // RAMSentinel_printStackPtr();
 
-    // check to see if there is enough room in the output queue for a chunk of our data. If
-    // not, we check again next time we're called.
-    if (CellularTCPIP_availableSpaceForWriteData() >= DATA_SENDER_BUFFER_LEN) {
-        // there is room in the output queue for a chunk of our data
-        // TODO: slice up reply into buffer len chunks
-        sendComplete = true;
-        CellularTCPIP_writeDataCS(&CommandProcessor_commandReply);
-    }
+    // send as much as there is enough room in the output queue for a chunk of our data.
+    const uint16_t availableSpace = CellularTCPIP_availableSpaceForWriteData();
+    const uint8_t spaceInSpan =
+        (availableSpace > 255)
+        ? 255
+        : ((uint8_t)availableSpace);
+    CharStringSpan_t chunk;
+    CharStringSpan_extractLeft(spaceInSpan, &remainingReplyDataToSend, &chunk);
+    CellularTCPIP_writeDataCSS(&chunk);
 
-    return sendComplete;
+    return CharStringSpan_isEmpty(&remainingReplyDataToSend);
 }
 
 static void TCPIPSendCompletionCallaback (
@@ -153,6 +157,7 @@ static void TCPIPSendCompletionCallaback (
 static void IPDataCallback (
     const CharString_t *ipData)
 {
+    // RAMSentinel_printStackPtr();
     for (int i = 0; i < CharString_length(ipData); ++i) {
         const char c = CharString_at(ipData, i);
         if ((c == '\r') || (c == '\n')) {
@@ -185,6 +190,7 @@ static void IPDataCallback (
 static void enableTCPIP (void)
 {
     CellularComm_Enable();
+    gotCommandFromHost = false;
     TCPIPConsole_setDataReceiver(IPDataCallback);
     TCPIPConsole_enable(false);
 }
@@ -243,7 +249,6 @@ static bool updateWaterLevelState (
 void transitionToWaitingForCommand(void)
 {
     CharString_clear(&CommandProcessor_incomingCommand);
-    gotCommandFromHost = false;
     wlmState = wlms_waitingForHostCommand;
 }
 
@@ -267,6 +272,7 @@ void WaterLevelMonitor_Initialize (void)
     SampleHistory_clear(&sampleHistory);
     dataSenderSampleIndex = -1;
     currentWaterLevelState = wl_inRange;
+    gotCommandFromHost = false;
 }
 
 void WaterLevelMonitor_task (void)
@@ -353,11 +359,13 @@ void WaterLevelMonitor_task (void)
             break;
         case wlms_waitingForHostCommand:
             if (gotCommandFromHost) {
+                gotCommandFromHost = false;
                 CharString_clear(&CommandProcessor_commandReply);
                 if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
                     CharStringSpan_t cmd;
                     CharStringSpan_init(&CommandProcessor_incomingCommand, &cmd);
-                    const bool successful = CommandProcessor_executeCommand(&cmd);
+                    const bool successful =
+                        CommandProcessor_executeCommand(&cmd, &CommandProcessor_commandReply);
                     CharString_clear(&CommandProcessor_incomingCommand);
                     if (CharString_isEmpty(&CommandProcessor_commandReply)) {
                         if (commandMode == cpm_commandBlock) {
@@ -383,6 +391,7 @@ void WaterLevelMonitor_task (void)
         case wlms_waitingForReadyToSendReply :
             if (TCPIPConsole_readyToSend()) {
                 sendDataStatus = sds_sending;
+                CharStringSpan_init(&CommandProcessor_commandReply, &remainingReplyDataToSend);
                 TCPIPConsole_sendData(replyDataSender, TCPIPSendCompletionCallaback);
                 wlmState = wlms_sendingReplyData;
             }

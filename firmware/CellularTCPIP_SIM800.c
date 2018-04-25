@@ -124,16 +124,16 @@ static void endSubtask (
     resetSubtask();
 }
 
-static void sendCIPSTART (void)
+static void sendCIPSTART (
+    CharString_t *cmdBuffer)
 {
-    CharString_define(60, cipstartCmd);
-    CharString_copyP(PSTR("AT+CIPSTART=\"TCP\",\""), &cipstartCmd);
-    CharString_appendCS(&ctHostAddress, &cipstartCmd);
-    CharString_appendP(PSTR("\",\""), &cipstartCmd);
-    StringUtils_appendDecimal(ctHostPort, 1, 0, &cipstartCmd);
-    CharString_appendP(PSTR("\""), &cipstartCmd);
+    CharString_copyP(PSTR("AT+CIPSTART=\"TCP\",\""), cmdBuffer);
+    CharString_appendCS(&ctHostAddress, cmdBuffer);
+    CharString_appendP(PSTR("\",\""), cmdBuffer);
+    StringUtils_appendDecimal(ctHostPort, 1, 0, cmdBuffer);
+    CharString_appendP(PSTR("\""), cmdBuffer);
     SystemTime_futureTime(CIPSTART_TIMEOUT, &ctResponseTimeoutTime);
-    sendSIM800CommandCS(&cipstartCmd, cts_waitingForCIPSTARTResponse);
+    sendSIM800CommandCS(cmdBuffer, cts_waitingForCIPSTARTResponse);
 }
 
 static void CGATTCallback (
@@ -180,15 +180,13 @@ static void waitBeforeRequestingIPState (void)
     ctState = cts_ipstateRequestDelay;
 }
 
-static void sendCSTT (void)
+static void sendCSTT (
+    CharString_t *cmdBuffer)
 {
-    CharString_define(60, csttCmd);
-    CharString_copyP(PSTR("AT+CSTT=\""), &csttCmd);
-    CharString_define(40, apn);
-    EEPROMStorage_getAPN(&apn);
-    CharString_appendCS(&apn, &csttCmd);
-    CharString_appendC('"', &csttCmd);
-    sendSIM800CommandCS(&csttCmd, cts_waitingForCSTTResponse);
+    CharString_copyP(PSTR("AT+CSTT=\""), cmdBuffer);
+    EEPROMStorage_getAPN(cmdBuffer);
+    CharString_appendC('"', cmdBuffer);
+    sendSIM800CommandCS(cmdBuffer, cts_waitingForCSTTResponse);
 }
 
 static void promptCallback (
@@ -216,7 +214,8 @@ static void sendCIPACK (void)
     sendSIM800CommandP(PSTR("AT+CIPACK"), cts_waitingForCIPACKResponse);
 }
 
-static void advanceStateForConnect (void)
+static void advanceStateForConnect (
+    CharString_t *cmdBuffer)
 {
     switch (curIPState) {
         case ips_CONNECT_OK :
@@ -231,7 +230,7 @@ static void advanceStateForConnect (void)
             requestIPAddress();
             break;
         case ips_IP_INITIAL :
-            sendCSTT();
+            sendCSTT(cmdBuffer);
             break;
         case ips_IP_START :
             sendSIM800CommandP(PSTR("AT+CIICR"), cts_waitingForCIICRResponse);
@@ -239,7 +238,7 @@ static void advanceStateForConnect (void)
         case ips_IP_STATUS :
         case ips_TCP_CLOSED :
         case ips_UDP_CLOSED :
-            sendCIPSTART();
+            sendCIPSTART(cmdBuffer);
             break;
         default:
             // not expected to ever get here
@@ -300,7 +299,8 @@ static void advanceStateForDisconnect (void)
             break;
     }
 }
-static void advanceStateForCommand (void)
+static void advanceStateForCommand (
+    CharString_t *cmdBuffer)
 {
     switch (curIPState) {
         case ips_PDP_DEACT :
@@ -320,7 +320,7 @@ static void advanceStateForCommand (void)
         default:
             switch (curCommand) {
                 case c_connect :
-                    advanceStateForConnect();
+                    advanceStateForConnect(cmdBuffer);
                     break;
                 case c_sendData :
                     advanceStateForSendData();
@@ -400,6 +400,7 @@ bool CellularTCPIP_hasSubtaskWorkToDo (void)
 
 void CellularTCPIP_Subtask (void)
 {
+    CharString_define(70, cmdBuffer);// define here to keep stack frame small
     switch (ctState) {
         case cts_idle :
             switch (curConnectionStatus) {
@@ -576,7 +577,7 @@ void CellularTCPIP_Subtask (void)
         case cts_waitingForIPState :
             if (curIPState != ips_unknown) {
                 // we got a state
-                advanceStateForCommand();
+                advanceStateForCommand(&cmdBuffer);
             } else if ((SIM800ResponseMsg == rm_ERROR)  ||
                        (SIM800ResponseMsg == rm_CLOSED)) {
                 endSubtask(cs_disconnected);
@@ -606,12 +607,6 @@ uint16_t CellularTCPIP_availableSpaceForWriteData (void)
     return SIM800_availableSpaceForSend();
 }
 
-void CellularTCPIP_writeData (
-    const uint8_t* data)
-{
-    SIM800_sendString((const char*)data);
-}
-
 void CellularTCPIP_writeDataP (
     PGM_P data)
 {
@@ -622,4 +617,10 @@ void CellularTCPIP_writeDataCS (
     CharString_t *data)
 {
     SIM800_sendStringCS(data);
+}
+
+void CellularTCPIP_writeDataCSS (
+    CharStringSpan_t *data)
+{
+    SIM800_sendStringCSS(data);
 }

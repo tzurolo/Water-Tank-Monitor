@@ -1006,16 +1006,6 @@ uint16_t SIM800_availableSpaceForSend (void)
     return SoftwareSerialTx_availableSpace(TX_CHAN_INDEX);
 }
 
-void SIM800_sendString (
-    const char* str)
-{
-#if DEBUG_TRACE
-    Console_print(str);
-#endif
-
-    SoftwareSerialTx_send(TX_CHAN_INDEX, str);
-}
-
 void SIM800_sendStringP (
     PGM_P str)
 {
@@ -1030,6 +1020,12 @@ void SIM800_sendStringCS (
     const CharString_t* str)
 {
     SoftwareSerialTx_sendCS(TX_CHAN_INDEX, str);
+}
+
+void SIM800_sendStringCSS (
+    const CharStringSpan_t* str)
+{
+    SoftwareSerialTx_sendCSS(TX_CHAN_INDEX, str);
 }
 
 void SIM800_sendLineP (

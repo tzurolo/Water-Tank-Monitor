@@ -57,11 +57,11 @@ extern int CellularTCPIP_state (void);
 // these functions are to be called only by DataProvider
 // functions
 extern uint16_t CellularTCPIP_availableSpaceForWriteData (void);
-extern void CellularTCPIP_writeData (
-    const uint8_t* data);
 extern void CellularTCPIP_writeDataP (
     PGM_P data);
 extern void CellularTCPIP_writeDataCS (
     CharString_t *data);
+extern void CellularTCPIP_writeDataCSS (
+    CharStringSpan_t *data);
 
 #endif  // CELLULARTCPIP_H

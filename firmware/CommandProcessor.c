@@ -29,7 +29,8 @@
 #include "StringUtils.h"
 #include "UART_async.h"
 
-#define CMD_TOKEN_BUFFER_LEN 80
+typedef void (*StringProvider)(
+    CharString_t *string);
 
 CharString_define(60, CommandProcessor_incomingCommand)
 CharString_define(100, CommandProcessor_commandReply)
@@ -39,7 +40,7 @@ void CommandProcessor_createStatusMessage (
 {
     CharString_clear(msg);
     SystemTime_appendCurrentToString(msg);
-    CharString_appendP(PSTR(", st:"), msg);
+    CharString_appendP(PSTR(",st:"), msg);
     StringUtils_appendDecimal(CellularComm_state(), 2, 0, msg);
     if (CellularComm_stateIsTCPIPSubtask(CellularComm_state())) {
         CharString_appendC('.', msg);
@@ -47,21 +48,21 @@ void CommandProcessor_createStatusMessage (
     }
     CharString_appendP(PSTR(","), msg);
     StringUtils_appendDecimal(WaterLevelMonitor_state(), 1, 0, msg);
-    CharString_appendP(PSTR(", U:"), msg);
+    CharString_appendP(PSTR(",U:"), msg);
     StringUtils_appendDecimal(UltrasonicSensorMonitor_currentDistance(), 3, 1, msg);
-    CharString_appendP(PSTR(", Vb:"), msg);
+    CharString_appendP(PSTR(",Vb:"), msg);
     StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 2, msg);
-    CharString_appendP(PSTR(", Vc:"), msg);
+    CharString_appendP(PSTR(",Vc:"), msg);
     StringUtils_appendDecimal(CellularComm_batteryMillivolts(), 1, 3, msg);
-    CharString_appendP(PSTR(", T:"), msg);
+    CharString_appendP(PSTR(",T:"), msg);
     if (InternalTemperatureMonitor_haveValidSample()) {
         StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, msg);
     } else {
         CharString_appendP(PSTR("__"), msg);
     }
-    CharString_appendP(PSTR(", reg:"), msg);
+    CharString_appendP(PSTR(",r:"), msg);
     StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, msg);
-    CharString_appendP(PSTR(", csq:"), msg);
+    CharString_appendP(PSTR(",q:"), msg);
     StringUtils_appendDecimal(CellularComm_SignalQuality(), 2, 0, msg);
     CharString_appendP(PSTR("  "), msg);
 }
@@ -106,13 +107,13 @@ static void endJSON (
 
 static void appendJSONStrValue (
     PGM_P name,
-    const CharString_t* value,
+    StringProvider strProvider,
     CharString_t *str)
 {
     CharString_appendC('\"', str);
     CharString_appendP(name, str);
     CharString_appendP(PSTR("\":\""), str);
-    CharString_appendCS(value, str);
+    strProvider(str);
     CharString_appendC('\"', str);
 }
 
@@ -129,11 +130,11 @@ static void appendJSONIntValue (
 
 static void makeJSONStrValue (
     PGM_P name,
-    const CharString_t* value,
+    StringProvider strProvider,
     CharString_t *str)
 {
     beginJSON(str);
-    appendJSONStrValue(name, value, str);
+    appendJSONStrValue(name, strProvider, str);
     endJSON(str);
 }
 
@@ -148,7 +149,8 @@ static void makeJSONIntValue (
 }
 
 bool CommandProcessor_executeCommand (
-    const CharStringSpan_t* command)
+    const CharStringSpan_t* command,
+    CharString_t *reply)
 {
     bool validCommand = true;
 
@@ -163,7 +165,7 @@ bool CommandProcessor_executeCommand (
             StringUtils_scanToken(&cmd, &statusToNumber);
         }
 	// return status info
-	CommandProcessor_createStatusMessage(&CommandProcessor_commandReply);
+	CommandProcessor_createStatusMessage(reply);
         if (!CharStringSpan_isEmpty(&statusToNumber)) {
             CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
         }
@@ -183,6 +185,13 @@ bool CommandProcessor_executeCommand (
             StringUtils_scanToken(&cmd, &cmdToken);
             if (!CharStringSpan_isEmpty(&cmdToken)) {
                 EEPROMStorage_setAPN(&cmdToken);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("ipserver"))) {
+            StringUtils_scanToken(&cmd, &cmdToken);
+            const uint16_t ipPort = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setIPConsoleServerAddress(&cmdToken);
+                EEPROMStorage_setIPConsoleServerPort(ipPort);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sampleinterval"))) {
             const uint16_t sampleInterval = scanIntegerToken(&cmd, &validCommand);
@@ -224,36 +233,32 @@ bool CommandProcessor_executeCommand (
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("get"))) {
         StringUtils_scanToken(&cmd, &cmdToken);
         if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("PIN"))) {
-            CharString_define(16, pinBuffer);
-            EEPROMStorage_getPIN(&pinBuffer);
-            makeJSONStrValue(PSTR("PIN"), &pinBuffer, &CommandProcessor_commandReply);
+            makeJSONStrValue(PSTR("PIN"), EEPROMStorage_getPIN, reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
-            makeJSONIntValue(PSTR("tcal"), EEPROMStorage_tempCalOffset(), &CommandProcessor_commandReply);
+            makeJSONIntValue(PSTR("tcal"), EEPROMStorage_tempCalOffset(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
-            CharString_define(40, apnBuffer); 
-            EEPROMStorage_getAPN(&apnBuffer);
-            makeJSONStrValue(PSTR("APN'"), &apnBuffer, &CommandProcessor_commandReply);
+            makeJSONStrValue(PSTR("APN'"), EEPROMStorage_getAPN, reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("ipserver"))) {
+            beginJSON(reply);
+            appendJSONStrValue(PSTR("IP_Addr"), EEPROMStorage_getIPConsoleServerAddress, reply);
+            continueJSON(reply);
+            appendJSONIntValue(PSTR("IP_Port"), EEPROMStorage_ipConsoleServerPort(), reply);
+            endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("sampleinterval"))) {
             makeJSONIntValue(PSTR("sampleInterval"), EEPROMStorage_sampleInterval(),
-                &CommandProcessor_commandReply);
+                reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("loginterval"))) {
-            makeJSONIntValue(PSTR("logInterval"), EEPROMStorage_LoggingUpdateInterval(),
-                &CommandProcessor_commandReply);
+            makeJSONIntValue(PSTR("logInterval"), EEPROMStorage_LoggingUpdateInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("thingspeak"))) {
-            CharString_define(40, buffer);
-            beginJSON(&CommandProcessor_commandReply);
-            appendJSONIntValue(PSTR("TS_En"), EEPROMStorage_thingspeakEnabled() ? 1 : 0,
-                &CommandProcessor_commandReply);
-            continueJSON(&CommandProcessor_commandReply);
-            EEPROMStorage_getThingspeakHostAddress(&buffer);
-            appendJSONStrValue(PSTR("TS_Addr"), &buffer, &CommandProcessor_commandReply);
-            continueJSON(&CommandProcessor_commandReply);
-            appendJSONIntValue(PSTR("TS_Port"), EEPROMStorage_thingspeakHostPort(),
-                &CommandProcessor_commandReply);
-            continueJSON(&CommandProcessor_commandReply);
-            EEPROMStorage_getThingspeakWriteKey(&buffer);
-            appendJSONStrValue(PSTR("TS_WK"), &buffer, &CommandProcessor_commandReply);
-            endJSON(&CommandProcessor_commandReply);
+            beginJSON(reply);
+            appendJSONIntValue(PSTR("TS_En"), EEPROMStorage_thingspeakEnabled() ? 1 : 0, reply);
+            continueJSON(reply);
+            appendJSONStrValue(PSTR("TS_Addr"), EEPROMStorage_getThingspeakHostAddress, reply);
+            continueJSON(reply);
+            appendJSONIntValue(PSTR("TS_Port"), EEPROMStorage_thingspeakHostPort(), reply);
+            continueJSON(reply);
+            appendJSONStrValue(PSTR("TS_WK"), EEPROMStorage_getThingspeakWriteKey, reply);
+            endJSON(reply);
         } else {
             validCommand = false;
         }
@@ -291,7 +296,7 @@ bool CommandProcessor_executeCommand (
                 CharString_copyIters(
                     CharStringSpan_begin(&message),
                     CharStringSpan_end(&message),
-                    &CommandProcessor_commandReply);
+                    reply);
                 CellularComm_setOutgoingSMSMessageNumber(&recipientNumber);
             }
         } else {
@@ -311,12 +316,11 @@ bool CommandProcessor_executeCommand (
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("eeread"))) {
         const uint16_t eeAddr = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {
-            beginJSON(&CommandProcessor_commandReply);
-            appendJSONIntValue(PSTR("EEAddr"), eeAddr, &CommandProcessor_commandReply);
-            continueJSON(&CommandProcessor_commandReply);
-            appendJSONIntValue(PSTR("EEVal"), EEPROM_read((uint8_t*)eeAddr),
-                &CommandProcessor_commandReply);
-            endJSON(&CommandProcessor_commandReply);
+            beginJSON(reply);
+            appendJSONIntValue(PSTR("EEAddr"), eeAddr, reply);
+            continueJSON(reply);
+            appendJSONIntValue(PSTR("EEVal"), EEPROM_read((uint8_t*)eeAddr), reply);
+            endJSON(reply);
         }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("eewrite"))) {
         const uint16_t eeAddr = scanIntegerToken(&cmd, &validCommand);

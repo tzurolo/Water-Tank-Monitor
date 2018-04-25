@@ -23,6 +23,7 @@ extern void EEPROM_writeString (
     const int maxLength,
     const CharStringSpan_t *string);
 
+// Appends to given string
 extern void EEPROM_readString (
     const char* uiAddress,
     CharString_t *string);

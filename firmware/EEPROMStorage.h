@@ -59,7 +59,8 @@ extern void EEPROMStorage_setTimeoutState (
 extern uint8_t EEPROMStorage_timeoutState (void);
 
 //
-// Storage for ThingSpeak support
+// Storage for ThingSpeak support.
+// NOTE: functions that return strings APPEND to the given string
 //
 extern void EEPROMStorage_setAPN (
     const CharStringSpan_t *APN);

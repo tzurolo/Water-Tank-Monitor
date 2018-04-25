@@ -26,7 +26,7 @@ extern void CommandProcessor_createStatusMessage (
 // writes response, if any, to CommandProcessor_commandReply
 // returns true if given command is valid
 extern bool CommandProcessor_executeCommand (
-    const CharStringSpan_t* command);
-
+    const CharStringSpan_t* command,
+    CharString_t *reply);
 
 #endif  // COMMANDPROCESSOR_H

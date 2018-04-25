@@ -21,4 +21,6 @@ extern void RAMSentinel_Initialize (void);
 // Resets it if it has.
 extern bool RAMSentinel_sentinelIntact (void);
 
+extern void RAMSentinel_printStackPtr (void);
+
 #endif      /* RAMSENTINEL_H */

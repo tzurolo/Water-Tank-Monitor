@@ -27,10 +27,20 @@ extern void CharStringSpan_init (
     const CharString_t *str,
     CharStringSpan_t *span);
 
+// initializes 'span' to the characters of 'str' starting
+// at offset
 extern void CharStringSpan_initRight (
     const CharString_t *str,
     const int offset,
     CharStringSpan_t *span);
+
+// takes the first numChars characters out of 'span'
+// and returns them in 'left'. If offset is beyond
+// the end of the span the whole span goes to 'left'
+extern void CharStringSpan_extractLeft (
+    const int numChars,
+    CharStringSpan_t *span,
+    CharStringSpan_t *left);
 
 inline void CharStringSpan_clear (
     CharStringSpan_t *span)
@@ -68,14 +78,10 @@ inline void CharStringSpan_setEnd (
     span->m_end = end;
 }
 
-inline void CharStringSpan_set (
+extern void CharStringSpan_set (
     const CharString_Iter begin,
     const CharString_Iter end,
-    CharStringSpan_t *span)
-{
-    span->m_begin = begin;
-    span->m_end = end;
-}
+    CharStringSpan_t *span);
 
 extern void CharStringSpan_incrBegin (
     CharStringSpan_t *span);

@@ -61,7 +61,6 @@ void EEPROM_readString (
     int lengthRead = 0;
     char strChar;
     uint8_t* charAddr = (uint8_t*)uiAddress;
-    CharString_clear(string);
     do {
         strChar = EEPROM_read(charAddr++);
         if (strChar != 0) {

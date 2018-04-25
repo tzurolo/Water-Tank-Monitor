@@ -12,6 +12,7 @@
 #include "SystemTime.h"
 #include "CommandProcessor.h"
 #include "StringUtils.h"
+#include "RAMSentinel.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -56,7 +57,11 @@ void Console_task (void)
                 SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
                 CharStringSpan_t command;
                 CharStringSpan_init(&CommandProcessor_incomingCommand, &command);
-                CommandProcessor_executeCommand(&command);
+                CommandProcessor_executeCommand(&command, &CommandProcessor_commandReply);
+                if (!CharString_isEmpty(&CommandProcessor_commandReply)) {
+                    Console_printCS(&CommandProcessor_commandReply);
+                    CharString_clear(&CommandProcessor_commandReply);
+                }
                 CharString_clear(&CommandProcessor_incomingCommand);
                 }
                 break;
@@ -80,7 +85,7 @@ void Console_task (void)
     // display status
     if (consoleIsConnected() &&
         SystemTime_timeHasArrived(&nextStatusPrintTime)) {
-        CharString_define(120, statusMsg)
+        CharString_define(80, statusMsg)
         CommandProcessor_createStatusMessage(&statusMsg);
         SoftwareSerialTx_sendP(TX_CHAN_INDEX, crP);
         SoftwareSerialTx_sendCS(TX_CHAN_INDEX, &statusMsg);
