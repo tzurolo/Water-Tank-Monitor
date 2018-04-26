@@ -252,6 +252,17 @@ void transitionToWaitingForCommand(void)
     wlmState = wlms_waitingForHostCommand;
 }
 
+void initiatePowerdown (void)
+{
+    TCPIPConsole_disable(false);
+    CellularComm_Disable();
+
+    // give it a little while to disable cellular comm
+    SystemTime_futureTime(300, &time);
+
+    wlmState = wlms_waitingForCellularCommDisable;
+}
+
 void transitionPerCommandMode(void)
 {
     if (commandMode == cpm_commandBlock) {
@@ -259,9 +270,7 @@ void transitionPerCommandMode(void)
         transitionToWaitingForCommand();
     } else {
         // no more commands coming. initiate powerdown sequence
-        TCPIPConsole_disable(false);
-        CellularComm_Disable();
-        wlmState = wlms_waitingForCellularCommDisable;
+        initiatePowerdown();
     }
 }
 
@@ -277,6 +286,14 @@ void WaterLevelMonitor_Initialize (void)
 
 void WaterLevelMonitor_task (void)
 {
+    if ((wlmState > wlms_resuming) &&
+        (wlmState < wlms_waitingForCellularCommDisable) &&
+        SystemTime_timeHasArrived(&time)) {
+        // task has exceeded timeout
+        Console_printP(PSTR("WLM timeout"));
+        initiatePowerdown();
+    }
+
     switch (wlmState) {
         case wlms_initial :
             wlmState = wlms_resuming;
@@ -294,6 +311,10 @@ void WaterLevelMonitor_task (void)
                 // time to log to server
                 enableTCPIP();
             }
+
+            // set up overal task timeout
+            SystemTime_futureTime(50 * 100, &time);
+
             wlmState = wlms_waitingForSensorData;
             break;
         case wlms_waitingForSensorData :
@@ -407,7 +428,7 @@ void WaterLevelMonitor_task (void)
             }
             break;
         case wlms_waitingForCellularCommDisable :
-            if (!CellularComm_isEnabled()) {
+            if ((!CellularComm_isEnabled()) || SystemTime_timeHasArrived(&time)) {
                 // give it another two seconds of power to properly close the connection
                 SystemTime_futureTime(200, &time);
                 wlmState = wlms_poweringDown;
