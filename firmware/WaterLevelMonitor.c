@@ -191,6 +191,7 @@ static void enableTCPIP (void)
 {
     CellularComm_Enable();
     gotCommandFromHost = false;
+    CharString_clear(&CommandProcessor_incomingCommand);
     TCPIPConsole_setDataReceiver(IPDataCallback);
     TCPIPConsole_enable(false);
 }
@@ -246,12 +247,6 @@ static bool updateWaterLevelState (
     return wentOutOfRange;
 }
 
-void transitionToWaitingForCommand(void)
-{
-    CharString_clear(&CommandProcessor_incomingCommand);
-    wlmState = wlms_waitingForHostCommand;
-}
-
 void initiatePowerdown (void)
 {
     TCPIPConsole_disable(false);
@@ -267,7 +262,7 @@ void transitionPerCommandMode(void)
 {
     if (commandMode == cpm_commandBlock) {
         // more commands coming. wait for next command
-        transitionToWaitingForCommand();
+        wlmState = wlms_waitingForHostCommand;
     } else {
         // no more commands coming. initiate powerdown sequence
         initiatePowerdown();
@@ -370,11 +365,11 @@ void WaterLevelMonitor_task (void)
                 case sds_completedSuccessfully :
                     SampleHistory_clear(&sampleHistory);
                     commandMode = cpm_singleCommand;
-                    transitionToWaitingForCommand();
+                    wlmState = wlms_waitingForHostCommand;
                     break;
                 case sds_completedFailed :
                     commandMode = cpm_singleCommand;
-                    transitionToWaitingForCommand();
+                    wlmState = wlms_waitingForHostCommand;
                     break;
             }
             break;
