@@ -25,6 +25,11 @@ extern void EEPROMStorage_setLastRebootTimeSec (
     const uint32_t sec);
 extern uint32_t EEPROMStorage_lastRebootTimeSec (void);
 
+// how long to go since last reboot. units are minutes
+extern void EEPROMStorage_setRebootInterval (
+    const uint16_t rebootMinutes);
+extern uint16_t EEPROMStorage_rebootInterval (void);
+
 extern void EEPROMStorage_setPIN (
     const CharStringSpan_t *PIN);
 extern void EEPROMStorage_getPIN (
@@ -34,6 +39,21 @@ extern void EEPROMStorage_getPIN (
 extern void EEPROMStorage_setTempCalOffset (
     const int16_t offset);
 extern int16_t EEPROMStorage_tempCalOffset (void);
+
+// watchdog timer calibration. unts are 1%
+extern void EEPROMStorage_setWatchdogTimerCal (
+    const uint8_t wdtCal);
+extern uint8_t EEPROMStorage_watchdogTimerCal (void);
+
+// battery voltage calibration. unts are 1%
+extern void EEPROMStorage_setBatteryVoltageCal (
+    const uint8_t batCal);
+extern uint8_t EEPROMStorage_batteryVoltageCal (void);
+
+// water level monitor task timeout. units are seconds
+extern void EEPROMStorage_setMonitorTaskTimeout (
+    const uint16_t wlmTimeout);
+extern uint16_t EEPROMStorage_monitorTaskTimeout (void);
 
 // distance from the water level sensor transducer to the
 // bottom of the tank when it is empty. units are cm

@@ -18,9 +18,13 @@ uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as 
 
 uint16_t EEMEM unitID = 0;
 uint32_t EEMEM lastRebootTimeSec = 0;
+uint16_t EEMEM rebootInterval = 1440;   // one day
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
+uint8_t EEMEM watchdogTimerCal = 100;
+uint8_t EEMEM batteryVoltageCal = 100;
+uint16_t EEMEM monitorTaskTimeout = 60;
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM sampleInterval = 600;
 uint16_t EEMEM loggingUpdateInterval = 1800;
@@ -78,10 +82,15 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setUnitID(2);
 
         EEPROMStorage_setLastRebootTimeSec(0);
+        EEPROMStorage_setRebootInterval(1440);
+
         getCharStringSpanFromP(tzPinP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setPIN(&stringBufferSpan);
 
         EEPROMStorage_setTempCalOffset(327);
+        EEPROMStorage_setWatchdogTimerCal(92);
+        EEPROMStorage_setBatteryVoltageCal(100);
+        EEPROMStorage_setMonitorTaskTimeout(60);
 
 	EEPROMStorage_setWaterTankEmptyDistance(290);
 	EEPROMStorage_setWaterTankFullDistance(30);
@@ -139,6 +148,16 @@ uint32_t EEPROMStorage_lastRebootTimeSec (void)
     return EEPROM_readLong((uint32_t*)&lastRebootTimeSec);
 }
 
+void EEPROMStorage_setRebootInterval (
+    const uint16_t rebootMinutes)
+{
+    EEPROM_writeWord((uint16_t*)&rebootInterval, rebootMinutes);
+}
+
+uint16_t EEPROMStorage_rebootInterval (void)
+{
+    return EEPROM_readWord((uint16_t*)&rebootInterval);
+}
 
 void EEPROMStorage_setPIN (
     const CharStringSpan_t *PIN)
@@ -161,6 +180,38 @@ void EEPROMStorage_setTempCalOffset (
 int16_t EEPROMStorage_tempCalOffset (void)
 {
     return EEPROM_readWord((uint16_t*)&tempCalOffset);
+}
+
+void EEPROMStorage_setWatchdogTimerCal (
+    const uint8_t wdtCal)
+{
+    EEPROM_write((uint8_t*)&watchdogTimerCal, wdtCal);
+}
+
+uint8_t EEPROMStorage_watchdogTimerCal (void)
+{
+    return EEPROM_read((uint8_t*)&watchdogTimerCal);
+}
+
+void EEPROMStorage_setBatteryVoltageCal (
+    const uint8_t batCal)
+{
+    EEPROM_write((uint8_t*)&batteryVoltageCal, batCal);
+}
+
+uint8_t EEPROMStorage_batteryVoltageCal (void)
+{
+    return EEPROM_read((uint8_t*)&batteryVoltageCal);
+}
+
+void EEPROMStorage_setMonitorTaskTimeout (
+    const uint16_t wlmTimeout)
+{
+    EEPROM_writeWord((uint16_t*)&monitorTaskTimeout, wlmTimeout);
+}
+uint16_t EEPROMStorage_monitorTaskTimeout (void)
+{
+    return EEPROM_readWord((uint16_t*)&monitorTaskTimeout);
 }
 
 void EEPROMStorage_setWaterTankEmptyDistance (

@@ -21,6 +21,7 @@
 #include <avr/interrupt.h>
 
 #define CONSULT_PINJUMPER 0
+#define USE_CMGL 0
 #define DEBUG_TRACE 0
 
 #define PINJUMPER_PIN       PD4
@@ -56,6 +57,8 @@ PGM_P smsStatusStrings[] PROGMEM =
     smsStatusStoSent,
     smsStatusAll
 };
+
+char smsCommandPrefix[]   PROGMEM = "ExeCmd:";
 
 // states
 typedef enum CellularCommState_enum {
@@ -175,6 +178,7 @@ static void printQueueingMessage (
     Console_printCS(&msg);
 }
 
+#if USE_CMGL
 static void SMSCMGLCallback (
     const int16_t msgID,
     const CharString_t *messageStatus, 
@@ -187,6 +191,7 @@ static void SMSCMGLCallback (
         MessageIDQueue_insert(msgID, &incomingSMSMessageIDs);
     }
 }
+#endif
 
 static void SMSCMGRCallback (
     const int16_t msgID,
@@ -280,6 +285,7 @@ static void sendSIM800CommandCS (
     SIM800_sendLineCS(command);
 }
 
+#if USE_CMGL
 static void sendCMGLCommand (
     const SMSMessageStatus requestedStatus)
 {
@@ -293,6 +299,7 @@ static void sendCMGLCommand (
     CharString_appendC('"', &command);
     sendSIM800CommandCS(&command);
 }
+#endif
 
 static void sendCMGRCommand (
     const int16_t msgID)
@@ -335,12 +342,6 @@ static void sendCSQCommand (void)
     sendSIM800CommandP(PSTR("AT+CSQ"));
 }
 
-static void sendCPINCommand (void)
-{
-    gotCPIN = false;
-    sendSIM800CommandP(PSTR("AT+CPIN?"));
-}
-
 static void sendCCLKCommand (void)
 {
     gotNetworkTime = false;
@@ -360,7 +361,7 @@ static void powerDownCellularModule (void)
     signalQuality = 0;
 }
 
-#if 0
+#if CONSULT_PINJUMPER
 static bool responseIsNeedPIN (void)
 {
     return CharString_equalsP(&ADH8066Response, PSTR("+CPIN: SIM PIN"));
@@ -501,7 +502,7 @@ void CellularComm_task (void)
 #endif
                         sendCMGRCommand(currentlyProcessingMessageID);
                         ccState = ccs_waitingForCMGRResponse;
-#if 0
+#if USE_CMGL
                     } else if (SystemTime_timeHasArrived(&nextCheckForIncomingSMSMessageTime)) {
                         Console_printP(PSTR("Check for incoming SMS"));
                         sendCMGLCommand(CMGLSMSMessageStatus);
@@ -649,19 +650,26 @@ void CellularComm_task (void)
                 if ((incomingSMSMessageStatus == sms_recUnread) ||
                     (incomingSMSMessageStatus == sms_recRead)) {
                     // process the message we got
-                    CharString_clear(&outgoingSMSMessageText);
-                    CharString_clear(&outgoingSMSMessagePhoneNumber);
-                    CharStringSpan_t cmd;
-                    CharStringSpan_init(&incomingSMSMessageText, &cmd);
-                    if (CommandProcessor_executeCommand(&cmd, &outgoingSMSMessageText)) {
-                        // valid command
-                        if (!CharString_isEmpty(&outgoingSMSMessageText)) {
-                            // a reply was generated from the command
-                            if (CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
-                                // the command did not set the outgoing phone number
-                                // use the incoming phone number
-                                CharString_copyCS(&incomingSMSMessagePhoneNumber,
-                                                    &outgoingSMSMessagePhoneNumber);
+                    // check if it's an executable command (i.e. has the
+                    // executable command prefix)
+                    if (CharString_startsWithP(&incomingSMSMessageText,
+                        smsCommandPrefix)) {
+                        // we have an executable command
+                        CharString_clear(&outgoingSMSMessageText);
+                        CharString_clear(&outgoingSMSMessagePhoneNumber);
+                        CharStringSpan_t cmd;
+                        CharStringSpan_initRight(&incomingSMSMessageText,
+                            strlen_P(smsCommandPrefix), &cmd);
+                        if (CommandProcessor_executeCommand(&cmd, &outgoingSMSMessageText)) {
+                            // valid command
+                            if (!CharString_isEmpty(&outgoingSMSMessageText)) {
+                                // a reply was generated from the command
+                                if (CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
+                                    // the command did not set the outgoing phone number
+                                    // use the incoming phone number
+                                    CharString_copyCS(&incomingSMSMessagePhoneNumber,
+                                                        &outgoingSMSMessagePhoneNumber);
+                                }
                             }
                         }
                     }

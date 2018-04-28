@@ -39,7 +39,9 @@ void CommandProcessor_createStatusMessage (
     CharString_t *msg)
 {
     CharString_clear(msg);
-    SystemTime_appendCurrentToString(msg);
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+    SystemTime_appendToString(&curTime, msg);
     CharString_appendP(PSTR(",st:"), msg);
     StringUtils_appendDecimal(CellularComm_state(), 2, 0, msg);
     if (CellularComm_stateIsTCPIPSubtask(CellularComm_state())) {
@@ -128,6 +130,18 @@ static void appendJSONIntValue (
     StringUtils_appendDecimal(value, 1, 0, str);
 }
 
+static void appendJSONTimeValue (
+    PGM_P name,
+    const SystemTime_t *time,
+    CharString_t *str)
+{
+    CharString_appendC('\"', str);
+    CharString_appendP(name, str);
+    CharString_appendP(PSTR("\":\""), str);
+    SystemTime_appendToString(time, str);
+    CharString_appendC('\"', str);
+}
+
 static void makeJSONStrValue (
     PGM_P name,
     StringProvider strProvider,
@@ -176,10 +190,35 @@ bool CommandProcessor_executeCommand (
         }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("set"))) {
         StringUtils_scanToken(&cmd, &cmdToken);
-        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
+        if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("id"))) {
+            const uint8_t id = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setUnitID(id);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
             const int16_t tempCalOffset = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setTempCalOffset(tempCalOffset);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("wdtCal"))) {
+            const uint8_t wdtCal = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setWatchdogTimerCal(wdtCal);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("batCal"))) {
+            const uint8_t batCal = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setBatteryVoltageCal(batCal);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("wlmTimeout"))) {
+            const uint16_t wlmTimeout = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setMonitorTaskTimeout(wlmTimeout);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("reboot"))) {
+            const uint16_t rebootInterval = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setRebootInterval(rebootInterval);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
             StringUtils_scanToken(&cmd, &cmdToken);
@@ -234,8 +273,18 @@ bool CommandProcessor_executeCommand (
         StringUtils_scanToken(&cmd, &cmdToken);
         if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("PIN"))) {
             makeJSONStrValue(PSTR("PIN"), EEPROMStorage_getPIN, reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("id"))) {
+            makeJSONIntValue(PSTR("id"), EEPROMStorage_unitID(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tCalOffset"))) {
             makeJSONIntValue(PSTR("tcal"), EEPROMStorage_tempCalOffset(), reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("wdtCal"))) {
+            makeJSONIntValue(PSTR("wdtcal"), EEPROMStorage_watchdogTimerCal(), reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("batCal"))) {
+            makeJSONIntValue(PSTR("batcal"), EEPROMStorage_batteryVoltageCal(), reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("wlmTimeout"))) {
+            makeJSONIntValue(PSTR("wlmTimeout"), EEPROMStorage_monitorTaskTimeout(), reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("reboot"))) {
+            makeJSONIntValue(PSTR("reboot"), EEPROMStorage_rebootInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
             makeJSONStrValue(PSTR("APN'"), EEPROMStorage_getAPN, reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("ipserver"))) {
@@ -258,6 +307,16 @@ bool CommandProcessor_executeCommand (
             appendJSONIntValue(PSTR("TS_Port"), EEPROMStorage_thingspeakHostPort(), reply);
             continueJSON(reply);
             appendJSONStrValue(PSTR("TS_WK"), EEPROMStorage_getThingspeakWriteKey, reply);
+            endJSON(reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("time"))) {
+            beginJSON(reply);
+            SystemTime_t time;
+            SystemTime_getCurrentTime(&time);
+            appendJSONTimeValue(PSTR("CurTime"), &time, reply);
+            continueJSON(reply);
+            time.seconds = EEPROMStorage_lastRebootTimeSec();
+            time.hundredths = 0;
+            appendJSONTimeValue(PSTR("LastReboot"), &time, reply);
             endJSON(reply);
         } else {
             validCommand = false;

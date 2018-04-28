@@ -89,8 +89,9 @@ extern uint8_t SystemTime_minutes (
 extern uint8_t SystemTime_seconds (
     const SystemTime_t *time);
 
-// writes current time as D:HH:MM:SS
-extern void SystemTime_appendCurrentToString (
+// writes given time as D:HH:MM:SS
+extern void SystemTime_appendToString (
+    const SystemTime_t *time,
     CharString_t* timeString);
 
 #endif  // SYSTEMTIME_H

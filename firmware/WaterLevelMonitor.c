@@ -314,7 +314,7 @@ void WaterLevelMonitor_task (void)
             }
 
             // set up overal task timeout
-            SystemTime_futureTime(50 * 100, &time);
+            SystemTime_futureTime(EEPROMStorage_monitorTaskTimeout() * 100, &time);
 
             wlmState = wlms_waitingForSensorData;
             break;

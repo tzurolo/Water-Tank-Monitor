@@ -123,7 +123,9 @@ void SystemTime_applyTimeAdjustment ()
 void SystemTime_sleepFor (
     const uint16_t seconds)
 {
-    uint16_t secondsRemaining = seconds;
+    uint32_t calibratedSeconds = 
+        (((uint32_t)seconds) * EEPROMStorage_watchdogTimerCal()) / 100;
+    uint16_t secondsRemaining = calibratedSeconds;
     while (secondsRemaining > 0) {
         uint8_t wdtTimeout;
         uint8_t secondsThisLoop;
@@ -183,20 +185,21 @@ void SystemTime_task (void)
 //        LED_OUTPORT |= (1 << LED_PIN);
     } else {
         wdt_reset();
-#if 0
-        // reboot daily at a predetermined time
-        const CellularComm_NetworkTime* currentTime =
-	        CellularComm_currentTime();
-        SystemTime_t currentTimeHundredths;
-        SystemTime_getCurrentTime(&currentTimeHundredths);
-        if (((currentTime->hour == REBOOT_HOUR) &&
-            (currentTime->minutes == REBOOT_MINUTES) &&
-            (currentTimeHundredths > 720000L) &&    // running at least two hours
-            CellularComm_isIdle()) ||
-            (currentTimeHundredths > REBOOT_FULL_DAY)) {
+
+        // reboot if it's been more than the stored reboot interval
+        // since the last reboot
+        SystemTime_t curTime;
+        SystemTime_getCurrentTime(&curTime);
+        SystemTime_t lastRebootTime;
+        lastRebootTime.seconds = EEPROMStorage_lastRebootTimeSec();
+        lastRebootTime.hundredths = 0;
+        const int32_t secondsSinceLastReboot =
+            SystemTime_diffSec(&curTime, &lastRebootTime);
+        const int32_t rebootIntervalSeconds =
+            ((int32_t)EEPROMStorage_rebootInterval()) * 60;
+        if (secondsSinceLastReboot > rebootIntervalSeconds) {
             SystemTime_commenceShutdown();
         }
-#endif
     }
 }
 
@@ -224,27 +227,24 @@ uint8_t SystemTime_seconds (
     return time->seconds % 60;
 }
 
-void SystemTime_appendCurrentToString (
+void SystemTime_appendToString (
+    const SystemTime_t *time,
     CharString_t* timeString)
 {
-    // get current time
-    SystemTime_t curTime;
-    SystemTime_getCurrentTime(&curTime);
-
     // append day of week
-    StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_dayOfWeek(time), 1, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append hours
-    StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_hours(time), 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append minutes
-    StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_minutes(time), 2, 0, timeString);
     CharString_appendP(PSTR(":"), timeString);
 
     // append seconds
-    StringUtils_appendDecimal(SystemTime_seconds(&curTime), 2, 0, timeString);
+    StringUtils_appendDecimal(SystemTime_seconds(time), 2, 0, timeString);
 }
 
 ISR(TIMER1_COMPA_vect, ISR_BLOCK)
