@@ -12,6 +12,7 @@
 #include <avr/sleep.h>
 #include "StringUtils.h"
 #include "Console.h"
+#include "EEPROMStorage.h"
 
 #define DEBUG_TRACE 1
 
@@ -30,7 +31,7 @@ static SystemTime_TickNotification notificationFunction;
 void SystemTime_Initialize (void)
 {
     tickCounter = 0;
-    currentTime.seconds = 0;
+    currentTime.seconds = EEPROMStorage_lastRebootTimeSec();
     currentTime.hundredths = 0;
     timeAdjustment = 0;
     notificationFunction = 0;
@@ -158,8 +159,16 @@ void SystemTime_sleepFor (
 void SystemTime_commenceShutdown (void)
 {
     shuttingDown = true;
+    // store reboot time
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+    curTime.seconds += timeAdjustment;    // apply time adjustment
+    curTime.seconds += 8;  // account for watchdog time
+    EEPROMStorage_setLastRebootTimeSec(curTime.seconds);
+
     Console_printP(PSTR("shutting down..."));
     wdt_enable(WDTO_8S);
+    wdt_reset();
 }
 
 bool SystemTime_shuttingDown (void)

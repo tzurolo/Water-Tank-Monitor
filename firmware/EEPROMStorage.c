@@ -17,6 +17,7 @@
 uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as all one's
 
 uint16_t EEMEM unitID = 0;
+uint32_t EEMEM lastRebootTimeSec = 0;
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
@@ -74,8 +75,9 @@ void EEPROMStorage_Initialize (void)
         CharString_define(40, stringBuffer);
         CharStringSpan_t stringBufferSpan;
 
-        EEPROMStorage_setUnitID(0);
+        EEPROMStorage_setUnitID(2);
 
+        EEPROMStorage_setLastRebootTimeSec(0);
         getCharStringSpanFromP(tzPinP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setPIN(&stringBufferSpan);
 
@@ -125,6 +127,18 @@ uint16_t EEPROMStorage_unitID (void)
 {
     return EEPROM_readWord((uint16_t*)&unitID);
 }
+
+void EEPROMStorage_setLastRebootTimeSec (
+    const uint32_t sec)
+{
+    EEPROM_writeLong((uint32_t*)&lastRebootTimeSec, sec);
+}
+
+uint32_t EEPROMStorage_lastRebootTimeSec (void)
+{
+    return EEPROM_readLong((uint32_t*)&lastRebootTimeSec);
+}
+
 
 void EEPROMStorage_setPIN (
     const CharStringSpan_t *PIN)

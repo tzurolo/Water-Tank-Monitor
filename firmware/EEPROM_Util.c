@@ -90,3 +90,26 @@ uint16_t EEPROM_readWord (
     return word;
 }
 
+void EEPROM_writeLong (
+    uint32_t* uiAddress,
+    const uint32_t longword)
+{
+    uint8_t* byteAddr = (uint8_t*)uiAddress;
+    uint32_t remainingValue = longword;
+    for (int byteOffset = 0; byteOffset < 4; ++byteOffset) {
+        EEPROM_write(byteAddr + byteOffset, remainingValue & 0xFF);
+        remainingValue >>= 8;
+    }
+}
+
+uint32_t EEPROM_readLong (
+    const uint32_t* uiAddress)
+{
+    uint8_t* byteAddr = (uint8_t*)uiAddress;
+    uint32_t longword = 0;
+    for (int byteOffset = 3; byteOffset >= 0; --byteOffset) {
+        longword <<= 8;
+        longword |= EEPROM_read(byteAddr + byteOffset);
+    }
+    return longword;
+}

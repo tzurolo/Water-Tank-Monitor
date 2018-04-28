@@ -35,8 +35,8 @@ static void Initialize (void)
     // enable watchdog timer
     wdt_enable(WATCHDOG_TIMEOUT);
 
-    SystemTime_Initialize();
     EEPROMStorage_Initialize();
+    SystemTime_Initialize();
     ADCManager_Initialize();
     BatteryMonitor_Initialize();
     InternalTemperatureMonitor_Initialize();
@@ -75,8 +75,8 @@ int main (void)
         CellularComm_task();
         WaterLevelMonitor_task();
 
-        if (WaterLevelMonitor_taskIsDone()) {
-            Console_printP(PSTR("done"));
+        if (WaterLevelMonitor_taskIsDone() &&
+            !SystemTime_shuttingDown()) {
 
             // apply calibration to WDT
 

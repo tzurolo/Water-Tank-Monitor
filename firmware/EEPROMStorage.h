@@ -21,6 +21,10 @@ extern void EEPROMStorage_setUnitID (
     const uint16_t id);
 extern uint16_t EEPROMStorage_unitID (void);
 
+extern void EEPROMStorage_setLastRebootTimeSec (
+    const uint32_t sec);
+extern uint32_t EEPROMStorage_lastRebootTimeSec (void);
+
 extern void EEPROMStorage_setPIN (
     const CharStringSpan_t *PIN);
 extern void EEPROMStorage_getPIN (

@@ -290,8 +290,14 @@ void WaterLevelMonitor_task (void)
     }
 
     switch (wlmState) {
-        case wlms_initial :
-            wlmState = wlms_resuming;
+        case wlms_initial : {
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            wlmState = 
+                (curTime.seconds > 1)
+                ? wlms_done         // starting up after reboot
+                : wlms_resuming;    // first run after reprogramming
+            }
             break;
         case wlms_resuming :
             // turn on peripheral power
@@ -396,7 +402,9 @@ void WaterLevelMonitor_task (void)
                         CharString_appendC('\n', &CommandProcessor_commandReply);
                     }
                 }
-                if (CharString_isEmpty(&CommandProcessor_commandReply)) {
+                if (SystemTime_shuttingDown()) {
+                    initiatePowerdown();
+                } else if (CharString_isEmpty(&CommandProcessor_commandReply)) {
                     transitionPerCommandMode();
                 } else {
                     // prepare to send reply

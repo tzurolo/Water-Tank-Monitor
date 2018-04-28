@@ -35,5 +35,12 @@ extern void EEPROM_writeWord (
 extern uint16_t EEPROM_readWord (
     const uint16_t* uiAddress);
 
+extern void EEPROM_writeLong (
+    uint32_t* uiAddress,
+    const uint32_t longword);
+
+extern uint32_t EEPROM_readLong (
+    const uint32_t* uiAddress);
+
 
 #endif  // EEPROM_UTIL_H

@@ -21,6 +21,7 @@
 #include <avr/interrupt.h>
 
 #define CONSULT_PINJUMPER 0
+#define DEBUG_TRACE 0
 
 #define PINJUMPER_PIN       PD4
 #define PINJUMPER_INPORT    PIND
@@ -101,14 +102,14 @@ static SystemTime_t nextCheckForIncomingSMSMessageTime;
 static SMSMessageStatus CMGLSMSMessageStatus;
 static SMSMessageStatus incomingSMSMessageStatus;
 CharString_define(16, incomingSMSMessagePhoneNumber)
-CharString_define(32, incomingSMSMessageTimestamp)
-CharString_define(60, incomingSMSMessageText)
+CharString_define(80, incomingSMSMessageText)
 static MessageIDQueue_type incomingSMSMessageIDs;
 static MessageIDQueue_ValueType currentlyProcessingMessageID;
 static bool gotCMGRMessage;
 
 // variables for outgoing SMS messages
 CharString_define(16, outgoingSMSMessagePhoneNumber)
+CharString_define(80, outgoingSMSMessageText)
 
 // variables for cell registration, network time, etc
 static SystemTime_t nextCheckForNetworkTimeAndCSQTime;
@@ -144,7 +145,7 @@ SMSMessageStatus messageStatusFromString (
     SMSMessageStatus msgStatus;
     for (msgStatus = sms_all; msgStatus > sms_unknown;
             msgStatus = (SMSMessageStatus)(((int)msgStatus) - 1)) {
-        if (CharStringSpan_equalsNocaseP(&statusStringSpan, imageOfMessageStatus(msgStatus)) == 0) {
+        if (CharStringSpan_equalsNocaseP(&statusStringSpan, imageOfMessageStatus(msgStatus))) {
             break;
         }
     }
@@ -395,7 +396,7 @@ void CellularComm_Initialize (void)
 
     // set up for outgoing SMS messages
     CharString_clear(&outgoingSMSMessagePhoneNumber);
-    CharString_clear(&CommandProcessor_commandReply);
+    CharString_clear(&outgoingSMSMessageText);
 
     ccEnabled = false;
     gotFunctionlevel = false;
@@ -425,315 +426,304 @@ void CellularComm_Disable (void)
 
 void CellularComm_task (void)
 {
-    if (SystemTime_shuttingDown()) {
-        powerDownCellularModule();
-    } else {
-        // state timeout logic. reboots if stuck in a state
-        if ((ccState == prevCcState) && (ccState != ccs_disabled)) {
-            if (SystemTime_timeHasArrived(&stateTimeoutTime)) {
-                char msgStr[10];
-                itoa((int)ccState, msgStr, 10);
-                Console_printP(PSTR("Rebooting due to timeout in state:"));
-                Console_print(msgStr);
-                Console_printP(PSTR("timeout time:"));
-                ltoa(stateTimeoutTime.seconds, msgStr, 10);
-                Console_print(msgStr);
-
-                EEPROMStorage_setTimeoutState((int)ccState);
-                SystemTime_commenceShutdown();
-            }
-        } else {
-            //char msgStr[10];
-            SystemTime_futureTime(STATE_TIMEOUT_TIME, &stateTimeoutTime);
-            //Console_printP(PSTR("next timeout:"));
-            //ltoa(stateTimeoutTime, msgStr, 10);
-            //Console_print(msgStr);
-            prevCcState = ccState;
+    // state timeout logic. reboots if stuck in a state
+    if ((ccState == prevCcState) && (ccState != ccs_disabled)) {
+        if (SystemTime_timeHasArrived(&stateTimeoutTime)) {
+            Console_printP(PSTR(">>> Timeout <<<"));
+            EEPROMStorage_setTimeoutState((int)ccState);
+            SystemTime_commenceShutdown();
         }
+    } else {
+        SystemTime_futureTime(STATE_TIMEOUT_TIME, &stateTimeoutTime);
+        prevCcState = ccState;
+    }
 
-        switch (ccState) {
-            case ccs_initial :
-                if (ccEnabled) {
-                    if (SIM800_status() == SIM800_ms_off) {
-                        Console_printP(PSTR(">>>> Enabling Cellular Module <<<<"));
-                        SIM800_powerOn();
-                        ccState = ccs_waitingForOnkeyResponse;
-                    } else {
-                        // already on
-                        ccState = ccs_idle;
-                    }
+    switch (ccState) {
+        case ccs_initial :
+            if (ccEnabled) {
+                if (SIM800_status() == SIM800_ms_off) {
+                    Console_printP(PSTR(">>>> Enabling Cellular Module <<<<"));
+                    SIM800_powerOn();
+                    ccState = ccs_waitingForOnkeyResponse;
                 } else {
-                    ccState = ccs_disabled;
+                    // already on
+                    ccState = ccs_idle;
                 }
-                break;
-            case ccs_disabling :
-                // wait until tcpip disconnects
-                CellularTCPIP_Subtask();
-                if (CellularTCPIP_connectionStatus() == cs_disconnected) {
-                    powerDownCellularModule();
-                    ccState = ccs_disabled;
-                }
-                break;
-            case ccs_disabled :
-                if (ccEnabled) {
-                    // exit the disabled state
-                    // TCPIPConsole_restoreEnablement();
-                    ccState = ccs_initial;
-                }
-                break;
-            case ccs_idle : {
-                if (ccEnabled) {
-                    if (CellularComm_isRegistered()) {
-                        // check for queued message ids, notifications to send,
-                        // or regularly scheduled functions that are due to run
-                        if (!CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
-                            // we have an outgoing message to send
-                            CharString_define(80, cmgs);
-                            Console_printP(PSTR("sending outgoing msg"));
-                            CharString_copyP(PSTR("SMS send \""), &cmgs);
-                            CharString_appendCS(
-                                &outgoingSMSMessagePhoneNumber, &cmgs);
-                            CharString_appendC('"', &cmgs);
-                            Console_printCS(&cmgs);
-                            sendCMGSCommand(&outgoingSMSMessagePhoneNumber);
-                            CharString_clear(&outgoingSMSMessagePhoneNumber);
-                            ccState = ccs_waitingForCMGSPrompt;
-                        } else if (!MessageIDQueue_isEmpty(&incomingSMSMessageIDs)) {
-                            // we have an incoming message ID
-                            currentlyProcessingMessageID =
-                                MessageIDQueue_remove(&incomingSMSMessageIDs);
-                            // read the message
-                            CharString_define(80, cmgr);
-                            CharString_copyP(PSTR("processing message ID "), &cmgr);
-                            StringUtils_appendDecimal32(
-                                currentlyProcessingMessageID, 1, 0, &cmgr); 
-                            Console_printCS(&cmgr);
-                            sendCMGRCommand(currentlyProcessingMessageID);
-                            ccState = ccs_waitingForCMGRResponse;
-#if 0
-                        } else if (SystemTime_timeHasArrived(&nextCheckForIncomingSMSMessageTime)) {
-                            Console_printP(PSTR("Check for incoming SMS"));
-                            sendCMGLCommand(CMGLSMSMessageStatus);
-                            ccState = ccs_waitingForCMGLResponse;
+            } else {
+                ccState = ccs_disabled;
+            }
+            break;
+        case ccs_disabling :
+            // wait until tcpip disconnects
+            CellularTCPIP_Subtask();
+            if (CellularTCPIP_connectionStatus() == cs_disconnected) {
+                powerDownCellularModule();
+                ccState = ccs_disabled;
+            }
+            break;
+        case ccs_disabled :
+            if (ccEnabled) {
+                // exit the disabled state
+                // TCPIPConsole_restoreEnablement();
+                ccState = ccs_initial;
+            }
+            break;
+        case ccs_idle : {
+            if (ccEnabled) {
+                if (CellularComm_isRegistered()) {
+                    // check for queued message ids, notifications to send,
+                    // or regularly scheduled functions that are due to run
+                    if (!CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
+                        // we have an outgoing message to send
+#if DEBUG_TRACE
+                        CharString_define(80, cmgs);
+                        Console_printP(PSTR("sending outgoing msg"));
+                        CharString_copyP(PSTR("SMS send \""), &cmgs);
+                        CharString_appendCS(
+                            &outgoingSMSMessagePhoneNumber, &cmgs);
+                        CharString_appendC('"', &cmgs);
+                        Console_printCS(&cmgs);
 #endif
-                        } else if (CellularTCPIP_hasSubtaskWorkToDo()) {
-                            ccState = ccs_runningTCPIPSubtask;
-                        } else if (SystemTime_timeHasArrived(&nextCheckForNetworkTimeAndCSQTime)) {
-                            Console_printP(PSTR("Check time"));
-                            sendCCLKCommand();
-                            ccState = ccs_waitingForCCLKResponse;
-                        }
-                    } else {
-                        CellularComm_requestRegistrationStatus();
-                        ccState = ccs_waitingForCREGResponse;
+                        sendCMGSCommand(&outgoingSMSMessagePhoneNumber);
+                        CharString_clear(&outgoingSMSMessagePhoneNumber);
+                        ccState = ccs_waitingForCMGSPrompt;
+                    } else if (!MessageIDQueue_isEmpty(&incomingSMSMessageIDs)) {
+                        // we have an incoming message ID
+                        currentlyProcessingMessageID =
+                            MessageIDQueue_remove(&incomingSMSMessageIDs);
+                        // read the message
+#if DEBUG_TRACE
+                        CharString_define(30, cmgr);
+                        CharString_copyP(PSTR("processing message ID "), &cmgr);
+                        StringUtils_appendDecimal32(
+                            currentlyProcessingMessageID, 1, 0, &cmgr); 
+                        Console_printCS(&cmgr);
+#endif
+                        sendCMGRCommand(currentlyProcessingMessageID);
+                        ccState = ccs_waitingForCMGRResponse;
+#if 0
+                    } else if (SystemTime_timeHasArrived(&nextCheckForIncomingSMSMessageTime)) {
+                        Console_printP(PSTR("Check for incoming SMS"));
+                        sendCMGLCommand(CMGLSMSMessageStatus);
+                        ccState = ccs_waitingForCMGLResponse;
+#endif
+                    } else if (CellularTCPIP_hasSubtaskWorkToDo()) {
+                        ccState = ccs_runningTCPIPSubtask;
+                    } else if (SystemTime_timeHasArrived(&nextCheckForNetworkTimeAndCSQTime)) {
+                        Console_printP(PSTR("Check time"));
+                        sendCCLKCommand();
+                        ccState = ccs_waitingForCCLKResponse;
                     }
                 } else {
-                    // cellular com is disabled. enter disabled state
-                    TCPIPConsole_disable(false);
-                    ccState = ccs_disabling;
-                    Console_printP(PSTR(">>>> Disabling Cellular Module <<<<"));
-                }
-                }
-                break;
-            case ccs_waitingForOnkeyResponse : {
-                if (SIM800_status() == SIM800_ms_readyForCommand) {
-                    Console_printP(PSTR("Cellular Module Ready"));
-
-                    // turn echo off
-                    sendSIM800CommandP(PSTR("ATE0"));
-                    ccState = ccs_waitingForEchoOffResponse;
-                }
-                }
-                break;
-            case ccs_waitingForEchoOffResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    Console_printP(PSTR("Checking PIN"));
-                    // SIM800 sends CPIN report unsolicited
-                    // sendSIM800CommandP(PSTR("AT+CPIN?"));
-                    gotCPIN = false;
-                    ccState = ccs_waitingForCPINQueryResponse;
-                    needToEnterPIN = false;
-                }
-                }
-                break;
-            case ccs_waitingForCPINQueryResponse : {
-                if (gotCPIN) {
-                    Console_printP(PSTR("PIN ready."));
-
-                    // set SMS to text mode
-                    sendSIM800CommandP(PSTR("AT+CMGF=1"));
-                    ccState = ccs_waitingForCMGFResponse;
-                }
-                }
-                break;
-            case ccs_waitingForCMGFResponse :
-                if (SIM800ResponseMsg == rm_OK) {
-                    // enable quick send
-                    sendSIM800CommandP(PSTR("AT+CIPQSEND=1"));
-                    ccState = ccs_waitingForCIPQSENDResponse;
-                }
-                break;
-            case ccs_waitingForCIPQSENDResponse :
-                if (SIM800ResponseMsg == rm_OK) {
-                    // enable IP header for received data to show data length
-                    sendSIM800CommandP(PSTR("AT+CIPHEAD=1"));
-                    ccState = ccs_waitingForCIPHEADResponse;
-                }
-                break;
-            case ccs_waitingForCIPHEADResponse :
-                if (SIM800ResponseMsg == rm_OK) {
-                    sendCBCCommand();
-                    ccState = ccs_waitingForInitialCBCResponse;
-                }
-            case ccs_waitingForInitialCBCResponse :
-                if (SIM800ResponseMsg == rm_OK) {
                     CellularComm_requestRegistrationStatus();
                     ccState = ccs_waitingForCREGResponse;
                 }
-                break;
-            case ccs_waitingForCREGResponse : {
-                if (CellularComm_gotRegistrationStatus()) {
-                    if (CellularComm_isRegistered()) {
-                        Console_printP(PSTR("Registered."));
+            } else {
+                // cellular com is disabled. enter disabled state
+                TCPIPConsole_disable(false);
+                ccState = ccs_disabling;
+                Console_printP(PSTR(">>>> Disabling Cellular Module <<<<"));
+            }
+            }
+            break;
+        case ccs_waitingForOnkeyResponse : {
+            if (SIM800_status() == SIM800_ms_readyForCommand) {
+                Console_printP(PSTR("Cellular Module Ready"));
 
-                        SystemTime_futureTime(500, &nextCheckForIncomingSMSMessageTime);
-                        SystemTime_futureTime(1000, &nextCheckForNetworkTimeAndCSQTime);
-                        sendCSQCommand();
-                        ccState = ccs_waitingForInitialCSQResponse;
-                    } else {
-                        // not registered yet.
-                        ccState = ccs_waitToRecheckCREG;
-                        SystemTime_futureTime(200, &powerupResumeTime);
-                    }
-                }
-                }
-                break;
-            case ccs_waitToRecheckCREG : {
-                if (SystemTime_timeHasArrived(&powerupResumeTime)) {
-                    CellularComm_requestRegistrationStatus();
-                    ccState = ccs_waitingForCREGResponse;
-                }
-                }
-                break;
-            case ccs_waitingForInitialCSQResponse :
-                if (SIM800ResponseMsg == rm_OK) {
-                    ccState = ccs_idle;
-                }
-                break;
-            case ccs_waitingForCMGLResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    if (MessageIDQueue_isEmpty(&incomingSMSMessageIDs)) {
-                        // no more messages in SIM card. we only need to
-                        // check for unread received messages from now on
-                        CMGLSMSMessageStatus = sms_recUnread;
-                    }
-                    // schedule next check
-                    SystemTime_futureTime(200, &nextCheckForIncomingSMSMessageTime);
-                    ccState = ccs_idle;
-                }
-                }
-                break;
-            case ccs_waitingForCMGRResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    // we now have a complete message
-                    // we will process the message text after
-                    // the message has been deleted from
-                    // the cell module
-                    Console_printP(PSTR("Got CMGR."));
-                    Console_printCS(&incomingSMSMessagePhoneNumber);
-                    Console_printP(imageOfMessageStatus(incomingSMSMessageStatus));
-                    Console_printCS(&incomingSMSMessageText);
+                // turn echo off
+                sendSIM800CommandP(PSTR("ATE0"));
+                ccState = ccs_waitingForEchoOffResponse;
+            }
+            }
+            break;
+        case ccs_waitingForEchoOffResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                Console_printP(PSTR("Checking PIN"));
+                // SIM800 sends CPIN report unsolicited
+                // sendSIM800CommandP(PSTR("AT+CPIN?"));
+                gotCPIN = false;
+                ccState = ccs_waitingForCPINQueryResponse;
+                needToEnterPIN = false;
+            }
+            }
+            break;
+        case ccs_waitingForCPINQueryResponse : {
+            if (gotCPIN) {
+                Console_printP(PSTR("PIN ready."));
 
-                    // delete the message now
-                    Console_printP(PSTR("Deleting message"));
-                    sendCMGDCommand(currentlyProcessingMessageID);
-                    ccState = ccs_waitingForCMGDResponse;
-                }
-                }
-                break;
-            case ccs_waitingForCMGDResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    Console_printP(PSTR("message deleted"));
+                // set SMS to text mode
+                sendSIM800CommandP(PSTR("AT+CMGF=1"));
+                ccState = ccs_waitingForCMGFResponse;
+            }
+            }
+            break;
+        case ccs_waitingForCMGFResponse :
+            if (SIM800ResponseMsg == rm_OK) {
+                // enable quick send
+                sendSIM800CommandP(PSTR("AT+CIPQSEND=1"));
+                ccState = ccs_waitingForCIPQSENDResponse;
+            }
+            break;
+        case ccs_waitingForCIPQSENDResponse :
+            if (SIM800ResponseMsg == rm_OK) {
+                // enable IP header for received data to show data length
+                sendSIM800CommandP(PSTR("AT+CIPHEAD=1"));
+                ccState = ccs_waitingForCIPHEADResponse;
+            }
+            break;
+        case ccs_waitingForCIPHEADResponse :
+            if (SIM800ResponseMsg == rm_OK) {
+                sendCBCCommand();
+                ccState = ccs_waitingForInitialCBCResponse;
+            }
+        case ccs_waitingForInitialCBCResponse :
+            if (SIM800ResponseMsg == rm_OK) {
+                CellularComm_requestRegistrationStatus();
+                ccState = ccs_waitingForCREGResponse;
+            }
+            break;
+        case ccs_waitingForCREGResponse : {
+            if (CellularComm_gotRegistrationStatus()) {
+                if (CellularComm_isRegistered()) {
+                    Console_printP(PSTR("Registered."));
 
-                    if ((incomingSMSMessageStatus == sms_recUnread) ||
-                        (incomingSMSMessageStatus == sms_recRead)) {
-                        // process the message we got
-                        CharString_clear(&CommandProcessor_commandReply);
-                        CharString_clear(&outgoingSMSMessagePhoneNumber);
-                        CharStringSpan_t cmd;
-                        CharStringSpan_init(&incomingSMSMessageText, &cmd);
-                        if (CommandProcessor_executeCommand(&cmd)) {
-                            // valid command
-                            if (!CharString_isEmpty(&CommandProcessor_commandReply)) {
-                                // a reply was generated from the command
-                                if (CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
-                                    // the command did not set the outgoing phone number
-                                    // use the incoming phone number
-                                    CharString_copyCS(&incomingSMSMessagePhoneNumber,
-                                                      &outgoingSMSMessagePhoneNumber);
-                                }
+                    SystemTime_futureTime(500, &nextCheckForIncomingSMSMessageTime);
+                    SystemTime_futureTime(1000, &nextCheckForNetworkTimeAndCSQTime);
+                    sendCSQCommand();
+                    ccState = ccs_waitingForInitialCSQResponse;
+                } else {
+                    // not registered yet.
+                    ccState = ccs_waitToRecheckCREG;
+                    SystemTime_futureTime(200, &powerupResumeTime);
+                }
+            }
+            }
+            break;
+        case ccs_waitToRecheckCREG : {
+            if (SystemTime_timeHasArrived(&powerupResumeTime)) {
+                CellularComm_requestRegistrationStatus();
+                ccState = ccs_waitingForCREGResponse;
+            }
+            }
+            break;
+        case ccs_waitingForInitialCSQResponse :
+            if (SIM800ResponseMsg == rm_OK) {
+                ccState = ccs_idle;
+            }
+            break;
+        case ccs_waitingForCMGLResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                if (MessageIDQueue_isEmpty(&incomingSMSMessageIDs)) {
+                    // no more messages in SIM card. we only need to
+                    // check for unread received messages from now on
+                    CMGLSMSMessageStatus = sms_recUnread;
+                }
+                // schedule next check
+                SystemTime_futureTime(200, &nextCheckForIncomingSMSMessageTime);
+                ccState = ccs_idle;
+            }
+            }
+            break;
+        case ccs_waitingForCMGRResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                // we now have a complete message
+                // we will process the message text after
+                // the message has been deleted from
+                // the cell module
+                Console_printP(PSTR("Got CMGR."));
+                Console_printCS(&incomingSMSMessagePhoneNumber);
+                Console_printP(imageOfMessageStatus(incomingSMSMessageStatus));
+                Console_printCS(&incomingSMSMessageText);
+
+                // delete the message now
+                Console_printP(PSTR("Deleting message"));
+                sendCMGDCommand(currentlyProcessingMessageID);
+                ccState = ccs_waitingForCMGDResponse;
+            }
+            }
+            break;
+        case ccs_waitingForCMGDResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                Console_printP(PSTR("message deleted"));
+
+                if ((incomingSMSMessageStatus == sms_recUnread) ||
+                    (incomingSMSMessageStatus == sms_recRead)) {
+                    // process the message we got
+                    CharString_clear(&outgoingSMSMessageText);
+                    CharString_clear(&outgoingSMSMessagePhoneNumber);
+                    CharStringSpan_t cmd;
+                    CharStringSpan_init(&incomingSMSMessageText, &cmd);
+                    if (CommandProcessor_executeCommand(&cmd, &outgoingSMSMessageText)) {
+                        // valid command
+                        if (!CharString_isEmpty(&outgoingSMSMessageText)) {
+                            // a reply was generated from the command
+                            if (CharString_isEmpty(&outgoingSMSMessagePhoneNumber)) {
+                                // the command did not set the outgoing phone number
+                                // use the incoming phone number
+                                CharString_copyCS(&incomingSMSMessagePhoneNumber,
+                                                    &outgoingSMSMessagePhoneNumber);
                             }
                         }
                     }
-                    ccState = ccs_idle;
                 }
-                }
-                break;
-            case ccs_waitingForCMGSPrompt : {
-                if (gotSIM800Prompt) {
-                    Console_printP(PSTR("sending message text & Ctrl-Z"));
-                    SIM800_sendStringCS(&CommandProcessor_commandReply);
-                    CharString_clear(&CommandProcessor_commandReply);
-                    SIM800_sendCtrlZ();
-                    ccState = ccs_waitingForCMGSResponse;
-                }
-                }
-                break;
-            case ccs_waitingForCMGSResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    Console_printP(PSTR("sent response"));
-                    ccState = ccs_idle;
-                } else if (SIM800ResponseMsg == rm_ERROR) {
-                    Console_printP(PSTR("error sending response"));
-                    ccState = ccs_idle;
-                }
-                }
-                break;
-            case ccs_waitingForCCLKResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    sendCSQCommand();
-                    ccState = ccs_waitingForCSQResponse;
-                }
-                }
-                break;
-            case ccs_waitingForCSQResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    sendCBCCommand();
-                    ccState = ccs_waitingForCBCResponse;
-                }
-                }
-                break;
-            case ccs_waitingForCBCResponse : {
-                if (SIM800ResponseMsg == rm_OK) {
-                    SystemTime_futureTime(6000, &nextCheckForNetworkTimeAndCSQTime);
-                    ccState = ccs_idle;
-                }
-                }
-                break;
-            case ccs_runningTCPIPSubtask : {
-                CellularTCPIP_Subtask();
-                if (!CellularTCPIP_hasSubtaskWorkToDo()) {
-                    Console_printP(PSTR("TCPIP subtask completed"));
-                    ccState = ccs_idle;
-                }
-                }
-                break;
-            default:
-                // unexpected state
-                // trigger system reset here
-                SystemTime_commenceShutdown();
-                break;
-        }
+                ccState = ccs_idle;
+            }
+            }
+            break;
+        case ccs_waitingForCMGSPrompt : {
+            if (gotSIM800Prompt) {
+                Console_printP(PSTR("sending message text & Ctrl-Z"));
+                SIM800_sendStringCS(&CommandProcessor_commandReply);
+                CharString_clear(&CommandProcessor_commandReply);
+                SIM800_sendCtrlZ();
+                ccState = ccs_waitingForCMGSResponse;
+            }
+            }
+            break;
+        case ccs_waitingForCMGSResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                Console_printP(PSTR("sent response"));
+                ccState = ccs_idle;
+            } else if (SIM800ResponseMsg == rm_ERROR) {
+                Console_printP(PSTR("error sending response"));
+                ccState = ccs_idle;
+            }
+            }
+            break;
+        case ccs_waitingForCCLKResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                sendCSQCommand();
+                ccState = ccs_waitingForCSQResponse;
+            }
+            }
+            break;
+        case ccs_waitingForCSQResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                sendCBCCommand();
+                ccState = ccs_waitingForCBCResponse;
+            }
+            }
+            break;
+        case ccs_waitingForCBCResponse : {
+            if (SIM800ResponseMsg == rm_OK) {
+                SystemTime_futureTime(6000, &nextCheckForNetworkTimeAndCSQTime);
+                ccState = ccs_idle;
+            }
+            }
+            break;
+        case ccs_runningTCPIPSubtask : {
+            CellularTCPIP_Subtask();
+            if (!CellularTCPIP_hasSubtaskWorkToDo()) {
+                Console_printP(PSTR("TCPIP subtask completed"));
+                ccState = ccs_idle;
+            }
+            }
+            break;
+        default:
+            // unexpected state
+            // trigger system reset here
+            SystemTime_commenceShutdown();
+            break;
     }
 }
 
