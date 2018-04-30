@@ -8,7 +8,6 @@ Design goals:
 3. REPL over TCP/IP
 
 ![Water Level Monitor](doc/WaterLevelMonitorBox.png)
-<img src="doc/WaterLevelMonitorBox.png" alt="Water Level Monitor Box" width=500"/>
 
 ## System details
 Water level is measured using an ultrasonic distance sensor in the roof of the tank. It measures the
