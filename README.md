@@ -7,6 +7,7 @@ Design goals:
 2. post data to a server on the half hour
 3. REPL over TCP/IP
 
+![Water Level Monitor](doc/WaterLevelMonitorBox.png)
 <img src="doc/WaterLevelMonitorBox.png" alt="Water Level Monitor Box" width=500"/>
 
 ## System details
