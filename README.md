@@ -6,6 +6,8 @@ Design goals:
 1. run on batteries for 5 years
 2. post data to a server on the half hour
 
+![Water Level Monitor](doc/WaterLevelMonitorBox.JPG)
+
 ## System details
 Water level is measured using an ultrasonic distance sensor in the roof of the tank. It measures the
 distance from the top of the tank to the surface of the water.
