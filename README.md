@@ -5,6 +5,7 @@ Battery-powered IoT endpoint that posts data to a server via a cellular module.
 Design goals:
 1. run on batteries for **5 years**
 2. post data to a server on the half hour
+3. REPL over TCP/IP
 
 ![Water Level Monitor](doc/WaterLevelMonitorBox.JPG)
 
