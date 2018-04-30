@@ -9,6 +9,8 @@ Design goals:
 
 ![Water Level Monitor](doc/WaterLevelMonitorBox.JPG =100x100)
 
+<img src="doc/WaterLevelMonitorBox.JPG" alt="Water Level Monitor Box" style="width: 100px;"/>
+
 ## System details
 Water level is measured using an ultrasonic distance sensor in the roof of the tank. It measures the
 distance from the top of the tank to the surface of the water.
