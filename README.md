@@ -11,6 +11,7 @@ Design goals:
 ## System details
 Water level is measured using an ultrasonic distance sensor in the roof of the tank. It measures the
 distance from the top of the tank to the surface of the water.
+
 The key to running on batteries for a long time is the ability for the system to go into deep sleep.
 The water level doesn't change quickly, so the system can sleep for several minutes between readings.
-Power to the ultrasonic 
+Power to the ultrasonic sensor and cellular module is switched on and off by a FET under microcontroller control. These devices get no power when the unit is sleeping.
