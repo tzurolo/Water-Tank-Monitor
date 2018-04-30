@@ -1,5 +1,5 @@
 # Water-Tank-Monitor
-Monitors the water level in a tank that supplies the daily water to the Lion of Judah Academy campus.
+Monitors the water level in a tank that supplies the daily water to the Lion of Judah Academy campus of over 800 students.
 
 Battery-powered IoT endpoint that posts data to a server via a cellular module.
 Design goals:
