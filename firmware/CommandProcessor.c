@@ -242,6 +242,16 @@ bool CommandProcessor_executeCommand (
             if (validCommand) {
                 EEPROMStorage_setSampleInterval(loggingInterval);
             }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("empty"))) {
+            const uint16_t emptyDistance = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setWaterTankEmptyDistance(emptyDistance);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("full"))) {
+            const uint16_t fullDistance = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setWaterTankFullDistance(fullDistance);
+            }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("thingspeak"))) {
             StringUtils_scanToken(&cmd, &cmdToken);
             if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("on"))) {
@@ -287,6 +297,12 @@ bool CommandProcessor_executeCommand (
             makeJSONIntValue(PSTR("reboot"), EEPROMStorage_rebootInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("apn"))) {
             makeJSONStrValue(PSTR("APN'"), EEPROMStorage_getAPN, reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("distance"))) {
+            beginJSON(reply);
+            appendJSONIntValue(PSTR("empty"), EEPROMStorage_waterTankEmptyDistance(), reply);
+            continueJSON(reply);
+            appendJSONIntValue(PSTR("full"), EEPROMStorage_waterTankFullDistance(), reply);
+            endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("ipserver"))) {
             beginJSON(reply);
             appendJSONStrValue(PSTR("IP_Addr"), EEPROMStorage_getIPConsoleServerAddress, reply);
@@ -314,6 +330,9 @@ bool CommandProcessor_executeCommand (
             SystemTime_getCurrentTime(&time);
             appendJSONTimeValue(PSTR("CurTime"), &time, reply);
             continueJSON(reply);
+            time.seconds = SystemTime_uptime();
+            time.hundredths = 0;
+            appendJSONTimeValue(PSTR("uptime"), &time, reply);
             time.seconds = EEPROMStorage_lastRebootTimeSec();
             time.hundredths = 0;
             appendJSONTimeValue(PSTR("LastReboot"), &time, reply);

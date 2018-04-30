@@ -681,8 +681,8 @@ void CellularComm_task (void)
         case ccs_waitingForCMGSPrompt : {
             if (gotSIM800Prompt) {
                 Console_printP(PSTR("sending message text & Ctrl-Z"));
-                SIM800_sendStringCS(&CommandProcessor_commandReply);
-                CharString_clear(&CommandProcessor_commandReply);
+                SIM800_sendStringCS(&outgoingSMSMessageText);
+                CharString_clear(&outgoingSMSMessageText);
                 SIM800_sendCtrlZ();
                 ccState = ccs_waitingForCMGSResponse;
             }

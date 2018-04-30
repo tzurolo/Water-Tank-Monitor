@@ -36,6 +36,8 @@ extern void SystemTime_registerForTickNotification (
 extern void SystemTime_getCurrentTime (
     SystemTime_t *curTime);
 
+extern uint32_t SystemTime_uptime (void);
+
 // initializes futureTime to the current time plus
 // the given number of 1/100 seconds
 extern void SystemTime_futureTime (

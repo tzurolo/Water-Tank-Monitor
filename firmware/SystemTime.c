@@ -16,14 +16,9 @@
 
 #define DEBUG_TRACE 1
 
-// when to reboot daily
-#define REBOOT_HOUR 12
-#define REBOOT_MINUTES 23
-
-#define REBOOT_FULL_DAY 8640000L
-
 static volatile uint16_t tickCounter = 0;
 static volatile SystemTime_t currentTime;
+static volatile uint32_t secondsSinceStartup;
 static int32_t timeAdjustment;
 static bool shuttingDown = false;
 static SystemTime_TickNotification notificationFunction;
@@ -33,6 +28,7 @@ void SystemTime_Initialize (void)
     tickCounter = 0;
     currentTime.seconds = EEPROMStorage_lastRebootTimeSec();
     currentTime.hundredths = 0;
+    secondsSinceStartup = 0;
     timeAdjustment = 0;
     notificationFunction = 0;
 
@@ -62,6 +58,19 @@ void SystemTime_getCurrentTime (
     curTime->seconds = currentTime.seconds;
     curTime->hundredths = currentTime.hundredths;
     SREG = SREGSave;
+}
+
+uint32_t SystemTime_uptime (void)
+{
+    uint32_t uptime;
+
+    char SREGSave;
+    SREGSave = SREG;
+    cli();
+    uptime = secondsSinceStartup;
+    SREG = SREGSave;
+
+    return uptime;
 }
 
 void SystemTime_futureTime (
@@ -113,6 +122,7 @@ void SystemTime_setTimeAdjustment (
 void SystemTime_applyTimeAdjustment ()
 {
     char SREGSave;
+
     SREGSave = SREG;
     cli();
     currentTime.seconds += timeAdjustment;
@@ -147,7 +157,6 @@ void SystemTime_sleepFor (
         WDTCSR |= (1 << WDIE);
         set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         cli();
-        currentTime.seconds += secondsThisLoop;
         sleep_enable();
         sleep_bod_disable();
 
@@ -156,6 +165,10 @@ void SystemTime_sleepFor (
         sleep_disable();
         sei();
     }
+    cli();
+    currentTime.seconds += seconds;
+    secondsSinceStartup += seconds;
+    sei();
 }
 
 void SystemTime_commenceShutdown (void)
@@ -187,17 +200,11 @@ void SystemTime_task (void)
         wdt_reset();
 
         // reboot if it's been more than the stored reboot interval
-        // since the last reboot
-        SystemTime_t curTime;
-        SystemTime_getCurrentTime(&curTime);
-        SystemTime_t lastRebootTime;
-        lastRebootTime.seconds = EEPROMStorage_lastRebootTimeSec();
-        lastRebootTime.hundredths = 0;
-        const int32_t secondsSinceLastReboot =
-            SystemTime_diffSec(&curTime, &lastRebootTime);
+        // since startup
+        const uint32_t uptime = SystemTime_uptime();
         const int32_t rebootIntervalSeconds =
             ((int32_t)EEPROMStorage_rebootInterval()) * 60;
-        if (secondsSinceLastReboot > rebootIntervalSeconds) {
+        if (uptime > rebootIntervalSeconds) {
             SystemTime_commenceShutdown();
         }
     }
@@ -256,6 +263,7 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK)
         if (currentTime.hundredths >= 100) {
             currentTime.hundredths = 0;
             ++currentTime.seconds;
+            ++secondsSinceStartup;
         }
     }
 

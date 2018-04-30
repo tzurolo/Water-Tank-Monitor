@@ -88,7 +88,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setPIN(&stringBufferSpan);
 
         EEPROMStorage_setTempCalOffset(327);
-        EEPROMStorage_setWatchdogTimerCal(92);
+        EEPROMStorage_setWatchdogTimerCal(93);
         EEPROMStorage_setBatteryVoltageCal(100);
         EEPROMStorage_setMonitorTaskTimeout(60);
 
