@@ -7,9 +7,7 @@ Design goals:
 2. post data to a server on the half hour
 3. REPL over TCP/IP
 
-![Water Level Monitor](doc/WaterLevelMonitorBox.JPG =100x100)
-
-<img src="doc/WaterLevelMonitorBox.JPG" alt="Water Level Monitor Box" width="100"/>
+<img src="doc/WaterLevelMonitorBox.JPG" alt="Water Level Monitor Box" width=500"/>
 
 ## System details
 Water level is measured using an ultrasonic distance sensor in the roof of the tank. It measures the
