@@ -46,12 +46,12 @@ INCLUDES = -I"C:\WinAVR-20100110\avr\include" -I"C:\WinAVR-20100110\avr\bin" -I"
 ## Objects that must be built in order to link
 OBJECTS = WaterLevelMonitorMain.o WaterLevelMonitor.o \
         CommandProcessor.o EEPROMStorage.o Console.o \
-        SystemTime.o ADCManager.o DataHistory.o \
+        SystemTime.o ADCManager.o DataHistory.o SampleHistory.o \
         BatteryMonitor.o InternalTemperatureMonitor.o UltrasonicSensorMonitor.o \
         CellularComm_SIM800.o CellularTCPIP_SIM800.o TCPIPConsole.o SIM800.o \
         SoftwareSerialTx.o SoftwareSerialRx0.o SoftwareSerialRx2.o \
-        CharString.o ByteQueue.o StringUtils.o UART_async.o EEPROM_Util.o \
-        IOPortBitfield.o \
+        CharString.o CharStringSpan.o ByteQueue.o StringUtils.o UART_async.o \
+        MessageIDQueue.o EEPROM_Util.o IOPortBitfield.o \
         RamSentinel.o
 
 ## Objects explicitly added by the user
@@ -76,6 +76,9 @@ ADCManager.o: ../ADCManager.c
 DataHistory.o: ../DataHistory.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
+SampleHistory.o: ../SampleHistory.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
 ByteQueue.o: ../ByteQueue.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
@@ -92,6 +95,9 @@ EEPROM_Util.o: ../EEPROM_Util.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 CharString.o: ../CharString.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+CharStringSpan.o: ../CharStringSpan.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 StringUtils.o: ../StringUtils.c
@@ -127,6 +133,9 @@ UART_async.o: ../UART_async.c
 EEPROMStorage.o: ../EEPROMStorage.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
+MessageIDQueue.o: ../MessageIDQueue.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+        
 IOPortBitfield.o: ../IOPortBitfield.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
