@@ -24,6 +24,8 @@
 #include "SampleHistory.h"
 #include "RAMSentinel.h"
 
+#define SW_VERSION 10
+
 // water level has to change by this percentage or more
 // to get back to inRange after going out of range
 #define waterLevelDeadband 5
@@ -79,47 +81,39 @@ static bool sampleDataSender (void)
             // send per-post data
             CharString_copyP(PSTR("I"), &dataToSend);
             StringUtils_appendDecimal(EEPROMStorage_unitID(), 1, 0, &dataToSend);
-            CharString_appendC('N', &dataToSend);
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            StringUtils_appendDecimal(SystemTime_dayOfWeek(&curTime), 1, 0, &dataToSend);
-            StringUtils_appendDecimal(SystemTime_hours(&curTime), 2, 0, &dataToSend);
-            StringUtils_appendDecimal(SystemTime_minutes(&curTime), 2, 0, &dataToSend);
-            CharString_appendC('L', &dataToSend);
-            StringUtils_appendDecimal(currentWaterLevelPercent, 1, 0, &dataToSend);
+            CharString_appendC('V', &dataToSend);
+            StringUtils_appendDecimal(SW_VERSION, 1, 0, &dataToSend);
             CharString_appendC('B', &dataToSend);
             StringUtils_appendDecimal(BatteryMonitor_currentVoltage(), 1, 0, &dataToSend);
             CharString_appendC('R', &dataToSend);
             StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
             CharString_appendC('Q', &dataToSend);
             StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            const int32_t secondsSinceLastSample = SystemTime_diffSec(&curTime, &lastSampleTime);
+            CharString_appendP(PSTR("C"), &dataToSend);
+            StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
+            CharString_appendC(';', &dataToSend);
         } else {
             // send next sample
             const SampleHistory_Sample* sample =
                 SampleHistory_getAt(dataSenderSampleIndex, &sampleHistory);
-            CharString_copyP(PSTR(";"), &dataToSend);
             if (sample->relSampleTime != 0) {
-                CharString_appendC('S', &dataToSend);
+                CharString_appendC('D', &dataToSend);
                 StringUtils_appendDecimal(sample->relSampleTime, 1, 0, &dataToSend);
             }
             CharString_appendC('W', &dataToSend);
             StringUtils_appendDecimal(sample->waterDistance, 1, 0, &dataToSend);
             CharString_appendC('T', &dataToSend);
             StringUtils_appendDecimal(sample->temperature, 1, 0, &dataToSend);
+            CharString_appendC(';', &dataToSend);
         }
 
         ++dataSenderSampleIndex;
         // if this is the last sample append the delta time between the last sample and
         // now, and append the terminator (Z)
         if (dataSenderSampleIndex >= ((int16_t)SampleHistory_length(&sampleHistory))) {
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            const int32_t secondsSinceLastSample =
-                SystemTime_diffSec(&curTime, &lastSampleTime);
-            if (secondsSinceLastSample != 0) {
-                CharString_appendP(PSTR(";S"), &dataToSend);
-                StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
-            }
             CharString_appendP(PSTR("Z\n"), &dataToSend);
             sendComplete = true;
         }
