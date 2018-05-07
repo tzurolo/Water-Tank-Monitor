@@ -284,14 +284,10 @@ void WaterLevelMonitor_task (void)
     }
 
     switch (wlmState) {
-        case wlms_initial : {
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            wlmState = 
-                (curTime.seconds > 1)
-                ? wlms_done         // starting up after reboot
-                : wlms_resuming;    // first run after reprogramming
-            }
+        case wlms_initial :
+            wlmState = (SystemTime_LastReboot() == lrb_software)
+                ? wlms_done         // starting up after software reboot
+                : wlms_resuming;    // hardware reboot
             break;
         case wlms_resuming :
             // turn on peripheral power
@@ -448,6 +444,11 @@ void WaterLevelMonitor_task (void)
 bool WaterLevelMonitor_taskIsDone (void)
 {
     return wlmState == wlms_done;
+}
+
+bool WaterLevelMonitor_hasSampleData (void)
+{
+    return !SampleHistory_empty(&sampleHistory);
 }
 
 void WaterLevelMonitor_resume (void)

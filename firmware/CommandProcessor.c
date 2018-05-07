@@ -333,9 +333,6 @@ bool CommandProcessor_executeCommand (
             time.seconds = SystemTime_uptime();
             time.hundredths = 0;
             appendJSONTimeValue(PSTR("uptime"), &time, reply);
-            time.seconds = EEPROMStorage_lastRebootTimeSec();
-            time.hundredths = 0;
-            appendJSONTimeValue(PSTR("LastReboot"), &time, reply);
             endJSON(reply);
         } else {
             validCommand = false;

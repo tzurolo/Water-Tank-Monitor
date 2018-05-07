@@ -17,6 +17,12 @@
 
 #define SYSTEMTIME_TICKS_PER_SECOND 4800
 
+// how the last reboot occurred
+typedef enum SystemTime_LastRebootBy_enum {
+    lrb_software,   // reboot initiated by software (e.g. reboot command)
+    lrb_hardware    // reboot initiated by hardware (e.g. reset line pulled low)
+} SystemTime_LastRebootBy;
+
 // absolute time from beginning of GPS epoch
 typedef struct SystemTime_t_struct {
     uint32_t seconds;   // seconds
@@ -37,6 +43,7 @@ extern void SystemTime_getCurrentTime (
     SystemTime_t *curTime);
 
 extern uint32_t SystemTime_uptime (void);
+extern SystemTime_LastRebootBy SystemTime_LastReboot (void);
 
 // initializes futureTime to the current time plus
 // the given number of 1/100 seconds

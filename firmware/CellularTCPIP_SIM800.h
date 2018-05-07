@@ -27,7 +27,7 @@ typedef enum CellularTCPIPConnectionStatus_enum {
 // prototypes for functions that clients supply to
 // provide and receive data
 typedef bool (*CellularTCPIP_DataProvider)(void);   // return true when done
-typedef void (*CellularTCPIP_SendCompletionCallaback)(const bool success);
+typedef void (*CellularTCPIP_SendCompletionCallback)(const bool success);
 typedef void (*CellularTCPIP_ConnectionStateChangeCallback)(const CellularTCPIPConnectionStatus status);
 
 extern void CellularTCPIP_Initialize (void);
@@ -42,7 +42,7 @@ extern void CellularTCPIP_connect (
 
 extern void CellularTCPIP_sendData (
     CellularTCPIP_DataProvider provider,   // will be called to write data
-    CellularTCPIP_SendCompletionCallaback completionCallback);
+    CellularTCPIP_SendCompletionCallback completionCallback);
 
 extern void CellularTCPIP_disconnect (void);
 

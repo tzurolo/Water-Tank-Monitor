@@ -51,7 +51,8 @@ uint8_t EEMEM thingspeakEnabled = 0;
 char EEMEM thingspeakHostAddress[40]  = "api.thingspeak.com";
 char thingspeakHostAddressP[] PROGMEM = "api.thingspeak.com";
 uint16_t EEMEM thingspeakHostPort = 80;
-char EEMEM thingspeakWriteKey[20] = "";
+char EEMEM thingspeakWriteKey[20] = "DD7TVSCZEHKZLAQP";
+char thingspeakWriteKeyP[] PROGMEM = "DD7TVSCZEHKZLAQP";
 
 // TCPIP Console
 uint8_t EEMEM ipConsoleEnabled = 1;
@@ -87,9 +88,9 @@ void EEPROMStorage_Initialize (void)
         getCharStringSpanFromP(tzPinP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setPIN(&stringBufferSpan);
 
-        EEPROMStorage_setTempCalOffset(327);
-        EEPROMStorage_setWatchdogTimerCal(93);
-        EEPROMStorage_setBatteryVoltageCal(100);
+        EEPROMStorage_setTempCalOffset(325);
+        EEPROMStorage_setWatchdogTimerCal(94);
+        EEPROMStorage_setBatteryVoltageCal(98);
         EEPROMStorage_setMonitorTaskTimeout(60);
 
 	EEPROMStorage_setWaterTankEmptyDistance(290);
@@ -109,7 +110,7 @@ void EEPROMStorage_Initialize (void)
         getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakHostAddress(&stringBufferSpan);
         EEPROMStorage_setThingspeakHostPort(80);
-        CharStringSpan_clear(&stringBufferSpan);
+        getCharStringSpanFromP(thingspeakWriteKeyP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakWriteKey(&stringBufferSpan);
 
         EEPROMStorage_setFilterSampleTime(1);   // once per second

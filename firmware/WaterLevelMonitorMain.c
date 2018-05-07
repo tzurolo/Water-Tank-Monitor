@@ -78,55 +78,61 @@ int main (void)
         if (WaterLevelMonitor_taskIsDone() &&
             !SystemTime_shuttingDown()) {
 
-            // apply calibration to WDT
+            const uint32_t uptime = SystemTime_uptime();
+            const uint32_t rebootIntervalSeconds =
+                ((uint32_t)EEPROMStorage_rebootInterval()) * 60;
+            if ((uptime >= rebootIntervalSeconds) &&
+                !WaterLevelMonitor_hasSampleData()) {   // wait until sample data transmitted
+                SystemTime_commenceShutdown();
+            } else {
+                // apply adjustment from server time
+                SystemTime_applyTimeAdjustment();
 
-            // apply adjustment from server time
-            SystemTime_applyTimeAdjustment();
+                // disable ADC (move to ADCManager)
+                ADCSRA &= ~(1 << ADEN);
+                power_all_disable();
+                // disable all digital inputs
+                DIDR0 = 0x3F;
+                DIDR1 = 3;
+                // turn off all pullups
+                PORTB = 0;
+                PORTC = 0;
+                PORTD = 0;
 
-            // disable ADC (move to ADCManager)
-            ADCSRA &= ~(1 << ADEN);
-            power_all_disable();
-            // disable all digital inputs
-            DIDR0 = 0x3F;
-            DIDR1 = 3;
-            // turn off all pullups
-            PORTB = 0;
-            PORTC = 0;
-            PORTD = 0;
+                // compute how long to sleep until the next sample
+                const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
+                SystemTime_t curTime;
+                SystemTime_getCurrentTime(&curTime);
+                SystemTime_t nextSampleTime;
+                nextSampleTime.seconds =
+                    (((curTime.seconds + (sampleInterval / 2)) / sampleInterval) + 1) * sampleInterval;
+                nextSampleTime.hundredths = 0;
+                int32_t sec32 = SystemTime_diffSec(&nextSampleTime, &curTime);
+                uint16_t sleepTime = (sec32 > 65535)
+                    ? 65535
+                    : (sec32 < 0)
+                        ? 0
+                        : ((uint16_t)sec32);
 
-            // compute how long to sleep until the next sample
-            const uint16_t sampleInterval = EEPROMStorage_sampleInterval();
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            SystemTime_t nextSampleTime;
-            nextSampleTime.seconds =
-                (((curTime.seconds + (sampleInterval / 2)) / sampleInterval) + 1) * sampleInterval;
-            nextSampleTime.hundredths = 0;
-            int32_t sec32 = SystemTime_diffSec(&nextSampleTime, &curTime);
-            uint16_t sleepTime = (sec32 > 65535)
-                ? 65535
-                : (sec32 < 0)
-                    ? 0
-                    : ((uint16_t)sec32);
+                // sleep
+                SystemTime_sleepFor(sleepTime);
 
-            // sleep
-            SystemTime_sleepFor(sleepTime);
+                // re-initialize the system
+                power_all_enable();
+                wdt_enable(WATCHDOG_TIMEOUT);
+                ADCManager_Initialize();
+                BatteryMonitor_Initialize();
+                InternalTemperatureMonitor_Initialize();
+                UltrasonicSensorMonitor_Initialize();
+                SoftwareSerialRx0_Initialize();
+                SoftwareSerialRx2_Initialize();
+                Console_Initialize();
+                CellularComm_Initialize();
+                CellularTCPIP_Initialize();
+                TCPIPConsole_Initialize();
 
-            // re-initialize the system
-            power_all_enable();
-            wdt_enable(WATCHDOG_TIMEOUT);
-            ADCManager_Initialize();
-            BatteryMonitor_Initialize();
-            InternalTemperatureMonitor_Initialize();
-            UltrasonicSensorMonitor_Initialize();
-            SoftwareSerialRx0_Initialize();
-            SoftwareSerialRx2_Initialize();
-            Console_Initialize();
-            CellularComm_Initialize();
-            CellularTCPIP_Initialize();
-            TCPIPConsole_Initialize();
-
-            WaterLevelMonitor_resume();
+                WaterLevelMonitor_resume();
+            }
         }
 
 #if COUNT_MAJOR_CYCLES

@@ -32,6 +32,6 @@ extern bool TCPIPConsole_readyToSend (void);
 
 extern void TCPIPConsole_sendData (
     CellularTCPIP_DataProvider dataProvider,
-    CellularTCPIP_SendCompletionCallaback completionCallback);
+    CellularTCPIP_SendCompletionCallback completionCallback);
 
 #endif  /* TCPIPCONSOLE_H */

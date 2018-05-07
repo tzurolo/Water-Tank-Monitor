@@ -22,7 +22,7 @@ typedef enum SendingState_enum {
 static bool isEnabled;
 static SIM800_IPDataCallback dataReceiver;
 static CellularTCPIP_DataProvider sendDataProvider;
-static CellularTCPIP_SendCompletionCallaback sendCompletionCallback;
+static CellularTCPIP_SendCompletionCallback sendCompletionCallback;
 static SendingState sState;
 static SystemTime_t nextConnectAttemptTime;
 
@@ -175,7 +175,7 @@ bool TCPIPConsole_readyToSend (void)
 
 void TCPIPConsole_sendData (
     CellularTCPIP_DataProvider dataProvider,
-    CellularTCPIP_SendCompletionCallaback completionCallback)
+    CellularTCPIP_SendCompletionCallback completionCallback)
 {
     sendDataProvider = dataProvider;
     sendCompletionCallback = completionCallback;

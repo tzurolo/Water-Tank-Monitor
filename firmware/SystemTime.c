@@ -21,6 +21,7 @@ static volatile SystemTime_t currentTime;
 static volatile uint32_t secondsSinceStartup;
 static int32_t timeAdjustment;
 static bool shuttingDown = false;
+static SystemTime_LastRebootBy lastRebootBy;
 static SystemTime_TickNotification notificationFunction;
 
 void SystemTime_Initialize (void)
@@ -28,8 +29,13 @@ void SystemTime_Initialize (void)
     tickCounter = 0;
     currentTime.seconds = EEPROMStorage_lastRebootTimeSec();
     currentTime.hundredths = 0;
+    EEPROMStorage_setLastRebootTimeSec(0);
     secondsSinceStartup = 0;
     timeAdjustment = 0;
+    shuttingDown = false;
+    lastRebootBy = (currentTime.seconds > 1)
+        ? lrb_software
+        : lrb_hardware;
     notificationFunction = 0;
 
     // set up timer3 to fire interrupt once per second
@@ -71,6 +77,11 @@ uint32_t SystemTime_uptime (void)
     SREG = SREGSave;
 
     return uptime;
+}
+
+SystemTime_LastRebootBy SystemTime_LastReboot (void)
+{
+    return lastRebootBy;
 }
 
 void SystemTime_futureTime (
@@ -199,11 +210,12 @@ void SystemTime_task (void)
     } else {
         wdt_reset();
 
-        // reboot if it's been more than the stored reboot interval
+        // reboot if it's been more than the stored reboot interval plus 3 logging intervals
         // since startup
         const uint32_t uptime = SystemTime_uptime();
-        const int32_t rebootIntervalSeconds =
-            ((int32_t)EEPROMStorage_rebootInterval()) * 60;
+        const uint32_t rebootIntervalSeconds =
+            (((uint32_t)EEPROMStorage_rebootInterval()) * 60) +
+            (((uint32_t)EEPROMStorage_LoggingUpdateInterval()) * 3);
         if (uptime > rebootIntervalSeconds) {
             SystemTime_commenceShutdown();
         }

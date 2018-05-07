@@ -561,7 +561,7 @@ void CellularComm_task (void)
         case ccs_waitingForCMGFResponse :
             if (SIM800ResponseMsg == rm_OK) {
                 // enable quick send
-                sendSIM800CommandP(PSTR("AT+CIPQSEND=1"));
+                sendSIM800CommandP(PSTR("AT+CIPQSEND=0"));
                 ccState = ccs_waitingForCIPQSENDResponse;
             }
             break;

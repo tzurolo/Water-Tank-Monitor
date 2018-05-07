@@ -13,6 +13,7 @@
 #include "ADCManager.h"
 #include "SystemTime.h"
 #include "DataHistory.h"
+#include "EEPROMStorage.h"
 
 #define BATTERY_ADC_CHANNEL ADC_SINGLE_ENDED_INPUT_ADC0
 
@@ -101,7 +102,11 @@ void BatteryMonitor_task (void)
         case bms_waitingForADCCompletion : {
             uint16_t batteryVoltage;
             if (ADCManager_ConversionIsComplete(&batteryVoltage)) {
-                DataHistory_insertValue(batteryVoltage, &batteryVoltageHistory);
+                // apply calibration
+                const uint16_t batteryVoltageCalibrated =
+                    (((uint32_t)batteryVoltage) * EEPROMStorage_batteryVoltageCal()) / 100;
+
+                DataHistory_insertValue(batteryVoltageCalibrated, &batteryVoltageHistory);
 
                 if (DataHistory_length(&batteryVoltageHistory) >=
                         BATTERY_VOLTAGE_SAMPLES) {

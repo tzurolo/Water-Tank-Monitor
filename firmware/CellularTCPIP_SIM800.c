@@ -55,7 +55,7 @@ static SystemTime_t ipstateRequestDelayTime;
 CharString_define(32, ctHostAddress);
 static uint16_t ctHostPort;
 static CellularTCPIP_DataProvider ctDataProvider;
-static CellularTCPIP_SendCompletionCallaback ctSendCompletionCallback;
+static CellularTCPIP_SendCompletionCallback ctSendCompletionCallback;
 static SystemTime_t ctResponseTimeoutTime;
 static SIM800_ResponseMessage SIM800ResponseMsg;
 static CellularTCPIPCommand curCommand;
@@ -371,7 +371,7 @@ void CellularTCPIP_connect (
 
 void CellularTCPIP_sendData (
     CellularTCPIP_DataProvider provider,
-    CellularTCPIP_SendCompletionCallaback completionCallback)
+    CellularTCPIP_SendCompletionCallback completionCallback)
 {
     if (provider != NULL) {
         ctDataProvider = provider;
