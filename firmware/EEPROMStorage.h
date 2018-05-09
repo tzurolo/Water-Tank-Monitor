@@ -82,20 +82,25 @@ extern void EEPROMStorage_setTimeoutState (
     const uint8_t state);
 extern uint8_t EEPROMStorage_timeoutState (void);
 
-//
-// Storage for ThingSpeak support.
 // NOTE: functions that return strings APPEND to the given string
-//
 extern void EEPROMStorage_setAPN (
     const CharStringSpan_t *APN);
 extern void EEPROMStorage_getAPN (
     CharString_t *APN);
+extern void EEPROMStorage_setCipqsend (
+    const uint8_t qsend);
+extern uint8_t EEPROMStorage_cipqsend (void);
+
 extern void EEPROMStorage_setSampleInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_sampleInterval (void);
 extern void EEPROMStorage_setLoggingUpdateInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_LoggingUpdateInterval (void);
+
+//
+// Storage for ThingSpeak support.
+//
 extern void EEPROMStorage_setThingspeak (
     const bool enabled);
 extern bool EEPROMStorage_thingspeakEnabled (void);

@@ -560,8 +560,11 @@ void CellularComm_task (void)
             break;
         case ccs_waitingForCMGFResponse :
             if (SIM800ResponseMsg == rm_OK) {
-                // enable quick send
-                sendSIM800CommandP(PSTR("AT+CIPQSEND=0"));
+                // enable or disable quick send
+                CharString_define(16, cipqsend);
+                CharString_copyP(PSTR("AT+CIPQSEND="), &cipqsend);
+                CharString_appendC((EEPROMStorage_cipqsend() != 0) ? '1' : '0', &cipqsend);
+                sendSIM800CommandCS(&cipqsend);
                 ccState = ccs_waitingForCIPQSENDResponse;
             }
             break;

@@ -210,33 +210,39 @@ static bool updateWaterLevelState (
         currentWaterLevelPercent = (relativeDistance * 100) / distanceRange;
     }
 
-    switch (currentWaterLevelState) {
-	case wl_inRange :
-	    if (currentWaterLevelPercent >= EEPROMStorage_waterHighNotificationLevel()) {
-		Console_printP(PSTR(">>> high level notification <<<"));
-		currentWaterLevelState = wl_high;
-                wentOutOfRange = true;
-	    } else if (currentWaterLevelPercent <= EEPROMStorage_waterLowNotificationLevel()) {
-		Console_printP(PSTR(">>> low level notification <<<"));
-		currentWaterLevelState = wl_low;
-                wentOutOfRange = true;
-	    }
-	    break;
-	case wl_low :
-	    // apply hysteresis
-	    if (currentWaterLevelPercent > (EEPROMStorage_waterLowNotificationLevel() + waterLevelDeadband)) {
-		Console_printP(PSTR(">>> back in range from low <<<"));
-		currentWaterLevelState = wl_inRange;
-	    }
-	    break;
-	case wl_high :
-	    // apply hysteresis
-	    if (currentWaterLevelPercent < (EEPROMStorage_waterHighNotificationLevel() - waterLevelDeadband)) {
-		Console_printP(PSTR(">>> back in range from high <<<"));
-		currentWaterLevelState = wl_inRange;
-	    }
-	    break;
+    WaterLevelState newState = currentWaterLevelState;
+    if (currentWaterLevelPercent >= EEPROMStorage_waterHighNotificationLevel()) {
+	newState = wl_high;
+    } else if (currentWaterLevelPercent <= EEPROMStorage_waterLowNotificationLevel()) {
+	newState = wl_low;
+    } else {
+        switch (currentWaterLevelState) {
+	    case wl_low :
+	        // apply hysteresis
+	        if (currentWaterLevelPercent > (EEPROMStorage_waterLowNotificationLevel() + waterLevelDeadband)) {
+		    newState = wl_inRange;
+	        }
+	        break;
+	    case wl_high :
+	        // apply hysteresis
+	        if (currentWaterLevelPercent < (EEPROMStorage_waterHighNotificationLevel() - waterLevelDeadband)) {
+		    newState = wl_inRange;
+	        }
+	        break;
+            default:
+                break;
+        }
     }
+    if (newState != currentWaterLevelState) {
+        // state changed
+        switch (newState) {
+	    case wl_low     : Console_printP(PSTR("->Low"));    break;
+	    case wl_high    : Console_printP(PSTR("->High"));   break;
+            case wl_inRange : Console_printP(PSTR("->Normal")); break;
+        }
+        wentOutOfRange = (newState != wl_inRange);
+    }
+    currentWaterLevelState = newState;
     
     return wentOutOfRange;
 }

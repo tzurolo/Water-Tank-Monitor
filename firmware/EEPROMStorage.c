@@ -45,6 +45,7 @@ uint8_t EEMEM highNotification = 90;
 //char EEMEM apn[40] = "mobiledata";    // T-Mobile
 char EEMEM apn[40]  = "hologram";        // hologram.io
 char apnP[] PROGMEM = "hologram";
+uint8_t EEMEM cipqsend = 0;
 
 // thingspeak
 uint8_t EEMEM thingspeakEnabled = 0;
@@ -87,6 +88,7 @@ void EEPROMStorage_Initialize (void)
 
         getCharStringSpanFromP(tzPinP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setPIN(&stringBufferSpan);
+        EEPROMStorage_setCipqsend(0);
 
         EEPROMStorage_setTempCalOffset(325);
         EEPROMStorage_setWatchdogTimerCal(94);
@@ -291,6 +293,17 @@ void EEPROMStorage_getAPN (
     CharString_t *APN)
 {
     EEPROM_readString(apn, APN);
+}
+
+void EEPROMStorage_setCipqsend (
+    const uint8_t qsend)
+{
+    EEPROM_write(&cipqsend, qsend);
+}
+
+uint8_t EEPROMStorage_cipqsend (void)
+{
+    return EEPROM_read(&cipqsend);
 }
 
 void EEPROMStorage_setSampleInterval (
