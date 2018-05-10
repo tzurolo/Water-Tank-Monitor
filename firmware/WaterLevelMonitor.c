@@ -158,6 +158,8 @@ static void IPDataCallback (
             // got command terminator
             if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
                 gotCommandFromHost = true;
+                Console_printP(PSTR("Got cmd"));
+                Console_printCS(&CommandProcessor_incomingCommand);
                 if (CharString_length(&CommandProcessor_incomingCommand) == 1) {
                     // check for mode command characters
                     switch (CharString_at(&CommandProcessor_incomingCommand, 0)) {
@@ -186,6 +188,7 @@ static void enableTCPIP (void)
     CellularComm_Enable();
     gotCommandFromHost = false;
     CharString_clear(&CommandProcessor_incomingCommand);
+    commandMode = cpm_singleCommand;
     TCPIPConsole_setDataReceiver(IPDataCallback);
     TCPIPConsole_enable(false);
 }
@@ -366,11 +369,9 @@ void WaterLevelMonitor_task (void)
                     break;
                 case sds_completedSuccessfully :
                     SampleHistory_clear(&sampleHistory);
-                    commandMode = cpm_singleCommand;
                     wlmState = wlms_waitingForHostCommand;
                     break;
                 case sds_completedFailed :
-                    commandMode = cpm_singleCommand;
                     wlmState = wlms_waitingForHostCommand;
                     break;
             }

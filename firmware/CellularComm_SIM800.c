@@ -443,7 +443,7 @@ void CellularComm_task (void)
         case ccs_initial :
             if (ccEnabled) {
                 if (SIM800_status() == SIM800_ms_off) {
-                    Console_printP(PSTR(">>>> Enabling Cellular Module <<<<"));
+                    Console_printP(PSTR(">> Enabling Cellular"));
                     SIM800_powerOn();
                     ccState = ccs_waitingForOnkeyResponse;
                 } else {
@@ -523,7 +523,7 @@ void CellularComm_task (void)
                 // cellular com is disabled. enter disabled state
                 TCPIPConsole_disable(false);
                 ccState = ccs_disabling;
-                Console_printP(PSTR(">>>> Disabling Cellular Module <<<<"));
+                Console_printP(PSTR(">> Disabling Cellular"));
             }
             }
             break;
