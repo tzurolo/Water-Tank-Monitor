@@ -158,8 +158,6 @@ static void IPDataCallback (
             // got command terminator
             if (!CharString_isEmpty(&CommandProcessor_incomingCommand)) {
                 gotCommandFromHost = true;
-                Console_printP(PSTR("Got cmd"));
-                Console_printCS(&CommandProcessor_incomingCommand);
                 if (CharString_length(&CommandProcessor_incomingCommand) == 1) {
                     // check for mode command characters
                     switch (CharString_at(&CommandProcessor_incomingCommand, 0)) {
