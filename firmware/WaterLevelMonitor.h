@@ -19,6 +19,7 @@ typedef enum WaterLevelMonitorState_enum {
     wlms_waitingForHostCommand,
     wlms_waitingForReadyToSendReply,
     wlms_sendingReplyData,
+    wlms_delayBeforeDisable,
     wlms_waitingForCellularCommDisable,
     wlms_poweringDown,
     wlms_done
@@ -31,6 +32,7 @@ extern void WaterLevelMonitor_Initialize (void);
 extern void WaterLevelMonitor_task (void);
 
 extern bool WaterLevelMonitor_taskIsDone (void);
+extern bool WaterLevelMonitor_hasSampleData (void);
 
 extern void WaterLevelMonitor_resume (void);
 

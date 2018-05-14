@@ -62,7 +62,7 @@ extern bool SystemTime_timeHasArrived (
 // SystemTime_applyTimeAdjustment()
 extern void SystemTime_setTimeAdjustment (
     const uint32_t *newTime);
-extern void SystemTime_applyTimeAdjustment ();
+extern void SystemTime_applyTimeAdjustment (void);
 
 // sleep for up to 18 hours
 extern void SystemTime_sleepFor (

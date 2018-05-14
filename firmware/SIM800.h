@@ -1,12 +1,15 @@
 //
 //  SIM800 Quad-band GSM/GPRS module interface
 //
+//  Uses SoftwareSerialTx channel 0
+//
 #ifndef SIM800_H
 #define SIM800_H
 
 #include "ByteQueue.h"
 #include <avr/pgmspace.h>
 #include "CharStringSpan.h"
+#include "IOPortBitfield.h"
 #include <stdint.h>
 
 typedef enum SIM800_moduleStatusEnum {
@@ -109,7 +112,11 @@ typedef void (*SIM800_CBCCallback)(
 typedef void (*SIM800_promptCallback)(
     void);
 
-extern void SIM800_Initialize (void);
+extern void SIM800_Initialize (
+    ByteQueue_t *rxQ,
+    IOPortBitfield_PortSelection txPort,
+    uint8_t txPin);
+
 extern void SIM800_task (void);
 
 extern void SIM800_powerOn (void);

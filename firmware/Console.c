@@ -12,7 +12,6 @@
 #include "SystemTime.h"
 #include "CommandProcessor.h"
 #include "StringUtils.h"
-#include "RAMSentinel.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -32,7 +31,7 @@ const prog_char crlfP[] = {13,10,0};
 static SystemTime_t nextStatusPrintTime;
 static uint8_t currentPrintLine = 5;
 
-static bool consoleIsConnected ()
+static bool consoleIsConnected (void)
 {
     return true;
 }

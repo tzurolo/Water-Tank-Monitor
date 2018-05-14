@@ -38,7 +38,7 @@ void SystemTime_Initialize (void)
         : lrb_hardware;
     notificationFunction = 0;
 
-    // set up timer3 to fire interrupt once per second
+    // set up timer1 to fire interrupt at SYSTEMTIME_TICKS_PER_SECOND
     TCCR1B = (TCCR1B & 0xF8) | 2; // prescale by 8
     TCCR1B = (TCCR1B & 0xE7) | (1 << 3); // set CTC mode
     OCR1A = (F_CPU / 8) / SYSTEMTIME_TICKS_PER_SECOND;

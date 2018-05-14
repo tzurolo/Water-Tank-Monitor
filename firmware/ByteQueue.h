@@ -25,7 +25,7 @@
 #include <avr/interrupt.h>
 
 // enable/disable watermarking length of byte queues
-#define BYTEQUEUE_HIGHWATERMARK_ENABLED 1
+#define BYTEQUEUE_HIGHWATERMARK_ENABLED 0
 
 typedef uint8_t ByteQueueElement;
 

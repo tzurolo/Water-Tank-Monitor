@@ -6,9 +6,9 @@
 
 //  I/O Pin usage
 //      D2        -> Power Status (optional)
-//      D3 (Rx)   -> TX0
-//      D4 (Tx)   -> RX0
 //      D5        -> OnKey
+//      Tx pin specified from SIM800_Initialize
+//      Rx pin not specified here, input comes from rxQ from SIM800_Initialize
 //
 #include "SIM800.h"
 
@@ -16,7 +16,6 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include "ByteQueue.h"
-#include "SoftwareSerialRx2.h"
 #include "SoftwareSerialTx.h"
 #include "Console.h"
 #include "SystemTime.h"
@@ -174,6 +173,7 @@ typedef enum moduleStateEnum {
 
 static bool powerCommand;
 static ModuleState mState;
+static ByteQueue_t* rxQueue;
 CharString_define(RESPONSE_BUFFER_LENGTH, SIM800Response);
 SIM800_ResponseMessage responseMsg;
 static SystemTime_t powerRetryTime;
@@ -650,7 +650,6 @@ static bool interpretNonterminatedResponse (
 
 static void processResponseBytes (void)
 {
-    ByteQueue_t* rxQueue = SoftwareSerial_rx2Queue();
     ByteQueueElement inByte;
     for (uint8_t numBytes = ByteQueue_length(rxQueue); numBytes > 0;
             --numBytes) {
@@ -761,8 +760,13 @@ void SIM800_powerOff (void)
     powerCommand = false;
 }
 
-void SIM800_Initialize (void)
+void SIM800_Initialize (
+    ByteQueue_t *rxQ,
+    IOPortBitfield_PortSelection txPort,
+    uint8_t txPin)
 {
+    rxQueue = rxQ;
+
     // set onkey to low (asserted) state, but set pin as input
     ONKEY_DIR &= ~(1 << ONKEY_PIN);
     ONKEY_OUTPORT &= ~(1 << ONKEY_PIN);
@@ -800,7 +804,7 @@ void SIM800_Initialize (void)
     CBCCallback = 0;
     promptCallback = 0;
 
-    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_d, 4);
+    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, txPort, txPin);
     SoftwareSerialTx_enable(TX_CHAN_INDEX);
 }
 
