@@ -66,6 +66,7 @@ void SoftwareSerialRx2_Initialize (void)
     // enable pin change interrupts
     PCICR |= (1 << SERIAL_RX_PCIE);
 
+    isEnabled = false;
     SoftwareSerialRx2_enable();
 }
 

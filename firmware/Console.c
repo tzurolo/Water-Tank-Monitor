@@ -2,8 +2,8 @@
 //  System Console for debug and local control
 //
 //  Pin usage:
-//      PC2 - serial input
-//      PC3 - serial output
+//      PB4 - serial input
+//      PB3 - serial output
 //
 #include "Console.h"
 
