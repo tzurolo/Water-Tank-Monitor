@@ -533,7 +533,7 @@ static void processResponseMessage (
             Console_printP(PSTR("Connect FAIL"));
             break;
         case rm_CLOSED              :
-            Console_printP(PSTR("Connection CLOSED"));
+            Console_printP(PSTR("Closed"));
             break;
         case rm_CLOSE_OK            :
         case rm_OK                  :
@@ -823,7 +823,9 @@ void SIM800_task (void)
         case ms_waitingForPowerStateResponse :
             if (responseMsg == rm_RDY) {
                 deassertOnKey();
+#if DEBUG_TRACE
                 Console_printP(PSTR("--- On ---"));
+#endif
                 if (powerCommand) {
                     mState = ms_waitingForCommand;
                 } else {
@@ -833,7 +835,9 @@ void SIM800_task (void)
                 }
             } else if (responseMsg == rm_NORMAL_POWER_DOWN) {
                 deassertOnKey();
+#if DEBUG_TRACE
                 Console_printP(PSTR("--- Off ---"));
+#endif
                 if (powerCommand) {
                     // was trying to power on - try again in a bit
                     SystemTime_futureTime(200, &powerRetryTime);

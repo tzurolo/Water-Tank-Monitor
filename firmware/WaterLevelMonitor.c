@@ -251,7 +251,7 @@ static bool updateWaterLevelState (
 void initiatePowerdown (void)
 {
     // give it a little while to properly close the connection
-    SystemTime_futureTime(200, &time);
+    SystemTime_futureTime(150, &time);
     wlmState = wlms_delayBeforeDisable;
 }
 
@@ -279,7 +279,7 @@ void WaterLevelMonitor_Initialize (void)
 void WaterLevelMonitor_task (void)
 {
     if ((wlmState > wlms_resuming) &&
-        (wlmState < wlms_waitingForCellularCommDisable) &&
+        (wlmState < wlms_delayBeforeDisable) &&
         SystemTime_timeHasArrived(&time)) {
         // task has exceeded timeout
         Console_printP(PSTR("WLM timeout"));

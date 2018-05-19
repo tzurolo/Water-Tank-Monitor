@@ -10,6 +10,8 @@
 #include "SystemTime.h"
 #include "EEPROMStorage.h"
 
+#define DEBUG_TRACE 0
+
 typedef enum SendingState_enum {
     ss_idle,
     ss_waitingForTCPIPConnecting,
@@ -29,6 +31,7 @@ static SystemTime_t nextConnectAttemptTime;
 static void statusCallback (
     const CellularTCPIPConnectionStatus status)
 {
+#if DEBUG_TRACE
     switch (status) {
         case cs_connecting :
             Console_printP(PSTR(">>> Connecting"));
@@ -46,6 +49,7 @@ static void statusCallback (
             Console_printP(PSTR(">>> Disconnected"));
             break;
     }
+#endif
 }
 
 void TCPIPConsole_Initialize (void)

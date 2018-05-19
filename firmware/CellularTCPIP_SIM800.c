@@ -15,6 +15,7 @@
 #include "Console.h"
 
 #define CIPACK_BEFORE_CIPSEND 1
+#define DEBUG_TRACE 0
 
 // time parameters (in seconds)
 #define IPSTATE_REQUEST_DELAY 100
@@ -242,7 +243,9 @@ static void advanceStateForConnect (
             break;
         default:
             // not expected to ever get here
+#if DEBUG_TRACE
             Console_printP(PSTR("unexpected IP state in connect"));
+#endif
             resetSubtask();
             break;
     }
@@ -270,7 +273,9 @@ static void advanceStateForSendData (void)
             break;
         default:
             // not expected to ever get here
+#if DEBUG_TRACE
             Console_printP(PSTR("unexpected IP state in sendData"));
+#endif
             resetSubtask();
             break;
     }
@@ -294,7 +299,9 @@ static void advanceStateForDisconnect (void)
             break;
         default:
             // not expected to ever get here
+#if DEBUG_TRACE
             Console_printP(PSTR("unexpected IP state in disconnect"));
+#endif
             resetSubtask();
             break;
     }
@@ -407,19 +414,25 @@ void CellularTCPIP_Subtask (void)
                 case cs_connected :
                     if (curCommand == c_sendData) {
                         // send data
+#if DEBUG_TRACE
                         Console_printP(PSTR("sending data"));
+#endif
                         setConnectionStatus(cs_sendingData);
                         requestIPState();
                     } else  if (curCommand == c_disconnect) {
                         // close connection
+#if DEBUG_TRACE
                         Console_printP(PSTR("disconnecting TCPIP"));
+#endif
                         setConnectionStatus(cs_disconnecting);
                         requestIPState();
                     }
                     break;
                 case cs_disconnected :
                     if (curCommand == c_connect) {
+#if DEBUG_TRACE
                         Console_printP(PSTR("connecting TCPIP"));
+#endif
                         setConnectionStatus(cs_connecting);
 
                         // begin by checking registration
@@ -429,7 +442,9 @@ void CellularTCPIP_Subtask (void)
                     }
                     break;
                 default :
+#if DEBUG_TRACE
                     Console_printP(PSTR("unexpected connection status"));
+#endif
                     // we don't expect to ever get here - for any other
                     // connection status we won't be in the idle state
                     break;

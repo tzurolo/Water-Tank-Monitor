@@ -16,7 +16,7 @@
 #define REFERENCE_VOLTAGE 1.1
 
 #define RESOLUTION 1000
-#define NUMERATOR ((1 / 0.94) * (1100 / 1024) * RESOLUTION)
+#define NUMERATOR ((int32_t)((1 / 0.94) * (1100 / 1024) * RESOLUTION))
 
 #define SENSOR_SAMPLES 10
 // sample 10 times per second (10 1/100ths)

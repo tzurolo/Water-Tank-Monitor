@@ -41,6 +41,8 @@ static char cipqsendP[]         PROGMEM = "cipqsend";
 static char apnP[]              PROGMEM = "APN";
 static char offP[]              PROGMEM = "off";
 static char onP[]               PROGMEM = "on";
+static char emptyP[]            PROGMEM = "empty";
+static char fullP[]             PROGMEM = "full";
 static char idP[]               PROGMEM = "id";
 static char ipserverP[]         PROGMEM = "ipserver";
 static char tCalOffsetP[]       PROGMEM = "tCalOffset";
@@ -264,12 +266,12 @@ bool CommandProcessor_executeCommand (
             if (validCommand) {
                 EEPROMStorage_setSampleInterval(loggingInterval);
             }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("empty"))) {
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, emptyP)) {
             const uint16_t emptyDistance = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setWaterTankEmptyDistance(emptyDistance);
             }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("full"))) {
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, fullP)) {
             const uint16_t fullDistance = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setWaterTankFullDistance(fullDistance);
@@ -323,9 +325,9 @@ bool CommandProcessor_executeCommand (
             makeJSONIntValue(cipqsendP, EEPROMStorage_cipqsend(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("distance"))) {
             beginJSON(reply);
-            appendJSONIntValue(PSTR("empty"), EEPROMStorage_waterTankEmptyDistance(), reply);
+            appendJSONIntValue(emptyP, EEPROMStorage_waterTankEmptyDistance(), reply);
             continueJSON(reply);
-            appendJSONIntValue(PSTR("full"), EEPROMStorage_waterTankFullDistance(), reply);
+            appendJSONIntValue(fullP, EEPROMStorage_waterTankFullDistance(), reply);
             endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, ipserverP)) {
             beginJSON(reply);
