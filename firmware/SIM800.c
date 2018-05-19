@@ -16,7 +16,6 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include "ByteQueue.h"
-#include "SoftwareSerialRx2.h"
 #include "SoftwareSerialTx.h"
 #include "Console.h"
 #include "SystemTime.h"
