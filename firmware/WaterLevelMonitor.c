@@ -425,12 +425,14 @@ void WaterLevelMonitor_task (void)
             if (SystemTime_timeHasArrived(&time)) {
                 TCPIPConsole_disable(false);
                 CellularComm_Disable();
-                // give it another two seconds of power to properly close the connection
-                SystemTime_futureTime(200, &time);
+                // give it another three seconds of power to properly close the connection
+                SystemTime_futureTime(300, &time);
                 wlmState = wlms_waitingForCellularCommDisable;
             }
         case wlms_waitingForCellularCommDisable :
-            if (SystemTime_timeHasArrived(&time)) {
+            if ((!CellularComm_isEnabled()) ||
+                SystemTime_timeHasArrived(&time)) {
+                SystemTime_futureTime(100, &time);
                 wlmState = wlms_poweringDown;
             }
             break;

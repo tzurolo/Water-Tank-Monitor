@@ -434,7 +434,8 @@ void CellularComm_task (void)
 {
     // state timeout logic. reboots if stuck in a state
     if ((ccState == prevCcState) && (ccState != ccs_disabled)) {
-        if (SystemTime_timeHasArrived(&stateTimeoutTime)) {
+        if ((!SystemTime_shuttingDown()) &&
+            (SystemTime_timeHasArrived(&stateTimeoutTime))) {
             Console_printP(PSTR("!! Timeout !!"));
             EEPROMStorage_setTimeoutState((int)ccState);
             SystemTime_commenceShutdown();

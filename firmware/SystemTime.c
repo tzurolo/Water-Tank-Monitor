@@ -184,17 +184,19 @@ void SystemTime_sleepFor (
 
 void SystemTime_commenceShutdown (void)
 {
-    shuttingDown = true;
-    // store reboot time
-    SystemTime_t curTime;
-    SystemTime_getCurrentTime(&curTime);
-    curTime.seconds += timeAdjustment;    // apply time adjustment
-    curTime.seconds += 8;  // account for watchdog time
-    EEPROMStorage_setLastRebootTimeSec(curTime.seconds);
+    if (!shuttingDown) {
+        shuttingDown = true;
+        // store reboot time
+        SystemTime_t curTime;
+        SystemTime_getCurrentTime(&curTime);
+        curTime.seconds += timeAdjustment;    // apply time adjustment
+        curTime.seconds += 8;  // account for watchdog time
+        EEPROMStorage_setLastRebootTimeSec(curTime.seconds);
 
-    Console_printP(PSTR("shutting down..."));
-    wdt_enable(WDTO_8S);
-    wdt_reset();
+        Console_printP(PSTR("shutting down..."));
+        wdt_enable(WDTO_8S);
+        wdt_reset();
+    }
 }
 
 bool SystemTime_shuttingDown (void)
