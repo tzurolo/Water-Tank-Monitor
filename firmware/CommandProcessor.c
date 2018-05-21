@@ -264,7 +264,7 @@ bool CommandProcessor_executeCommand (
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, logIntervalP)) {
             const uint16_t loggingInterval = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
-                EEPROMStorage_setSampleInterval(loggingInterval);
+                EEPROMStorage_setLoggingUpdateInterval(loggingInterval);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, emptyP)) {
             const uint16_t emptyDistance = scanIntegerToken(&cmd, &validCommand);

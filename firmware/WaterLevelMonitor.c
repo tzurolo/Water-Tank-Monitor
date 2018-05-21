@@ -251,7 +251,7 @@ static bool updateWaterLevelState (
 void initiatePowerdown (void)
 {
     // give it a little while to properly close the connection
-    SystemTime_futureTime(150, &time);
+    SystemTime_futureTime(200, &time);
     wlmState = wlms_delayBeforeDisable;
 }
 
@@ -425,14 +425,14 @@ void WaterLevelMonitor_task (void)
             if (SystemTime_timeHasArrived(&time)) {
                 TCPIPConsole_disable(false);
                 CellularComm_Disable();
-                // give it another three seconds of power to properly close the connection
-                SystemTime_futureTime(300, &time);
+                // give the cell module another three seconds to properly close the connection
+                SystemTime_futureTime(200, &time);
                 wlmState = wlms_waitingForCellularCommDisable;
             }
         case wlms_waitingForCellularCommDisable :
             if ((!CellularComm_isEnabled()) ||
                 SystemTime_timeHasArrived(&time)) {
-                SystemTime_futureTime(100, &time);
+                SystemTime_futureTime(50, &time);
                 wlmState = wlms_poweringDown;
             }
             break;
