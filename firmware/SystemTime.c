@@ -41,7 +41,7 @@ void SystemTime_Initialize (void)
     // set up timer1 to fire interrupt at SYSTEMTIME_TICKS_PER_SECOND
     TCCR1B = (TCCR1B & 0xF8) | 2; // prescale by 8
     TCCR1B = (TCCR1B & 0xE7) | (1 << 3); // set CTC mode
-    OCR1A = (F_CPU / 8) / SYSTEMTIME_TICKS_PER_SECOND;
+    OCR1A = ((F_CPU / 8) / SYSTEMTIME_TICKS_PER_SECOND) - 1;
     TCNT1 = 0;  // start the time counter at 0
     TIFR1 |= (1 << OCF1A);  // "clear" the timer compare flag
     TIMSK1 |= (1 << OCIE1A);// enable timer compare match interrupt
@@ -271,7 +271,7 @@ void SystemTime_appendToString (
 ISR(TIMER1_COMPA_vect, ISR_BLOCK)
 {
     ++tickCounter;
-    if (tickCounter > (SYSTEMTIME_TICKS_PER_SECOND / 100)) {
+    if (tickCounter >= (SYSTEMTIME_TICKS_PER_SECOND / 100)) {
         tickCounter = 0;
         ++currentTime.hundredths;
         if (currentTime.hundredths >= 100) {

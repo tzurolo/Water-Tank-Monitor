@@ -429,6 +429,7 @@ void WaterLevelMonitor_task (void)
                 SystemTime_futureTime(200, &time);
                 wlmState = wlms_waitingForCellularCommDisable;
             }
+            break;
         case wlms_waitingForCellularCommDisable :
             if ((!CellularComm_isEnabled()) ||
                 SystemTime_timeHasArrived(&time)) {
