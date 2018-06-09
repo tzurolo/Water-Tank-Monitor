@@ -31,6 +31,9 @@ extern void WaterLevelMonitor_Initialize (void);
 // called in each iteration of the mainloop
 extern void WaterLevelMonitor_task (void);
 
+extern void WaterLevelMonitor_extendTaskTimeout(
+    const uint16_t seconds);
+
 extern bool WaterLevelMonitor_taskIsDone (void);
 extern bool WaterLevelMonitor_hasSampleData (void);
 

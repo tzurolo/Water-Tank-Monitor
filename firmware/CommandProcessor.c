@@ -413,6 +413,9 @@ bool CommandProcessor_executeCommand (
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, rebootP)) {
         // reboot
         SystemTime_commenceShutdown();
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("extend"))) {
+        const uint16_t seconds = scanIntegerToken(&cmd, &validCommand);
+        WaterLevelMonitor_extendTaskTimeout(seconds);
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("eeread"))) {
         const uint16_t eeAddr = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {

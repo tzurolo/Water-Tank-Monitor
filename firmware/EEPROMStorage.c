@@ -40,6 +40,7 @@ uint16_t EEMEM emptyDist = 290;
 uint16_t EEMEM fullDist = 30;
 uint8_t EEMEM lowNotification = 50;
 uint8_t EEMEM highNotification = 90;
+uint8_t EEMEM levelIncreaseNotificationThreshold = 2;
 
 // internet
 //char EEMEM apn[40] = "mobiledata";    // T-Mobile
@@ -100,6 +101,7 @@ void EEPROMStorage_Initialize (void)
 
 	EEPROMStorage_setWaterHighNotificationLevel(90);
 	EEPROMStorage_setWaterLowNotificationLevel(45);
+        EEPROMStorage_setLevelIncreaseNotificationThreshold(2);
 
 	EEPROMStorage_setNotification(false);
 
@@ -259,6 +261,17 @@ void EEPROMStorage_setWaterHighNotificationLevel (
 uint8_t EEPROMStorage_waterHighNotificationLevel (void)
 {
     return EEPROM_read(&highNotification);
+}
+
+void EEPROMStorage_setLevelIncreaseNotificationThreshold (
+    const uint8_t percentIncrease)
+{
+    EEPROM_write(&levelIncreaseNotificationThreshold, percentIncrease);
+}
+
+uint8_t EEPROMStorage_levelIncreaseNotificationThreshold (void)
+{
+    return EEPROM_read(&levelIncreaseNotificationThreshold);
 }
 
 void EEPROMStorage_setNotification (

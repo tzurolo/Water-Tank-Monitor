@@ -73,6 +73,9 @@ extern uint8_t EEPROMStorage_waterLowNotificationLevel (void);
 extern void EEPROMStorage_setWaterHighNotificationLevel (
     const uint8_t level);
 extern uint8_t EEPROMStorage_waterHighNotificationLevel (void);
+extern void EEPROMStorage_setLevelIncreaseNotificationThreshold (
+    const uint8_t percentIncrease);
+extern uint8_t EEPROMStorage_levelIncreaseNotificationThreshold (void);
 
 extern void EEPROMStorage_setNotification (
     const bool onOff);

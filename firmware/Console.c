@@ -38,7 +38,7 @@ static bool consoleIsConnected (void)
 
 void Console_Initialize (void)
 {
-    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, ps_b, 3);
+    SoftwareSerialTx_open(TX_CHAN_INDEX, ps_b, 3);
     SoftwareSerialTx_enable(TX_CHAN_INDEX);
     SoftwareSerialTx_sendP(TX_CHAN_INDEX, crlfP);
 

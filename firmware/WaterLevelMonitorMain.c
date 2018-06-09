@@ -43,6 +43,7 @@ static void Initialize (void)
     UltrasonicSensorMonitor_Initialize();
     SoftwareSerialRx0_Initialize();
     SoftwareSerialRx2_Initialize();
+    SoftwareSerialTx_Initialize();
     Console_Initialize();
     CellularComm_Initialize();
     CellularTCPIP_Initialize();

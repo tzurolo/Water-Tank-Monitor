@@ -191,11 +191,13 @@ static void enableTCPIP (void)
     TCPIPConsole_enable(false);
 }
 
-// returns true if the water level just went out of the normal range
+// returns true if we need to report the water level now (for example if
+// the water level just went out of the normal range)
 static bool updateWaterLevelState (
     const uint16_t waterDistance) // in CM
 {
-    bool wentOutOfRange = false;
+    bool needToReportLevel = false;
+    const uint8_t previousWaterLevelPercent = currentWaterLevelPercent;
 
     // compute percentage full
     const uint16_t emptyDistance = EEPROMStorage_waterTankEmptyDistance();
@@ -241,11 +243,19 @@ static bool updateWaterLevelState (
 	    case wl_high    : Console_printP(PSTR("->High"));   break;
             case wl_inRange : Console_printP(PSTR("->Normal")); break;
         }
-        wentOutOfRange = (newState != wl_inRange);
+        // report level if it has gone out of range
+        needToReportLevel = (newState != wl_inRange);
     }
     currentWaterLevelState = newState;
+
+    if (!needToReportLevel) {
+        // see if we need to report the level because it is increasing
+        needToReportLevel =
+            (currentWaterLevelPercent >=
+            (previousWaterLevelPercent + EEPROMStorage_levelIncreaseNotificationThreshold()));
+    }
     
-    return wentOutOfRange;
+    return needToReportLevel;
 }
 
 void initiatePowerdown (void)
@@ -332,13 +342,13 @@ void WaterLevelMonitor_task (void)
                 sample.waterDistance = UltrasonicSensorMonitor_currentDistance();
                 SampleHistory_insertSample(&sample, &sampleHistory);
 
-                const bool wentOutOfRange = 
+                const bool needToReportLevel = 
                     updateWaterLevelState(sample.waterDistance / 10);   // cvt mm to cm
     
                 if (TCPIPConsole_isEnabled()) {
                     wlmState = wlms_waitingForConnection;
                 } else {
-                    if (wentOutOfRange) {
+                    if (needToReportLevel) {
                         enableTCPIP();
                         wlmState = wlms_waitingForConnection;
                     } else {
@@ -449,6 +459,14 @@ void WaterLevelMonitor_task (void)
         case wlms_done :
             break;
     }
+}
+
+void WaterLevelMonitor_extendTaskTimeout(
+    const uint16_t seconds)
+{
+    // limit extension to 5 minutes
+    const int extension = (seconds > 300) ? 300 : seconds;
+    SystemTime_futureTime(extension * 100, &time);
 }
 
 bool WaterLevelMonitor_taskIsDone (void)
