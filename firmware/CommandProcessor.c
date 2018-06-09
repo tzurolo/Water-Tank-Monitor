@@ -43,7 +43,11 @@ static char offP[]              PROGMEM = "off";
 static char onP[]               PROGMEM = "on";
 static char emptyP[]            PROGMEM = "empty";
 static char fullP[]             PROGMEM = "full";
+static char lowP[]              PROGMEM = "low";
+static char highP[]             PROGMEM = "high";
+static char risingP[]           PROGMEM = "rising";
 static char idP[]               PROGMEM = "id";
+static char notifyP[]           PROGMEM = "notify";
 static char ipserverP[]         PROGMEM = "ipserver";
 static char tCalOffsetP[]       PROGMEM = "tCalOffset";
 static char wdtCalP[]           PROGMEM = "wdtCal";
@@ -349,6 +353,14 @@ bool CommandProcessor_executeCommand (
             continueJSON(reply);
             appendJSONStrValue(PSTR("TS_WK"), EEPROMStorage_getThingspeakWriteKey, reply);
             endJSON(reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, notifyP)) {
+            beginJSON(reply);
+            appendJSONIntValue(lowP, EEPROMStorage_waterLowNotificationLevel(), reply);
+            continueJSON(reply);
+            appendJSONIntValue(highP, EEPROMStorage_waterHighNotificationLevel(), reply);
+            continueJSON(reply);
+            appendJSONIntValue(risingP, EEPROMStorage_levelIncreaseNotificationThreshold(), reply);
+            endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("time"))) {
             beginJSON(reply);
             SystemTime_t time;
@@ -362,21 +374,26 @@ bool CommandProcessor_executeCommand (
         } else {
             validCommand = false;
         }
-    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("notify"))) {
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, notifyP)) {
         StringUtils_scanToken(&cmd, &cmdToken);
         if (CharStringSpan_equalsNocaseP(&cmdToken, onP)) {
             EEPROMStorage_setNotification(true);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, offP)) {
             EEPROMStorage_setNotification(false);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("low"))) {
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, lowP)) {
             const uint16_t level = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setWaterLowNotificationLevel(level);
             }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("high"))) {
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, highP)) {
             const uint16_t level = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setWaterHighNotificationLevel(level);
+            }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, risingP)) {
+            const uint8_t percentIncrease = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setLevelIncreaseNotificationThreshold(percentIncrease);
             }
         } else {
             validCommand = false;
