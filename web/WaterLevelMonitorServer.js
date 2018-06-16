@@ -12,7 +12,14 @@ var pendingCommand = '';
 
 var tankEmptyDistance = 300;
 var tankFullDistance = 30;
-var latestWaterLevel = 0;
+var latestWaterLevel = -1;  // -1 means unknown
+var latestWaterLevelTimestamp = 0;
+
+var gpsStart = Date.UTC(1980, 0, 6);
+function gpsTime (date)
+{
+    return Math.round((date.getTime() - gpsStart) / 1000);
+}
 
 //
 //  HTTP post to ThingSpeak
@@ -124,9 +131,7 @@ var waterLevelMonitorServer = net.createServer(function(sock) {
     var now = new Date();
     console.log('CONNECTED ' + now.toDateString() + " " + now.toLocaleTimeString() + ': ' +
         sock.remoteAddress +':'+ sock.remotePort);
-    var gpsStart = Date.UTC(1980, 0, 6);
-    var gpsNow = Math.round((now.getTime() - gpsStart) / 1000);
-    var setTimeCmd = 'tset ' + gpsNow;
+    var setTimeCmd = 'tset ' + gpsTime(now);
     if (pendingCommand.length > 0) {
         console.log('sending block start');
         sock.write('[\r');
@@ -134,7 +139,7 @@ var waterLevelMonitorServer = net.createServer(function(sock) {
     }
     sock.write(setTimeCmd + '\r');
 
-    sock["mycounter"] = 0;
+    sock["mycounter"] = 0;	
     sock["incomingData"] = '';
     mainsock = sock;
     // Add a 'data' event handler to this instance of socket
@@ -144,6 +149,7 @@ var waterLevelMonitorServer = net.createServer(function(sock) {
         var now = new Date();
         console.log('DATA ' + now.toDateString() + " " + now.toLocaleTimeString() + ': ' +
             dataString + ', count: ' + sock.mycounter);
+        latestWaterLevelTimestamp = gpsTime(now);
         if (sock.mycounter == 1) {
             // first line is sensor data
             // validate
@@ -190,9 +196,8 @@ var waterLevelDisplayServer = net.createServer(function(sock) {
     var now = new Date();
     console.log('display CONNECTED ' + now.toDateString() + " " + now.toLocaleTimeString() + ': ' +
         sock.remoteAddress +':'+ sock.remotePort);
-    var gpsStart = Date.UTC(1980, 0, 6);
-    var gpsNow = Math.round((now.getTime() - gpsStart) / 1000);
-    var dataCmd = 'data ' + latestWaterLevel + ' ' + gpsNow;
+    var dataCmd = 'data ' + latestWaterLevel + ' ' + latestWaterLevelTimestamp + ' ' + gpsTime(now);
+    console.log(dataCmd);
     if (pendingCommand.length > 0) {
         console.log('sending block start');
         sock.write('[\r');
