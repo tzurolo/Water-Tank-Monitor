@@ -63,7 +63,8 @@ static SampleHistory_define(30, sampleHistory);
 static int16_t dataSenderSampleIndex;
 static CharStringSpan_t remainingReplyDataToSend;
 static WaterLevelState currentWaterLevelState;
-static uint8_t currentWaterLevelPercent;
+static int8_t currentWaterLevelPercent;
+static int8_t lastReportedWaterLevelPercent;
 
 #define DATA_SENDER_BUFFER_LEN 30
 
@@ -197,7 +198,6 @@ static bool updateWaterLevelState (
     const uint16_t waterDistance) // in CM
 {
     bool needToReportLevel = false;
-    const uint8_t previousWaterLevelPercent = currentWaterLevelPercent;
 
     // compute percentage full
     const uint16_t emptyDistance = EEPROMStorage_waterTankEmptyDistance();
@@ -251,8 +251,9 @@ static bool updateWaterLevelState (
     if (!needToReportLevel) {
         // see if we need to report the level because it is increasing
         needToReportLevel =
+            (lastReportedWaterLevelPercent >= 0) && // we had successfully reported
             (currentWaterLevelPercent >=
-            (previousWaterLevelPercent + EEPROMStorage_levelIncreaseNotificationThreshold()));
+            (lastReportedWaterLevelPercent + EEPROMStorage_levelIncreaseNotificationThreshold()));
     }
     
     return needToReportLevel;
@@ -284,6 +285,8 @@ void WaterLevelMonitor_Initialize (void)
     dataSenderSampleIndex = -1;
     currentWaterLevelState = wl_inRange;
     gotCommandFromHost = false;
+    currentWaterLevelPercent = -1;      // unknown level
+    lastReportedWaterLevelPercent = -1; // unknown level
 }
 
 void WaterLevelMonitor_task (void)
@@ -373,6 +376,7 @@ void WaterLevelMonitor_task (void)
                     break;
                 case sds_completedSuccessfully :
                     SampleHistory_clear(&sampleHistory);
+                    lastReportedWaterLevelPercent = currentWaterLevelPercent;
                     wlmState = wlms_waitingForHostCommand;
                     break;
                 case sds_completedFailed :

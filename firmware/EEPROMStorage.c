@@ -44,8 +44,13 @@ uint8_t EEMEM levelIncreaseNotificationThreshold = 2;
 
 // internet
 //char EEMEM apn[40] = "mobiledata";    // T-Mobile
+//char EEMEM apn[40]  = "send.ee";      // OneSimCard
 char EEMEM apn[40]  = "hologram";        // hologram.io
 char apnP[] PROGMEM = "hologram";
+char EEMEM username[20]  = "";
+char usernameP[] PROGMEM = "";
+char EEMEM password[20]  = "";
+char passwordP[] PROGMEM = "";
 uint8_t EEMEM cipqsend = 0;
 
 // thingspeak
@@ -107,6 +112,10 @@ void EEPROMStorage_Initialize (void)
 
         getCharStringSpanFromP(apnP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setAPN(&stringBufferSpan);
+        getCharStringSpanFromP(usernameP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setUsername(&stringBufferSpan);
+        getCharStringSpanFromP(passwordP, &stringBuffer, &stringBufferSpan);
+        EEPROMStorage_setPassword(&stringBufferSpan);
 
         EEPROMStorage_setSampleInterval(600);
         EEPROMStorage_setLoggingUpdateInterval(1800);
@@ -306,6 +315,40 @@ void EEPROMStorage_getAPN (
     CharString_t *APN)
 {
     EEPROM_readString(apn, APN);
+}
+
+void EEPROMStorage_setUsername (
+    const CharStringSpan_t *usern)
+{
+    EEPROM_writeString(username, sizeof(username), usern);
+}
+
+bool EEPROMStorage_haveUsername (void)
+{
+    return EEPROM_haveString(username);
+}
+
+void EEPROMStorage_getUsername (
+    CharString_t *usern)
+{
+    EEPROM_readString(username, usern);
+}
+
+bool EEPROMStorage_havePassword (void)
+{
+    return EEPROM_haveString(password);
+}
+
+void EEPROMStorage_setPassword (
+    const CharStringSpan_t *passw)
+{
+    EEPROM_writeString(password, sizeof(password), passw);
+}
+
+void EEPROMStorage_getPassword (
+    CharString_t *passw)
+{
+    EEPROM_readString(password, passw);
 }
 
 void EEPROMStorage_setCipqsend (

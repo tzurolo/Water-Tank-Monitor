@@ -65,8 +65,8 @@ char smsCommandPrefix[]   PROGMEM = "ExeCmd:";
 typedef enum CellularCommState_enum {
     ccs_initial,
     ccs_disabling,
-    ccs_disabled,
     ccs_waitingForSIM800PowerDown,
+    ccs_disabled,
     ccs_idle,
     ccs_waitingForOnkeyResponse,
     ccs_lettingADH8066Initialize,
@@ -473,6 +473,7 @@ void CellularComm_task (void)
             if (SIM800_status() == SIM800_ms_off) {
                 ccState = ccs_disabled;
             }
+            break;
         case ccs_disabled :
             if (ccEnabled) {
                 // exit the disabled state
@@ -535,6 +536,7 @@ void CellularComm_task (void)
             } else {
                 // cellular com is disabled. enter disabled state
                 TCPIPConsole_disable(false);
+                CellularTCPIP_disconnect();
                 ccState = ccs_disabling;
                 Console_printP(PSTR("> Disabling Cell <"));
             }
@@ -614,8 +616,12 @@ void CellularComm_task (void)
                     ccState = ccs_waitingForInitialCSQResponse;
                 } else {
                     // not registered yet.
-                    ccState = ccs_waitToRecheckCREG;
-                    SystemTime_futureTime(200, &powerupResumeTime);
+                    if (ccEnabled) {
+                        ccState = ccs_waitToRecheckCREG;
+                        SystemTime_futureTime(200, &powerupResumeTime);
+                    } else {
+                        ccState = ccs_idle;
+                    }
                 }
             }
             }
@@ -753,6 +759,8 @@ void CellularComm_task (void)
                 Console_printP(PSTR("TCPIP subtask completed"));
 #endif
                 ccState = ccs_idle;
+            } else if (!ccEnabled) {
+                CellularTCPIP_disconnect();
             }
             }
             break;
@@ -825,6 +833,11 @@ bool CellularComm_stateIsTCPIPSubtask (
 uint16_t CellularComm_batteryMillivolts (void)
 {
     return batteryMillivolts;
+}
+
+uint8_t CellularComm_batteryPercent (void)
+{
+    return batteryPercent;
 }
 
 void CellularComm_setOutgoingSMSMessageNumber (

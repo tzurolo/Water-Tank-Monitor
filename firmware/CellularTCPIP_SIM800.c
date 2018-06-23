@@ -185,8 +185,21 @@ static void sendCSTT (
     CharString_t *cmdBuffer)
 {
     CharString_copyP(PSTR("AT+CSTT=\""), cmdBuffer);
+    // specify APN
     EEPROMStorage_getAPN(cmdBuffer);
     CharString_appendC('"', cmdBuffer);
+    // add username/password if specified
+    if (EEPROMStorage_haveUsername() ||
+        EEPROMStorage_havePassword()) {
+        CharString_appendP(PSTR(",\""), cmdBuffer);
+        EEPROMStorage_getUsername(cmdBuffer);
+        CharString_appendP(PSTR("\",\""), cmdBuffer);
+        EEPROMStorage_getPassword(cmdBuffer);
+        CharString_appendC('"', cmdBuffer);
+    }
+#if DEBUG_TRACE
+    Console_printCS(cmdBuffer);
+#endif
     sendSIM800CommandCS(cmdBuffer, cts_waitingForCSTTResponse);
 }
 
@@ -319,7 +332,11 @@ static void advanceStateForCommand (
             break;
         case ips_TCP_CONNECTING :
         case ips_UDP_CONNECTING :
-            waitBeforeRequestingIPState();
+            if (curCommand == c_disconnect) {
+                endSubtask(cs_disconnected);
+            } else {
+                waitBeforeRequestingIPState();
+            }
             break;
         case ips_unknown :
             requestIPState();
