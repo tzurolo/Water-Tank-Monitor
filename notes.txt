@@ -1,0 +1,12 @@
+AtMega328P avrdude (using AdapterSerial module):
+avrdude -p atmega328p -P COM7 -c avrispv2 -e -U WaterLevelMonitor.hex
+
+AtTiny84 avrdude:
+avrdude -p attiny84 -P COM4 -c avrispv2 -e -U LightingUPS.hex
+
+FeatherFona via AdapterSerial module:
+avrdude -p atmega32u4 -P COM7 -c avrispv2 -e -U USBtoSerial.hex
+FeatherFona via Pololu programmer
+avrdude -p atmega32u4 -P COM4 -c avrispv2 -e -U USBtoSerial.hex
+
+\files\Microcontrollers\LUFA\lufa-LUFA-151115\Projects\WaterLevelDisplay\firmware
