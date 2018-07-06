@@ -5,7 +5,8 @@ var readline = require('readline');
 
 var HOST = 'localhost';
 var PORT = 3000;
-var ThingSpeakWritekey = "DD7TVSCZEHKZLAQP";
+var ThingSpeakSensorWritekey = "DD7TVSCZEHKZLAQP";
+var ThingSpeakPumpWritekey = "P55J3PTLW77TJFLB";
 
 var mainsock;
 var pendingCommand = '';
@@ -24,12 +25,12 @@ function gpsTime (date)
 //
 //  HTTP post to ThingSpeak
 //
-function postSensorDataToThingSpeak(sensorData) {
-    // Build the post string from an object
+function postBulkDataToThingSpeak(bulkData) {
+    // Build the post string from the given data object
     var postData = {
-       "write_api_key" : ThingSpeakWritekey,
+       "write_api_key" : ThingSpeakSensorWritekey,
        "time_format" : "relative",
-       "updates" : sensorData
+       "updates" : bulkData
     };
     var postDataStr = JSON.stringify(postData);
     
@@ -42,8 +43,8 @@ function postSensorDataToThingSpeak(sensorData) {
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postDataStr)
-    }
-};
+        }
+    };
 
   // Set up the request
   var post_req = http.request(post_options, function(res) {
@@ -59,6 +60,51 @@ function postSensorDataToThingSpeak(sensorData) {
   post_req.end();
 }
 
+function postDataToThingSpeak(data) {
+    // Build the post string from the given data object
+	var fieldDataStr = '';
+	for (var field in data){
+		if (fieldDataStr.length > 0) {
+			fieldDataStr += ',';
+		}
+        fieldDataStr += '&' + field + '=' + data[field];
+    }
+    var postDataStr = 'api_key=' + ThingSpeakPumpWritekey + fieldDataStr;
+	
+    // An object of options to indicate where to post to
+    var post_options = {
+        host: 'api.thingspeak.com',
+        port: '80',
+        path: '/update',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache'
+        }
+    };
+
+  // Set up the request
+  var post_req = http.request(post_options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function (chunk) {
+          console.log('Response: ' + chunk);
+      });
+  });
+  
+  // post the data
+  console.log("Posting: " + postDataStr);
+  post_req.write(postDataStr);
+  post_req.end();
+}
+
+//POST /update.json HTTP/1.1
+//Host: api.thingspeak.com
+//Content-Type: application/x-www-form-urlencoded
+//Cache-Control: no-cache
+//Postman-Token: ae8df110-e894-4f64-a0a6-17a374a14a2b
+//
+//api_key=P55J3PTLW77TJFLB&field1=1
+
 //
 //  End of HTTP post to ThingSpeak
 //
@@ -67,7 +113,7 @@ function postSensorDataToThingSpeak(sensorData) {
 // parse sensor data and send to ThingSpeak
 //
 
-var fieldDescriptors = {
+var sensorFieldDescriptors = {
    "D" : {fieldName : "delta_t",  divisor : 1   },
    "W" : {fieldName : "field1",   divisor : 10  },
    "T" : {fieldName : "field2",   divisor : 1   },
@@ -78,7 +124,7 @@ var fieldDescriptors = {
 
 // sets a field of sample from the given fieldStr. fieldStr
 // is expected to be an uppercase letter followed by a number
-function parseField(fieldStr, sample)  {
+function parseField(fieldStr, fieldDescriptors, sample)  {
     var key = fieldStr.substring(0,1);
     var value = parseFloat(fieldStr.substring(1));
     if (key in fieldDescriptors) {
@@ -98,7 +144,7 @@ function parseSensorDataFeed(sensorDataStr) {
         var sample = {"delta_t" : 0};
         var sampleFields = sampleStr.match(fieldRE);
         for (x in sampleFields) {
-           parseField(sampleFields[x], sample);
+           parseField(sampleFields[x], sensorFieldDescriptors, sample);
         }
         samples.push(sample);
     }
@@ -106,7 +152,7 @@ function parseSensorDataFeed(sensorDataStr) {
     var lastSample = samples[samples.length-1];
     var connFields = connDataStr.match(fieldRE);
     for (x in connFields) {
-        parseField(connFields[x], lastSample);
+        parseField(connFields[x], sensorFieldDescriptors, lastSample);
     }
     
     // capture water level to send to display
@@ -116,7 +162,7 @@ function parseSensorDataFeed(sensorDataStr) {
         (tankEmptyDistance - tankFullDistance));
     
     // send to ThingSpeak
-    postSensorDataToThingSpeak(samples);
+    postBulkDataToThingSpeak(samples);
 }
 //
 // end of parse sensor data and send to ThingSpeak
@@ -188,6 +234,34 @@ var waterLevelMonitorServer = net.createServer(function(sock) {
 //
 
 //
+// parse sensor data and send to ThingSpeak
+//
+
+var pumpFieldDescriptors = {
+   "M" : {fieldName : "field2",   divisor : 1    },
+   "P" : {fieldName : "field1",   divisor : 1    },
+   "T" : {fieldName : "field3",   divisor : 1    },
+   "B" : {fieldName : "field4",   divisor : 1000 },
+   "Q" : {fieldName : "field5",   divisor : 1    },
+   "C" : {fieldName : "field6",   divisor : 1    },
+   };
+
+function parsePumpDataFeed(pumpDataStr) {
+    var fieldRE = new RegExp("\\w-?\\d+", "g");
+    var pumpData = {};
+    var pumpDataFields = pumpDataStr.match(fieldRE);
+    for (x in pumpDataFields) {
+        parseField(pumpDataFields[x], pumpFieldDescriptors, pumpData);
+    }
+    
+    // send to ThingSpeak
+    postDataToThingSpeak(pumpData);
+}
+//
+// end of parse pump data and send to ThingSpeak
+//
+
+//
 //  water level display net server
 //
 var waterLevelDisplayServer = net.createServer(function(sock) {
@@ -222,8 +296,7 @@ var waterLevelDisplayServer = net.createServer(function(sock) {
                 ((dataString.charAt(dataString.length-2) == 'Z') ||
                  (dataString.charAt(dataString.length-1) == 'Z'))) {
                 // parse the data
-                //parseSensorDataFeed(dataString);
-                
+                parsePumpDataFeed(dataString);                
             } else {
                 console.log('>>>> unexpected input - destroy socket');
                 sock.destroy('unexpected');
