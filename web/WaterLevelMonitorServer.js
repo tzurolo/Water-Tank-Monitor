@@ -22,6 +22,13 @@ function gpsTime (date)
     return Math.round((date.getTime() - gpsStart) / 1000);
 }
 
+function waterLevelFromDistance (distance)
+{
+    return Math.round(
+        ((tankEmptyDistance - distance) * 100) /
+        (tankEmptyDistance - tankFullDistance));
+}
+
 //
 //  HTTP post to ThingSpeak
 //
@@ -146,6 +153,8 @@ function parseSensorDataFeed(sensorDataStr) {
         for (x in sampleFields) {
            parseField(sampleFields[x], sensorFieldDescriptors, sample);
         }
+		var waterLevel = waterLevelFromDistance(sample.field1);
+		sample.field6 = waterLevel.toString();
         samples.push(sample);
     }
     // set connection data on last sample
@@ -156,10 +165,7 @@ function parseSensorDataFeed(sensorDataStr) {
     }
     
     // capture water level to send to display
-    var latestSampleDistance = lastSample.field1;
-    latestWaterLevel = Math.round(
-        ((tankEmptyDistance - latestSampleDistance) * 100) /
-        (tankEmptyDistance - tankFullDistance));
+    latestWaterLevel = lastSample.field6;
     
     // send to ThingSpeak
     postBulkDataToThingSpeak(samples);
