@@ -16,6 +16,7 @@
 #include "DataHistory.h"
 
 #define SENSOR_SAMPLES 5
+#define SENSOR_INVALID_RANGE 5000
 
 CharString_define(16, sensorDataStr);
 DataHistory_define(SENSOR_SAMPLES, distanceHistory);
@@ -64,7 +65,9 @@ void UltrasonicSensorMonitor_task (void)
                 int16_t dist = 0;
                 uint8_t numFracDigits = 0;
                 StringUtils_scanDecimal(&decimalStr, &isValid, &dist, &numFracDigits, NULL);
-                if (isValid) {
+                if (isValid &&
+					(dist > 0) &&
+					(dist < SENSOR_INVALID_RANGE)) {
                     if (numReadingsToIgnore > 0) {
                         // ignoring first readings, which are not filtered
                         --numReadingsToIgnore;
