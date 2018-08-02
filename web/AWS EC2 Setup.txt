@@ -1,0 +1,13 @@
+AWS EC2 setup
+
+nano /etc/profile
+Not sure we need this:
+export TMPDIR=/home/ec2-user/tmp
+
+curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -
+
+sudo yum install -y nodejs
+
+npm install http --save
+npm install net --save
+npm install readline --save

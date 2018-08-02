@@ -16,6 +16,8 @@ var tankFullDistance = 30;
 var latestWaterLevel = -1;  // -1 means unknown
 var latestWaterLevelTimestamp = 0;
 
+var LoJADisplayUnitId = 3;
+
 var gpsStart = Date.UTC(1980, 0, 6);
 function gpsTime (date)
 {
@@ -250,6 +252,7 @@ var pumpFieldDescriptors = {
    "B" : {fieldName : "field4",   divisor : 1000 },
    "Q" : {fieldName : "field5",   divisor : 1    },
    "C" : {fieldName : "field6",   divisor : 1    },
+   "I" : {fieldName : "id",       divisor : 1    }
    };
 
 function parsePumpDataFeed(pumpDataStr) {
@@ -260,8 +263,13 @@ function parsePumpDataFeed(pumpDataStr) {
         parseField(pumpDataFields[x], pumpFieldDescriptors, pumpData);
     }
     
-    // send to ThingSpeak
-    postDataToThingSpeak(pumpData);
+    if (pumpData.id == LoJADisplayUnitId) {
+        delete pumpData.id; // we don't post the id
+        // send to ThingSpeak
+        postDataToThingSpeak(pumpData);
+    } else {
+        console.log('got data from alternate display ' + pumpData.id);
+    }
 }
 //
 // end of parse pump data and send to ThingSpeak
@@ -353,6 +361,45 @@ rl.on('line', function(line){
 // End of Command line interface
 //
 
+//
+//  read latest water level from ThingSpeak upon startup
+//  of this server
+//
+function readLatestWaterLevelFromThingSpeak() {
+    // An object of options to indicate where to get from
+    var get_options = {
+        host: 'api.thingspeak.com',
+        port: '80',
+        path: '/channels/8203/fields/6.json?results=1',
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache'
+        }
+    };
+  var responseData = '';
+  // Set up the request
+  var get_req = http.request(get_options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function (chunk) {
+          responseData += chunk;
+      });
+      res.on('end', function () {
+          // console.log('Response: ' + responseData);
+          responseObj = JSON.parse(responseData);
+          latestWaterLevel = parseInt(responseObj.feeds[0].field6);
+          console.log('Water Level: ' + latestWaterLevel);
+          var latestWaterLevelDate = new Date(responseObj.feeds[0].created_at);
+          console.log('      as of: ' + latestWaterLevelDate);
+          latestWaterLevelTimestamp = gpsTime(latestWaterLevelDate);
+      });
+  });
+  
+  // get the data
+  console.log("Getting field from ThingSpeak");
+  get_req.end();
+}
+readLatestWaterLevelFromThingSpeak();
 
 waterLevelMonitorServer.listen(3000, function() {
   console.log('water level monitor server bound');

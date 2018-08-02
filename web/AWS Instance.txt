@@ -1,0 +1,9 @@
+AWS Instance
+
+ID: i-0abc4d3c0066c6397
+DNS: ec2-13-59-114-45.us-east-2.compute.amazonaws.com
+IP: 13.59.114.45
+
+to get node.js:
+curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -
+
