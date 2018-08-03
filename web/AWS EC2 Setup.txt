@@ -11,3 +11,22 @@ sudo yum install -y nodejs
 npm install http --save
 npm install net --save
 npm install readline --save
+
+Installing and running PM2:
+installation:
+   sudo npm install pm2@latest -g
+
+Running the node.js server:
+   pm2 start BoilerMonitorServer.js
+   pm2 list
+To get the command to run that will make pm2 run upon boot:
+   pm2 startup
+   [PM2] Init System found: systemd
+   [PM2] You have to run this command as root. Execute the following command:
+   sudo env PATH=$PATH:/opt/nodejs/bin /opt/nodejs/lib/node_modules/pm2/bin/pm2 startup systemd -u pi --hp /home/pi
+   pm2 save
+To stop processes managed by pm2
+   pm2 stop all
+To restart processes managed by pm2
+   pm2 restart all
+
