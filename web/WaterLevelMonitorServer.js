@@ -12,7 +12,7 @@ var ThingSpeakPumpWritekey = "P55J3PTLW77TJFLB";
 var mainsock;
 var pendingCommand = '';
 
-var tankEmptyDistance = 300;
+var tankEmptyDistance = 283;
 var tankFullDistance = 30;
 
 var latestValidWaterDistance = { "distance" : -1, "timestamp" : 0};  // -1 means unknown
@@ -215,12 +215,11 @@ function parseSensorDataFeed(sensorDataStr) {
 			latestWaterLevel.timestamp = samples[s].abs_t;
 			
 			samples[s].field6 = waterLevel;
-			
-			// clear out abs_t - it's only needed for this filter
-			delete samples[s].abs_t;
 		} else {
-			console.log('>>> rejecting sample distance ' + distance + ", bounds: " + bounds.low + ".." + bounds.high);
+			console.log('>>> rejecting sample distance ' + distance + " (out of bounds " + bounds.low + ".." + bounds.high + ")");
 		}
+		// clear out abs_t - it's only needed for this filter
+		delete samples[s].abs_t;
 	}
 	
     // set connection data on last sample
