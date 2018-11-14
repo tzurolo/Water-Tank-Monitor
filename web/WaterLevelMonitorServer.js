@@ -12,7 +12,7 @@ var ThingSpeakPumpWritekey = "P55J3PTLW77TJFLB";
 var mainsock;
 var pendingCommand = '';
 
-var tankEmptyDistance = 283;
+var tankEmptyDistance = 284;
 var tankFullDistance = 30;
 
 var latestValidWaterDistance = { "distance" : -1, "timestamp" : 0};  // -1 means unknown
@@ -45,11 +45,15 @@ function computeDistanceBounds (sampleTimestamp, latestValidDistance)
 		var timeInterval = sampleTimestamp - latestValidDistance.timestamp;  // seconds
 		var latestDistance = latestValidDistance.distance;
 
-		bounds.low = latestDistance - maxFillRate * timeInterval;
-		if (bounds.low < tankFullDistance) bounds.low = tankFullDistance;
+		// when the sensor is dirty it reports tankFullDistance. So when
+		// we get tankFullDistance we allow full range bounds
+		if (latestDistance != tankFullDistance) {
+		    bounds.low = latestDistance - maxFillRate * timeInterval;
+		    if (bounds.low < tankFullDistance) bounds.low = tankFullDistance;
 
-	    bounds.high = latestDistance + maxDrainRate * timeInterval;
-		if (bounds.high > tankEmptyDistance) bounds.high = tankEmptyDistance;
+			bounds.high = latestDistance + maxDrainRate * timeInterval;
+			if (bounds.high > tankEmptyDistance) bounds.high = tankEmptyDistance;
+		}
 	}
 
 	return bounds;
